@@ -6,13 +6,15 @@ module scf_esl
 
   public ::                       &
             scf_t,                &
-            scf_init,             &
-            scf_end,              &
             scf_loop
 
   !Data structure containing the data for the SCF
   type scf_t 
    real(kind=dp) :: tol_reldens
+   contains
+     private
+     procedure, public :: init
+     final :: cleanup
   end type scf_t
 
   contains
@@ -20,19 +22,19 @@ module scf_esl
 
  !Initialize density and wfn
  !----------------------------------------------------
- subroutine scf_init(this)
-   type(scf_t),  intent(inout) :: this
+ subroutine init(this)
+   class(scf_t)  :: this
 
    !Parse here the data for the SCF
- end subroutine scf_init
+ end subroutine init
 
  !Cleaning up
  !----------------------------------------------------
- subroutine scf_end(this)
-   type(scf_t),  intent(inout) :: this
+ subroutine cleanup(this)
+   type(scf_t) :: this
 
 
- end subroutine scf_end
+ end subroutine cleanup
 
  !Perform the self-consistent field calculation
  !----------------------------------------------------
