@@ -16,7 +16,7 @@ module smear_esl
    integer, public, parameter :: &
     COLD     = 1,           &
     FD       = 2,           &
-    MT       = 3,           &
+    MP       = 3,           &
     GAUSSIAN = 4
 
 
@@ -29,10 +29,10 @@ module smear_esl
 
      !TODO: Use ELSI here
 
-     select(this%smearing)
+     select case(this%smearing)
        case(COLD)
        case(FD)
-       case(MT)
+       case(MP)
        case(GAUSSIAN)
      end select
 
@@ -45,10 +45,10 @@ module smear_esl
 
      !TODO: Use ELSI here
 
-     select(this%smearing)
+     select case(this%smearing)
        case(COLD)
        case(FD)
-       case(MT)
+       case(MP)
        case(GAUSSIAN)
      end select
 

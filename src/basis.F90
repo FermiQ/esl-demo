@@ -4,13 +4,15 @@ module basis_esl
   private
 
   public ::                &
-            basis_t,      &
-            basis_init,   &
-            basis_end
+            basis_t
   
   !Data structure for the basis
   type basis_t
     integer :: basis_type
+    contains
+      private
+      procedure, public :: init
+      final :: cleanup
   end type basis_t
 
   integer, public, parameter :: &
@@ -22,18 +24,18 @@ module basis_esl
 
    !Initialize the physical system
    !----------------------------------------------------
-   subroutine basis_init(this)
-     type(basis_t), intent(inout) :: this
+   subroutine init(this)
+     class(basis_t) :: this
 
      !Parse the informations from the input file
 
-   end subroutine basis_init
+   end subroutine init
  
    !Release
    !----------------------------------------------------
-   subroutine basis_end(this)
-     type(basis_t), intent(inout) :: this
+   subroutine cleanup(this)
+     type(basis_t) :: this
 
-   end subroutine basis_end
+   end subroutine cleanup
 
 end module basis_esl
