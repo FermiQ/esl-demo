@@ -27,6 +27,7 @@ module system_esl
     real(dp) :: vol
 
     type(basis_t) :: basis
+    real(dp) :: nElectrons
   contains
     private
     procedure, public :: init
