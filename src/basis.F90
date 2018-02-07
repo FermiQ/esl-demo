@@ -1,7 +1,7 @@
 module basis_esl
-  use fdf, only : block_fdf, fdf_integer, fdf_block,fdf_defined, &
+  use fdf, only : block_fdf, fdf_block,fdf_defined, &
                   parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
-                  fdf_physical
+                  fdf_get
 
   use message_esl
 
@@ -33,7 +33,7 @@ module basis_esl
      class(basis_t) :: this
 
      character(len=100) :: str
-     str=fdf_string('BasisSet','Planewaves')
+     str=fdf_get('BasisSet','Planewaves')
      if (str == 'Planewaves')  Then
        this%basis_type=PLANEWAVES
      else if (str=='AtomicOrbitals') then
