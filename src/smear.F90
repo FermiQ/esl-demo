@@ -1,6 +1,8 @@
 module smear_esl
-  use prec
+  use prec, only : ip, dp
   use elsi_wrapper_esl, only: elsi_calc_fermi_and_occ
+
+  use states_esl
 
   implicit none
   private
@@ -12,7 +14,6 @@ module smear_esl
   type smear_t
     integer(kind=ip)           :: smearing           !< which smearing do we use
     real(kind=dp), pointer     :: eigenvalues(:,:,:) !< n_state,n_spin,n_kpt
-    real(kind=dp), allocatable :: occ_numbers(:,:,:)
     real(kind=dp)              :: fermi_level
   end type smear_t
 
@@ -27,11 +28,12 @@ module smear_esl
 
    !Compute the Fermi level and occupation numbers
    !----------------------------------------------------
-   subroutine smear_calc_fermi_and_occ(this)
+   subroutine smear_calc_fermi_and_occ(this, states)
      type(smear_t), intent(inout) :: this
+     type(states_t),   intent(in) :: states
 
      call elsi_calc_fermi_and_occ(this%smearing,this%eigenvalues,&
-          this%occ_numbers,this%fermi_level)
+          states%occ_numbers,this%fermi_level)
 
    end subroutine smear_calc_fermi_and_occ
 

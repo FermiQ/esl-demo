@@ -12,6 +12,11 @@ module states_esl
            states_init,      &
            states_end,       &
            states_randomize
+
+ type wfn_t
+   real(kind=dp), allocatable :: coef(:) !<Coefficients of the wavefunction in the basis
+ end type wfn_t
+
           
  !Data structure for the states
  type states_t
@@ -21,17 +26,14 @@ module states_esl
    integer :: ncoef
 
    type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
+   real(kind=dp), allocatable :: occ_numbers(:,:,:)
  end type states_t
-
- type wfn_t
-   real(kind=dp), allocatable :: coef(:) !<Coefficients of the wavefunction in the basis
- end type wfn_t
 
  contains
 
    !Initialize the states
    !----------------------------------------------------
-   subroutine states_init(this, basis, nstates, npsin, nkpt)
+   subroutine states_init(this, basis, nstates, nspin, nkpt)
      type(states_t), intent(inout) :: this
      type(basis_t),  intent(in)    :: basis
      integer,        intent(in)    :: nstates
@@ -50,7 +52,7 @@ module states_esl
      do ik = 1, nkpt
        do isp = 1, nspin
          do ist = 1, nstates
-           allocate(this%states(ist, isp, ik)%coef(1:basis%size)
+           allocate(this%states(ist, isp, ik)%coef(1:basis%size))
          end do 
        end do
      end do
@@ -62,6 +64,8 @@ module states_esl
    !----------------------------------------------------
    subroutine states_end(this)
      type(states_t):: this
+
+     integer :: ist, isp, ik
 
      do ik = 1, this%nkpt
        do isp = 1, this%nspin
@@ -82,6 +86,8 @@ module states_esl
    subroutine states_randomize(this)
      type(states_t):: this
 
+     integer :: ist, isp, ik
+
      call init_random()
 
      do ik = 1, this%nkpt
@@ -94,4 +100,4 @@ module states_esl
 
    end subroutine states_randomize
 
-end module potential_esl
+end module states_esl
