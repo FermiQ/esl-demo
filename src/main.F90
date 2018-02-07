@@ -1,4 +1,5 @@
 program esl_demo
+ use basis_esl
  use hamiltonian_esl
  use parser_esl
  use scf_esl
@@ -6,6 +7,7 @@ program esl_demo
 
  implicit none
 
+ type(basis_t)       :: basis
  type(hamiltonian_t) :: hamiltonian
  type(parser_t)      :: parser
  type(system_t)      :: system
@@ -19,6 +21,8 @@ program esl_demo
  call parser_init(parser)
 
  call system_init(system, parser)
+
+ call basis_init(basis)
 
  call hamiltonian_init(hamiltonian, parser)
 
@@ -34,6 +38,8 @@ program esl_demo
  call scf_end(scf)
 
  call hamiltonian_end(hamiltonian)
+
+ call basis_end(basis)
 
  call system_end(system)
 
