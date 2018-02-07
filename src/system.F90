@@ -5,6 +5,8 @@ module system_esl
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical
 
+  use basis_esl
+
   implicit none
   private
 
@@ -21,6 +23,8 @@ module system_esl
     character(len=10), dimension(:), allocatable :: el,sp
     character(len=100), dimension(:), allocatable :: potName
     real(dp) :: vol
+
+    type(basis_t) :: basis
   contains
     private
     procedure, public :: init
@@ -34,13 +38,15 @@ module system_esl
    !Initialize the physical system
    !----------------------------------------------------
    subroutine init(sys, of)
-     class(system_t),  intent(inout) :: sys
+     class(system_t) :: sys
      integer(kind=ip), intent(inout) :: of
 
      logical :: isdef
      integer :: j,i
      type(block_fdf)            :: blk
      type(parsed_line), pointer :: pline
+
+     sys%basis%init()
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
