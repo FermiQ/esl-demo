@@ -1,4 +1,9 @@
 module basis_esl
+  use fdf, only : block_fdf, fdf_block,fdf_defined, &
+                  parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
+                  fdf_get
+
+  use message_esl
 
   implicit none
   private
@@ -27,7 +32,15 @@ module basis_esl
    subroutine init(this)
      class(basis_t) :: this
 
-     !Parse the informations from the input file
+     character(len=100) :: str
+     str=fdf_get('BasisSet','Planewaves')
+     if (str == 'Planewaves')  Then
+       this%basis_type=PLANEWAVES
+     else if (str=='AtomicOrbitals') then
+       this%basis_type=ATOMICORBS
+     else
+       call message_error("The specified basis set is not correct.")
+     endif
 
    end subroutine init
  
