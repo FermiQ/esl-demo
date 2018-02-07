@@ -5,31 +5,33 @@ module hamiltonian_esl
 
  public ::                   &
            hamiltonian_t,    &
-           hamiltonian_init, &
-           hamiltonian_end,  &
            hamiltonian_apply
           
  !Data structure for the Hamiltonian
  type hamiltonian_t
+    integer :: dummy ! remove once proper data members are added
+    contains
+      private
+      procedure, public :: init
+      final :: cleanup
+ end type 
 
- end type hamitonian_t
-
- contains,
+ contains
 
    !Initialize the Hamiltonian
    !----------------------------------------------------
-   subroutine hamiltonian_init(this)
-     type(hamiltonian_t), intent(inout) :: this
+   subroutine init(this)
+     class(hamiltonian_t) :: this
 
-   end subroutine hamiltonian_init
+   end subroutine init
 
 
    !Release the Hamiltonian
    !----------------------------------------------------
-   subroutine hamiltonian_end(this)
-     type(hamiltonian_t), intent(inout) :: this
+   subroutine cleanup(this)
+     type(hamiltonian_t):: this
 
-   end subroutine hamiltonian_end
+   end subroutine cleanup
 
 
    !Apply the Hamiltonian matrix

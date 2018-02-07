@@ -1,11 +1,12 @@
 program esl_demo
- use basis_esl
+ use basis_esl, only : basis_T
  use fdf, only : fdf_init, fdf_shutdown, fdf_string
- use hamiltonian_esl
+ use hamiltonian_esl, only : hamiltonian_t
  use iso_fortran_env, only : ou=>OUTPUT_UNIT
- use prec, only :: dp, ip
- use scf_esl
- use system_esl
+ use prec, only : dp, ip
+ use scf_esl, only : scf_t, scf_loop
+ use system_esl, only : system_t
+ use numeric_esl, only : init_random
 
  implicit none
 
@@ -14,7 +15,7 @@ program esl_demo
  type(system_t)      :: system
  type(scf_t)         :: scf
  character(len=100) :: input_file,echo_file,output_file
-
+ integer :: of
  !Init MPI
 
  !Init data basis strucutes 
@@ -33,10 +34,11 @@ program esl_demo
 
  output_file = fdf_string('output', 'sample.out')
  open(newunit=of,file=trim(output_file),action="write")
+ call init_random()
  call system%init(of)
- call basis_init(basis)
- call hamiltonian_init(hamiltonian)
- call scf_init(scf, parser)
+ call basis%init()
+ call hamiltonian%init()
+ call scf%init()
 
  close(of)
  call fdf_shutdown() ! no Input after this point
@@ -49,11 +51,7 @@ program esl_demo
  !Outputs
 
  !Release memory
- call scf_end(scf)
- call hamiltonian_end(hamiltonian)
- call basis_end(basis)
- call system_end(system)
-
+ ! which is not released in final procedure for different types
 
  !End of the calculation
-end program
+end program esl_demo

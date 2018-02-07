@@ -1,6 +1,6 @@
 module system_esl
   use prec, only : dp,ip
-  use numeric, only : invertCell
+  use numeric_esl, only : invert_cell
   use fdf, only : block_fdf, fdf_integer, fdf_block,fdf_defined, &
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical
@@ -9,8 +9,7 @@ module system_esl
   private
 
   public ::                &
-            system_t,      &
-            options_t
+            system_t
   
   !Data structure for the system
   type system_t
@@ -29,10 +28,6 @@ module system_esl
     procedure, public :: volume
     final  :: cleanup
   end type system_t
-
-  type :: options_t
-    character(len=100) :: output_file
-  end type
 
   contains
 
@@ -94,7 +89,7 @@ module system_esl
        sys%cell(3,3)=sys%cell(1,1)
      endif
 
-     sys%icell=invertCell(sys%cell)
+     sys%icell=invert_cell(sys%cell)
      call sys%summary(of)
 
    end subroutine init
@@ -102,7 +97,7 @@ module system_esl
    !Release
    !----------------------------------------------------
    subroutine cleanup(sys)
-    class(system_t) :: sys
+     type(system_t) :: sys
 
     if (allocated(sys%coord)) deallocate(sys%coord)
     if (allocated(sys%el)) deallocate(sys%el)
