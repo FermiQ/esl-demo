@@ -18,6 +18,7 @@ set(target_name esl-demo.X)
 include(GNUInstallDirs)
 include(FeatureSummary)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
+set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
@@ -26,8 +27,9 @@ include_directories(${FDF_INCLUDE_DIRS})
 message(STATUS "Found FDF support: ${FDF_INCLUDE_DIRS};")
 set(LIBS ${LIBS} ${FDF_LIBRARIES})
 link_directories(${FDF_LIBRARY_DIRS})
+
 add_executable(${target_name}
-  ${src_dir}/esl_demo.F90
+  ${src_dir}/esl-demo.F90
   ${src_dir}/types.F90
   ${src_dir}/parser.F90
   ${src_dir}/useful.F90
