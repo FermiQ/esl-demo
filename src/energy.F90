@@ -30,7 +30,7 @@ module energy_esl
 
    !Initialize the energies
    !----------------------------------------------------
-   subroutine calculate(this)
+   subroutine init(this)
      class(energy_t) :: this
 
      this%total = 0.d0
@@ -44,7 +44,7 @@ module energy_esl
      this%kinetic = 0.d0
      this%entropy = 0.d0
 
-   end subroutine calculate
+   end subroutine init
 
 
    !Compute the total energy

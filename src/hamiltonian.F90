@@ -1,5 +1,6 @@
 module hamiltonian_esl
- use density_esl
+  use density_esl
+  use basis_esl
 
  implicit none
  private
@@ -21,10 +22,11 @@ module hamiltonian_esl
 
    !Initialize the Hamiltonian
    !----------------------------------------------------
-   subroutine init(this)
+   subroutine init(this, basis)
      class(hamiltonian_t) :: this
+     type(basis_t), intent(in) :: basis
 
-     call density_init(this%density)
+     call density_init(this%density, basis)
 
    end subroutine init
 
