@@ -2,6 +2,7 @@ module states_esl
   use prec, only : dp,ip
 
   use basis_esl
+  use numeric_esl
 
  implicit none
  private
@@ -9,13 +10,15 @@ module states_esl
  public ::                   &
            states_t,         &
            states_init,      &
-           states_end
+           states_end,       &
+           states_randomize
           
  !Data structure for the states
  type states_t
    integer :: nstates
    integer :: nkpt
    integer :: nspin
+   integer :: ncoef
 
    type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
  end type states_t
@@ -40,6 +43,7 @@ module states_esl
      this%nstates = nstates
      this%nspin = nspin
      this%nkpt = nkpt
+     this%ncoef = basis%size
 
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
      
@@ -59,12 +63,10 @@ module states_esl
    subroutine states_end(this)
      type(states_t):: this
 
-     allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
-
-     do ik = 1, nkpt
-       do isp = 1, nspin
-         do ist = 1, nstates
-           if(this%states(ist, isp, ik)%coef) &
+     do ik = 1, this%nkpt
+       do isp = 1, this%nspin
+         do ist = 1, this%nstates
+           if(allocated(this%states(ist, isp, ik)%coef)) &
              deallocate(this%states(ist, isp, ik)%coef)
          end do 
        end do
@@ -74,5 +76,22 @@ module states_esl
 
    end subroutine states_end
 
+
+   !Randomize the states
+   !----------------------------------------------------
+   subroutine states_randomize(this)
+     type(states_t):: this
+
+     call init_random()
+
+     do ik = 1, this%nkpt
+       do isp = 1, this%nspin
+         do ist = 1, this%nstates
+           call random_number(this%states(ist, isp, ik)%coef(1:this%ncoef))
+         end do
+       end do
+     end do
+
+   end subroutine states_randomize
 
 end module potential_esl
