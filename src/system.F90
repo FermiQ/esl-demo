@@ -37,7 +37,7 @@ module system_esl
 
    !Initialize the physical system
    !----------------------------------------------------
-   subroutine init(sys, of)
+    subroutine init(sys, of)
      class(system_t) :: sys
      integer(kind=ip), intent(inout) :: of
 
@@ -46,7 +46,7 @@ module system_esl
      type(block_fdf)            :: blk
      type(parsed_line), pointer :: pline
 
-     sys%basis%init()
+     call sys%basis%init()
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
