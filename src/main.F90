@@ -1,7 +1,9 @@
 program esl_demo
  use basis_esl
+ use fdf, only : fdf_init, fdf_shutdown, fdf_string
  use hamiltonian_esl
- use parser_esl
+ use iso_fortran_env, only : ou=>OUTPUT_UNIT
+ use prec, only :: dp, ip
  use scf_esl
  use system_esl
 
@@ -9,24 +11,36 @@ program esl_demo
 
  type(basis_t)       :: basis
  type(hamiltonian_t) :: hamiltonian
- type(parser_t)      :: parser
  type(system_t)      :: system
  type(scf_t)         :: scf
+ character(len=100) :: input_file,echo_file,output_file
 
  !Init MPI
 
  !Init data basis strucutes 
 
  !Read Input variables and init corresponding data structures
- call parser_init(parser)
+ input_file="sample.inp"
+ if (command_argument_count() == 1 ) Then
+   call get_command_argument(1, input_file)
+ end if
 
- call system_init(system, parser)
+ echo_file=trim(input_file)//".echo"
+ write(ou,'(a)')"reading instructions from: "//trim(input_file)//" echo in "//trim(echo_file)
+ 
+ !Parsing the input file
+ call fdf_init(input_file, echo_file)
 
+ output_file = fdf_string('output', 'sample.out')
+ open(newunit=of,file=trim(output_file),action="write")
+ call system%init(of)
  call basis_init(basis)
-
- call hamiltonian_init(hamiltonian, parser)
-
+ call hamiltonian_init(hamiltonian)
  call scf_init(scf, parser)
+
+ close(of)
+ call fdf_shutdown() ! no Input after this point
+
 
  !SCF loop
  call scf_loop(scf)
@@ -36,15 +50,10 @@ program esl_demo
 
  !Release memory
  call scf_end(scf)
-
  call hamiltonian_end(hamiltonian)
-
  call basis_end(basis)
-
  call system_end(system)
 
- call parser_end(parser) 
 
  !End of the calculation
- 
 end program

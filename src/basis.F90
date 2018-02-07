@@ -1,5 +1,4 @@
 module basis_esl
-  use parser_esl
 
   implicit none
   private
@@ -23,9 +22,8 @@ module basis_esl
 
    !Initialize the physical system
    !----------------------------------------------------
-   subroutine basis_init(this, parser)
+   subroutine basis_init(this)
      type(basis_t), intent(inout) :: this
-     type(parser_t),  intent(in) :: parser
 
      !Parse the informations from the input file
 

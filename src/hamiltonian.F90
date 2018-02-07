@@ -1,5 +1,4 @@
 module hamiltonian_esl
- use parser_esl
 
  implicit none
  private
@@ -19,9 +18,8 @@ module hamiltonian_esl
 
    !Initialize the Hamiltonian
    !----------------------------------------------------
-   subroutine hamiltonian_init(this, parser)
+   subroutine hamiltonian_init(this)
      type(hamiltonian_t), intent(inout) :: this
-     type(parser_t),  intent(in) :: parser
 
    end subroutine hamiltonian_init
 

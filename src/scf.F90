@@ -1,5 +1,5 @@
 module scf_esl
-  use parser_esl
+  use prec, only : dp,ip
 
   implicit none
   private
@@ -12,7 +12,7 @@ module scf_esl
 
   !Data structure containing the data for the SCF
   type scf_t 
-   double precision :: tol_reldens
+   real(kind=dp) :: tol_reldens
   end type scf_t
 
   contains
@@ -20,9 +20,8 @@ module scf_esl
 
  !Initialize density and wfn
  !----------------------------------------------------
- subroutine scf_init(this, parser)
+ subroutine scf_init(this)
    type(scf_t),  intent(inout) :: this
-   type(parser_t),  intent(in) :: parser
 
    !Parse here the data for the SCF
  end subroutine scf_init
