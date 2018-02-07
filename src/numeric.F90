@@ -1,9 +1,15 @@
-module numeric
+module numeric_esl
   use prec, only : dp
+
   implicit none
   private
-  public :: invertCell
+
+  public ::                 &
+            invertCell
+
 contains
+
+  !----------------------------------------------------
   pure real(kind=dp) function determinant(a)
     real(kind=dp), intent(in)  :: a(3,3)
 
@@ -12,6 +18,7 @@ contains
       + a(3,1)*(a(2,3)*a(1,2)-a(2,2)*a(1,3))
   end function determinant
 
+  !----------------------------------------------------
   pure function invertCell(a) result(b)
     real(kind=dp), intent(in)  :: a(3,3)
     real(kind=dp)  :: b(3,3)
@@ -31,4 +38,5 @@ contains
     b(3,2)= idet*(a(2,1)*a(1,3)-a(2,3)*a(1,1))
     b(3,3)= idet*(a(2,2)*a(1,1)-a(2,1)*a(1,2))
   end function invertCell
-end module numeric
+
+end module numeric_esl
