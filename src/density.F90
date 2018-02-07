@@ -9,7 +9,7 @@ module density_esl
   public ::                 &
             density_t,      &
             density_init,   &
-            densitu_calc,   &
+            density_calc,   &
             density_end
   
   !Data structure for the density
@@ -27,7 +27,7 @@ module density_esl
      type(basis_t),   intent(in)    :: basis
 
      !Parse the informations from the input file
-     select(basis%basis_type)
+     select case(basis%basis_type)
        case(PLANEWAVES)
        !Initialization structures for the PW case
        case(ATOMICORBS)
@@ -41,8 +41,8 @@ module density_esl
    subroutine density_end(this)
      type(density_t), intent(inout) :: this
 
-     if(allocated(density_matrix)) deallocate(density_matrix)
-     if(allocated(density)) deallocate(density)
+     if(allocated(this%density_matrix)) deallocate(this%density_matrix)
+     if(allocated(this%density)) deallocate(this%density)
 
    end subroutine density_end
 
@@ -52,7 +52,7 @@ module density_esl
      type(density_t), intent(inout) :: this
      type(basis_t),   intent(in)    :: basis
 
-     select(basis%basis_type)
+     select case(basis%basis_type)
        case(PLANEWAVES)
 
        case(ATOMICORBS)

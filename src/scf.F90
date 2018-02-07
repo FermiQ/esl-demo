@@ -4,6 +4,7 @@ module scf_esl
 
   use basis_esl
   use density_esl
+  use hamiltonian_esl
   use system_esl
 
   implicit none

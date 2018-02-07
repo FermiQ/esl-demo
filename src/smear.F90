@@ -1,5 +1,6 @@
 module smear_esl
-  use elsi_wrapper_esl, only :: elsi_calc_fermi_and_occ
+  use prec
+  use elsi_wrapper_esl, only: elsi_calc_fermi_and_occ
 
   implicit none
   private
