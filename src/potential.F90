@@ -5,6 +5,7 @@ module potential_esl
   use density_esl
   use energy_esl
   use psolver_esl
+  use states_esl
 
  implicit none
  private
@@ -21,7 +22,7 @@ module potential_esl
 
    real(kind=dp), allocatable :: hartree(:)  !Hartree potential
    real(kind=dp), allocatable :: external(:) !External local potential
-   real(kind=dp), allocatable :: xc(:)  !xc potential
+   real(kind=dp), allocatable :: xc(:,:)  !xc potential
 
    type(psolver_t) :: psolver
  end type 
@@ -30,9 +31,10 @@ module potential_esl
 
    !Initialize the potentials
    !----------------------------------------------------
-   subroutine potential_init(this, basis)
+   subroutine potential_init(this, basis, states)
      type(potential_t) :: this
      type(basis_t), intent(in) :: basis
+     type(states_t), intent(in):: states
 
      integer :: ndim
      real(kind=dp) :: hgrid
@@ -43,7 +45,7 @@ module potential_esl
 
      allocate(this%hartree(1:this%np))
      allocate(this%external(1:this%np))
-     allocate(this%xc(1:this%np))
+     allocate(this%xc(1:this%np, 1:states%nspin))
 
      select case(basis%basis_type)
        case(PLANEWAVES)
