@@ -84,7 +84,7 @@ module system_esl
      isdef = fdf_defined('cubic')
      sys%cell=0.0_dp
      if (isDef) then
-       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Ang')
+       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Bohr')
        sys%cell(2,2)=sys%cell(1,1)
        sys%cell(3,3)=sys%cell(1,1)
      endif
@@ -119,7 +119,7 @@ module system_esl
     do i =1, sys%nAtoms
       write(of,'(a10,3(es19.10,1x))')trim(sys%el(i)),sys%coord(:,i)
     enddo
-    write(of,'(a,es16.8,a)')"Volume: ",sys%volume(),"Ang^3"
+    write(of,'(a,es16.8,a)')"Volume: ",sys%volume(),"Bohr^3"
 
   end subroutine summary
 
