@@ -1,6 +1,8 @@
 module hamiltonian_esl
-  use density_esl
   use basis_esl
+  use density_esl
+  use energy_esl
+  use potential_esl
 
  implicit none
  private
@@ -11,7 +13,9 @@ module hamiltonian_esl
           
  !Data structure for the Hamiltonian
  type hamiltonian_t
-   type(density_t) :: density
+   type(density_t)   :: density
+   type(energy_t)    :: energy
+   type(potential_t) :: potentials
     contains
       private
       procedure, public :: init
@@ -27,6 +31,8 @@ module hamiltonian_esl
      type(basis_t), intent(in) :: basis
 
      call density_init(this%density, basis)
+     call this%energy%init()
+     call potential_init(this%potentials, basis)
 
    end subroutine init
 
@@ -37,6 +43,7 @@ module hamiltonian_esl
      type(hamiltonian_t):: this
 
      call density_end(this%density)
+     call potential_end(this%potentials)
 
    end subroutine cleanup
 

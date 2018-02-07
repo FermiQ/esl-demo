@@ -36,10 +36,11 @@ add_executable(${target_name}
   ${src_dir}/energy.F90
   ${src_dir}/hamiltonian.F90
   ${src_dir}/numeric.F90
+  ${src_dir}/psolver.F90
+  ${src_dir}/potential.F90
   ${src_dir}/scf.F90
   ${src_dir}/smear.F90
   ${src_dir}/system.F90
-  ${src_dir}/psolver.F90
   )
 target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES})
 target_include_directories(${target_name} PUBLIC ${FDF_INCLUDE_DIRS} ${PSOLVER_INCLUDE_DIRS})
