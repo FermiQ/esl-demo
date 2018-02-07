@@ -23,6 +23,8 @@ module potential_esl
    real(kind=dp), allocatable :: external(:) !External local potential
    real(kind=dp), allocatable :: xc(:)  !xc potential
 
+   real(dp) :: ionicOffset !< Offset of the external potential
+
    type(psolver_t) :: psolver
  end type 
 
@@ -50,7 +52,9 @@ module potential_esl
          geocode = 'P'
        case(ATOMICORBS)
          geocode = 'F'
-     end select
+      end select
+
+      this%ionicOffset = 0._dp
      call this%psolver%init(1, 1, geocode, (/ndim, ndim, ndim/), (/hgrid, hgrid, hgrid/))    
 
      !Here we need to init the libxc and pspio parts 
@@ -77,14 +81,8 @@ module potential_esl
      type(density_t),   intent(in)    :: density
      type(energy_t),    intent(inout) :: energy
 
-     integer :: ip
-
-     !Computing the hartree potential
-     !We first copy the density into the potential array
-     forall(ip = 1:this%np)
-       this%hartree(ip) = density%density(ip)
-     end forall
-     call this%psolver%h_potential(this%hartree, energy%hartree) 
+     call this%psolver%h_potential(density, this%hartree, this%np, &
+          & this%external, this%ionicOffset, energy%hartree)
 
      !Here we need to compute the xc potential
 
