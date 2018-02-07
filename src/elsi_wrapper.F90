@@ -16,6 +16,10 @@ module elsi_wrapper_esl
     type(sparse_matrix) :: S
     type(sparse_matrix) :: D
     real(kind=dp)       :: energy
+    contains
+      private
+      procedure, public :: init
+      final :: cleanup
   end type elsi_t
 
   integer(kind=ip), parameter :: ELPA        = 1
@@ -30,8 +34,8 @@ module elsi_wrapper_esl
 
    !Initialize ELSI
    !----------------------------------------------------
-   subroutine elsi_start(this)
-     type(elsi_t), intent(inout) :: this
+   subroutine init(this)
+     class(elsi_t) :: this
 
      !Initialize an ELSI handle
      !TODO: Feed in system info
@@ -45,16 +49,16 @@ module elsi_wrapper_esl
      !TODO: Feed in sparse matrix info
      call elsi_set_csc(this%e_h,global_nnz,local_nnz,local_ncol,row_idx,col_ptr)
 
-   end subroutine elsi_start
+   end subroutine init
  
    !Finalize ELSI
    !----------------------------------------------------
-   subroutine elsi_end(this)
-     type(elsi_t), intent(inout) :: this
+   subroutine cleanup(this)
+     type(elsi_t) :: this
 
      call elsi_finalize(elsi_t%e_h)
 
-   end subroutine elsi_end
+   end subroutine cleanup
 
    !Compute density matrix by ELSI
    !----------------------------------------------------

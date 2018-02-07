@@ -25,6 +25,9 @@ module system_esl
     real(dp) :: vol
 
     type(basis_t) :: basis
+    real(dp) :: nElectrons
+    real(dp) :: nkpts=1
+    real(dp) :: nspin=1
   contains
     private
     procedure, public :: init
