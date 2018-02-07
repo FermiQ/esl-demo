@@ -34,7 +34,7 @@ packages to build the demonstrator:
 - Automake >= 1.15
 - Libtool >= 2.4.2
 - M4 >= 1.4.17
-
+- cmake > 3.0.2
 
 ESL Components
 --------------
