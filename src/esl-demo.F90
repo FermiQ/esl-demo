@@ -1,12 +1,12 @@
 program esl_demo
   use prec, only : dp,ip
   use iso_fortran_env, only : ou=>OUTPUT_UNIT 
-  use system, only : systemT
+  use system, only : system_t
   use fdf, only : fdf_init, fdf_shutdown, fdf_string
   implicit none
 
   character(len=100) :: input_file,echo_file,output_file
-  type(systemT) :: system
+  type(system_t) :: system
   integer(kind=ip) :: of
 
   input_file="sample.inp"

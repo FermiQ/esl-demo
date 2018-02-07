@@ -1,4 +1,4 @@
-module useful
+module numeric
   use prec, only : dp
   implicit none
   private
@@ -31,4 +31,4 @@ contains
     b(3,2)= idet*(a(2,1)*a(1,3)-a(2,3)*a(1,1))
     b(3,3)= idet*(a(2,2)*a(1,1)-a(2,1)*a(1,2))
   end function invertCell
-end module useful
+end module numeric

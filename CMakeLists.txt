@@ -31,7 +31,7 @@ link_directories(${FDF_LIBRARY_DIRS})
 add_executable(${target_name}
   ${src_dir}/esl-demo.F90
   ${src_dir}/system.F90
-  ${src_dir}/useful.F90
+  ${src_dir}/numeric.F90
   )
 target_link_libraries(${target_name} ${FDF_LIBRARIES})
 target_include_directories(${target_name} PUBLIC ${FDF_INCLUDE_DIRS})

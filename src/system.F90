@@ -1,15 +1,15 @@
 module system
   use prec, only : dp,ip
-  use useful, only : invertCell
+  use numeric, only : invertCell
   use fdf, only : block_fdf, fdf_integer, fdf_block,fdf_defined, &
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical  
   implicit none
   private
 
-  type, public :: systemT
+  type, public :: system_t
     integer(kind=ip) :: nAtoms
-    real(kind=dp),allocatable :: x(:),y(:),z(:)
+    real(kind=dp),allocatable :: coord(:,:) ! (1:3,natoms)
     integer(kind=ip) :: nSpecies
     real(kind=dp) :: cell(3,3)=0.0_dp
     real(kind=dp) :: icell(3,3)=0.0_dp
@@ -31,18 +31,18 @@ module system
 contains
 
   subroutine init(sys,of)
-  class(systemT) :: sys
+  class(system_t) :: sys
     integer(kind=ip), intent(inout) :: of
 
     logical :: isdef
-    integer :: j
+    integer :: j,i
     type(block_fdf)            :: blk
     type(parsed_line), pointer :: pline
 
 
     isdef = .false.
     sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
-    allocate(sys%x(sys%nAtoms),sys%y(sys%nAtoms),sys%z(sys%nAtoms))
+    allocate(sys%coord(1:3,sys%nAtoms))
     allocate(sys%el(sys%nAtoms))
 
     isdef = fdf_defined('coordinates')
@@ -50,9 +50,7 @@ contains
       if (fdf_block('coordinates', blk)) then
         j = 1
         do while((fdf_bline(blk, pline)) .and. (j <= sys%nAtoms))
-          sys%x(j) = fdf_breals(pline, 1)
-          sys%y(j) = fdf_breals(pline, 2)
-          sys%z(j) = fdf_breals(pline, 3)
+          sys%coord(1:3,j) = [(fdf_breals(pline, i),i=1,3)]
           sys%el(j) = fdf_bnames(pline, 1)
           j = j + 1
         enddo
@@ -95,17 +93,15 @@ contains
   end subroutine init
 
   subroutine cleanup(sys)
-    type(systemT) :: sys
-    if (allocated(sys%x)) deallocate(sys%x) 
-    if (allocated(sys%y)) deallocate(sys%y) 
-    if (allocated(sys%z)) deallocate(sys%z)
+    type(system_t) :: sys
+    if (allocated(sys%coord)) deallocate(sys%coord) 
     if (allocated(sys%el)) deallocate(sys%el)
     if (allocated(sys%sp)) deallocate(sys%sp)
     if (allocated(sys%potName)) deallocate(sys%potName)
 
   end subroutine cleanup
   subroutine summary(sys,of)
-  class(systemT) :: sys
+  class(system_t) :: sys
     integer(kind=ip) :: of
 
     integer :: i
@@ -113,12 +109,12 @@ contains
     write(of,'(a80)')"Atom Coordinates"
     write(of,'(a11,a20,a20,a20)')"Element |","X|","Y|","Z|"
     do i =1, sys%nAtoms
-      write(of,'(a10,3(es19.10,1x))')trim(sys%el(i)),sys%x(i),sys%y(i),sys%z(i)
+      write(of,'(a10,3(es19.10,1x))')trim(sys%el(i)),sys%coord(:,i)
     enddo 
     write(of,'(a,es16.8,a)')"Volume: ",sys%volume(),"Ang^3"
   end subroutine summary
   real(dp) function volume(sys)
-  class(systemT)               :: sys
+  class(system_t)               :: sys
 
     volume = sys%cell(1,1)*(sys%cell(2,2)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,2)) - &
       sys%cell(1,2)*(sys%cell(2,1)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,1)) + &
