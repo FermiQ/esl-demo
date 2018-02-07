@@ -1,10 +1,11 @@
 module scf_esl
   use prec, only : dp,ip
-  use fdf, only : fdf_integer, fdf_double
+  use fdf, only : fdf_get
 
   use basis_esl
   use density_esl
   use hamiltonian_esl
+  use potential_esl
   use system_esl
 
   implicit none
@@ -32,8 +33,8 @@ module scf_esl
  subroutine init(this)
    class(scf_t)  :: this
 
-     this%tol_reldens=fdf_double('SCFTolerance',1.0e-6_dp)
-     this%max_iter=fdf_integer('SCFMaxIterations', 100)
+   this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
+   this%max_iter    = fdf_get('SCFMaxIterations', 100)
    !Parse here the data for the SCF
  end subroutine init
 
@@ -60,7 +61,13 @@ module scf_esl
      !Update occupations
 
      !Calc. density
-     call density_calc(hamiltonian%density, system%basis)    
+     call density_calc(hamiltonian%density, system%basis)  
+
+     !Calc. potentials
+     call potential_calc(hamiltonian%potentials, hamiltonian%density, hamiltonian%energy)
+
+     !Calc. energies
+     call hamiltonian%energy%calculate()  
 
      !Test tolerance and print status
 
