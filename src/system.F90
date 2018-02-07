@@ -40,9 +40,8 @@ module system_esl
 
    !Initialize the physical system
    !----------------------------------------------------
-    subroutine init(sys, of)
+    subroutine init(sys)
      class(system_t) :: sys
-     integer(kind=ip), intent(inout) :: of
 
      logical :: isdef
      integer :: j,i
@@ -102,7 +101,7 @@ module system_esl
      endif
 
      sys%icell=invert_cell(sys%cell)
-     call sys%summary(of)
+     call sys%summary()
 
    end subroutine init
  
@@ -122,18 +121,23 @@ module system_esl
 
   !Summary
   !----------------------------------------------------
-  subroutine summary(sys,of)
+  subroutine summary(sys)
+    use yaml_output
     class(system_t) :: sys
-    integer(kind=ip) :: of
 
     integer :: i
 
-    write(of,'(a80)')"Atom Coordinates"
-    write(of,'(a11,a20,a20,a20)')"Element |","X|","Y|","Z|"
+    call yaml_mapping_open("system")
+    call yaml_comment("Element | X| Y| Z|", hfill = "-")
+    call yaml_sequence_open("Atom Coordinates")
     do i =1, sys%nAtoms
-      write(of,'(a10,3(es19.10,1x))')trim(sys%el(i)),sys%coord(:,i)
+       call yaml_mapping_open(flow = .true.)
+       call yaml_map(trim(sys%el(i)), sys%coord(:,i))
+       call yaml_mapping_close()
     enddo
-    write(of,'(a,es16.8,a)')"Volume: ",sys%volume(),"Bohr^3"
+    call yaml_map("Volume (Bohr^3)", sys%volume())
+    call yaml_sequence_close()
+    call yaml_mapping_close()
 
   end subroutine summary
 
