@@ -1,5 +1,5 @@
 program esl_demo
- use basis_esl, only : basis_T
+ use basis_esl, only : basis_t
  use fdf, only : fdf_init, fdf_shutdown, fdf_string
  use hamiltonian_esl, only : hamiltonian_t
  use iso_fortran_env, only : ou=>OUTPUT_UNIT
@@ -7,6 +7,8 @@ program esl_demo
  use scf_esl, only : scf_t, scf_loop
  use system_esl, only : system_t
  use numeric_esl, only : init_random
+ use smear_esl, only : smear_t
+ use elsi_esl, only : elsi_t
 
  implicit none
 
@@ -14,6 +16,8 @@ program esl_demo
  type(hamiltonian_t) :: hamiltonian
  type(system_t)      :: system
  type(scf_t)         :: scf
+ type(smear_t)         :: smear
+ type(elsi_t)         :: elsi
  character(len=100) :: input_file,echo_file,output_file
  integer :: of
  !Init MPI
@@ -39,6 +43,7 @@ program esl_demo
  call basis%init()
  call hamiltonian%init(system)
  call scf%init()
+ call smear%init()
 
  close(of)
  call fdf_shutdown() ! no Input after this point
