@@ -33,6 +33,7 @@ add_executable(${target_name}
   ${src_dir}/main.F90
   ${src_dir}/basis.F90
   ${src_dir}/density.F90
+  ${src_dir}/energy.F90
   ${src_dir}/hamiltonian.F90
   ${src_dir}/numeric.F90
   ${src_dir}/scf.F90
