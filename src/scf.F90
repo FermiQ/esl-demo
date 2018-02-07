@@ -59,6 +59,7 @@ module scf_esl
      !Diagonalization (ELSI/KSsolver)
  
      !Update occupations
+     call smear_calc_fermi_and_occ(system%smear, system%states)
 
      !Calc. density
      call density_calc(hamiltonian%density, system%basis)  

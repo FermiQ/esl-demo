@@ -41,6 +41,7 @@ add_executable(${target_name}
   ${src_dir}/potential.F90
   ${src_dir}/scf.F90
   ${src_dir}/smear.F90
+  ${src_dir}/states.F90
   ${src_dir}/system.F90
   )
 target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES})

@@ -14,6 +14,7 @@ module basis_esl
   !Data structure for the basis
   type basis_t
     integer :: basis_type
+    integer :: size !< Number of coefficients in the basis
     contains
       private
       procedure, public :: init
