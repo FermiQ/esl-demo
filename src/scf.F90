@@ -2,6 +2,10 @@ module scf_esl
   use prec, only : dp,ip
   use fdf, only : fdf_integer, fdf_double
 
+  use basis_esl
+  use density_esl
+  use system_esl
+
   implicit none
   private
 
@@ -42,9 +46,10 @@ module scf_esl
 
  !Perform the self-consistent field calculation
  !----------------------------------------------------
- subroutine scf_loop(this)
-   type(scf_t),  intent(inout) :: this
-
+ subroutine scf_loop(this, hamiltonian, system)
+   type(scf_t),         intent(inout) :: this
+   type(hamiltonian_t), intent(inout) :: hamiltonian
+   type(system_t),         intent(in) :: system
   
    integer :: iter !< Interation
 
@@ -54,6 +59,7 @@ module scf_esl
      !Update occupations
 
      !Calc. density
+     call density_calc(hamiltonian%density, system%basis)    
 
      !Test tolerance and print status
 

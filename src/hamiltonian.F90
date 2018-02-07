@@ -1,4 +1,5 @@
 module hamiltonian_esl
+ use density_esl
 
  implicit none
  private
@@ -9,7 +10,7 @@ module hamiltonian_esl
           
  !Data structure for the Hamiltonian
  type hamiltonian_t
-    integer :: dummy ! remove once proper data members are added
+   type(density_t) :: density
     contains
       private
       procedure, public :: init
@@ -23,6 +24,8 @@ module hamiltonian_esl
    subroutine init(this)
      class(hamiltonian_t) :: this
 
+     call density_init(this%density)
+
    end subroutine init
 
 
@@ -30,6 +33,8 @@ module hamiltonian_esl
    !----------------------------------------------------
    subroutine cleanup(this)
      type(hamiltonian_t):: this
+
+     call density_end(this%density)
 
    end subroutine cleanup
 
