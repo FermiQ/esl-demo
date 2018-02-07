@@ -1,5 +1,6 @@
 module scf_esl
   use prec, only : dp,ip
+  use fdf, only : fdf_integer, fdf_double
 
   implicit none
   private
@@ -10,7 +11,8 @@ module scf_esl
 
   !Data structure containing the data for the SCF
   type scf_t 
-   real(kind=dp) :: tol_reldens
+   real(kind=dp) :: tol_reldens 
+   integer(kind=ip) :: max_iter !< Maximum number of iterations
    contains
      private
      procedure, public :: init
@@ -25,6 +27,8 @@ module scf_esl
  subroutine init(this)
    class(scf_t)  :: this
 
+     this%tol_reldens=fdf_double('SCFTolerance',1.0e-6_dp)
+     this%max_iter=fdf_integer('SCFMaxIterations', 100)
    !Parse here the data for the SCF
  end subroutine init
 
@@ -42,10 +46,9 @@ module scf_esl
    type(scf_t),  intent(inout) :: this
 
   
-   integer :: max_iter  !< Maximum number of iterations
    integer :: iter !< Interation
 
-   do iter = 1, max_iter
+   do iter = 1, this%max_iter
      !Diagonalization (ELSI/KSsolver)
  
      !Update occupations
