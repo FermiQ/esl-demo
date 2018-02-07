@@ -35,6 +35,7 @@ add_executable(${target_name}
   ${src_dir}/density.F90
   ${src_dir}/energy.F90
   ${src_dir}/hamiltonian.F90
+  ${src_dir}/message.F90
   ${src_dir}/numeric.F90
   ${src_dir}/scf.F90
   ${src_dir}/smear.F90
