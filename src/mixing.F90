@@ -48,9 +48,9 @@ module mixing_esl
 
      integer :: ip
 
-     forall(ip=1:np)
+     do ip=1, np
        rhonew(ip) = rhoin(ip)*(1.0d0-this%alpha) + rhoout(ip)*this%alpha
-     end forall
+     end do
 
    end subroutine mixing_linear
 

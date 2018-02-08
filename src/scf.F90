@@ -55,6 +55,7 @@ module scf_esl
  !Perform the self-consistent field calculation
  !----------------------------------------------------
  subroutine scf_loop(this, elsi, hamiltonian, system, states, smear)
+   use yaml_output
    use smear_esl
    use states_esl
    use elsi_wrapper_esl
@@ -75,12 +76,15 @@ module scf_esl
    allocate(rhoout(1:system%grid%np))
    allocate(rhonew(1:system%grid%np))
 
+   call yaml_mapping_open("SCF cycle")
+
    do iter = 1, this%max_iter
+     call yaml_map("Iteration", iter)
+
      !Diagonalization (ELSI/KSsolver)
- 
+
      !Update occupations
      call smear_calc_fermi_and_occ(smear, elsi, states)
-
 
      !Saving the in density for the mixing
      call hamiltonian%density%get_den(rhoin)
@@ -88,7 +92,6 @@ module scf_esl
      call hamiltonian%density%calculate(system%basis)
      !Saving the out density for the mixing
      call hamiltonian%density%get_den(rhoin)
-
      !Calc. potentials
      call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
 
@@ -104,6 +107,8 @@ module scf_esl
      !Update Hamiltonian matrix
 
    end do
+
+   call yaml_mapping_close()
 
    deallocate(rhoin, rhoout, rhonew)
 

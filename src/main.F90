@@ -2,7 +2,6 @@ program esl_demo
  use fdf, only : fdf_init, fdf_shutdown, fdf_string
  use hamiltonian_esl, only : hamiltonian_t
  use iso_fortran_env, only : ou=>OUTPUT_UNIT
- use prec, only : dp, ip
  use scf_esl, only : scf_t, scf_loop
  use states_esl
  use system_esl, only : system_t
@@ -22,7 +21,7 @@ program esl_demo
  integer :: of
 
  !--------------TEMP --------------------
- integer :: nstates, nspin
+ integer :: nstates, nspin, nel
  !--------------------------------------
 
 
@@ -49,7 +48,13 @@ program esl_demo
  open(newunit=of,file=trim(output_file),action="write")
  call init_random()
  call system%init()
- call states_init(states, system%basis, nstates, nspin, 1)
+ !--------------TEMP --------------------
+ nstates = 1
+ nspin = 1
+ nel = 1
+ !---------------------------------------
+ call states_init(states, system%basis, nstates, nspin, 1, nel)
+ call states_summary(states)
  call hamiltonian%init(system, states)
  call scf%init()
  call smear%init()

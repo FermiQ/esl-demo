@@ -11,7 +11,8 @@ module states_esl
            states_t,         &
            states_init,      &
            states_end,       &
-           states_randomize
+           states_randomize, &
+           states_summary
 
  type wfn_t
    real(kind=dp),    allocatable :: dcoef(:) !<Coefficients of the wavefunction in the basis
@@ -25,6 +26,7 @@ module states_esl
    integer :: nkpt
    integer :: nspin
    integer :: ncoef
+   integer :: nel  !< Number of electrons
 
    logical :: complex_states
 
@@ -36,12 +38,13 @@ module states_esl
 
    !Initialize the states
    !----------------------------------------------------
-   subroutine states_init(this, basis, nstates, nspin, nkpt)
+   subroutine states_init(this, basis, nstates, nspin, nkpt, nel)
      type(states_t), intent(inout) :: this
      type(basis_t),  intent(in)    :: basis
      integer,        intent(in)    :: nstates
      integer,        intent(in)    :: nspin
      integer,        intent(in)    :: nkpt
+     integer,        intent(in)    :: nel
 
      integer :: ist, isp, ik
 
@@ -49,6 +52,7 @@ module states_esl
      this%nspin = nspin
      this%nkpt = nkpt
      this%ncoef = basis%size
+     this%nel = nel
 
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
      allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
@@ -137,5 +141,19 @@ module states_esl
      end if
 
    end subroutine states_randomize
+
+   !Summary
+   !----------------------------------------------------
+   subroutine states_summary(this)
+     use yaml_output
+     class(states_t) :: this
+
+     call yaml_mapping_open("States")
+     call yaml_map("Number of states", this%nstates)
+     call yaml_map("Spin components", this%nspin)
+     call yaml_map("Number of k-points", this%nkpt)
+     call yaml_mapping_close()
+
+   end subroutine states_summary
 
 end module states_esl

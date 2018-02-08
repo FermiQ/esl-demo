@@ -129,7 +129,7 @@ module system_esl
 
     integer :: i
 
-    call yaml_mapping_open("system")
+    call yaml_mapping_open("System")
     call yaml_map("Cell", sys%cell)
     call yaml_sequence_open("Atom Coordinates", advance = "no")
     call yaml_comment("Element | X| Y| Z|", hfill = "-")
@@ -141,6 +141,7 @@ module system_esl
     call yaml_map("Volume (Bohr^3)", sys%volume())
     call yaml_mapping_close()
 
+    call sys%grid%summary()
   end subroutine summary
 
   !----------------------------------------------------
