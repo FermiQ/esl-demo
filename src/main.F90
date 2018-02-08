@@ -21,7 +21,7 @@ program esl_demo
  integer :: of
 
  !--------------TEMP --------------------
- integer :: nstates, nspin
+ integer :: nstates, nspin, nel
  !--------------------------------------
 
 
@@ -51,8 +51,9 @@ program esl_demo
  !--------------TEMP --------------------
  nstates = 1
  nspin = 1
+ nel = 1
  !---------------------------------------
- call states_init(states, system%basis, nstates, nspin, 1)
+ call states_init(states, system%basis, nstates, nspin, 1, nel)
  call states_summary(states)
  call hamiltonian%init(system, states)
  call scf%init()

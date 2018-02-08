@@ -75,6 +75,6 @@ contains
     forall(ip = 1:np)
        hartree(ip) = rho%density(ip)
     end forall
-    call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true.)
+    call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true., quiet = "YES")
   end subroutine h_potential
 end module psolver_esl

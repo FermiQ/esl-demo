@@ -25,6 +25,7 @@ module states_esl
    integer :: nkpt
    integer :: nspin
    integer :: ncoef
+   integer :: nel  !< Number of electrons
 
    type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
    real(kind=dp), allocatable :: occ_numbers(:,:,:)
@@ -34,12 +35,13 @@ module states_esl
 
    !Initialize the states
    !----------------------------------------------------
-   subroutine states_init(this, basis, nstates, nspin, nkpt)
+   subroutine states_init(this, basis, nstates, nspin, nkpt, nel)
      type(states_t), intent(inout) :: this
      type(basis_t),  intent(in)    :: basis
      integer,        intent(in)    :: nstates
      integer,        intent(in)    :: nspin
      integer,        intent(in)    :: nkpt
+     integer,        intent(in)    :: nel
 
      integer :: ist, isp, ik
 
@@ -47,6 +49,7 @@ module states_esl
      this%nspin = nspin
      this%nkpt = nkpt
      this%ncoef = basis%size
+     this%nel = nel
 
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
      allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))

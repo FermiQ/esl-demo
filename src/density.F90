@@ -35,9 +35,14 @@ module density_esl
      !Parse the informations from the input file
      select case(basis%basis_type)
        case(PLANEWAVES)
-       !Initialization structures for the PW case
+         !Initialization structures for the PW case
+         allocate(this%density(1:grid%np))
+         this%density(1:grid%np) = 0.d0
        case(ATOMICORBS)
-       !Initialization structures for the LO case
+         !Initialization structures for the LO case
+         !TEMP
+         allocate(this%density(1:grid%np))
+         this%density(1:grid%np) = 0.d0
      end select 
 
      this%np = grid%np
