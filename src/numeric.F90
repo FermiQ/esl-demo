@@ -5,10 +5,11 @@ module numeric_esl
   implicit none
   private
 
-  public ::                 &
+  public ::              &
             invert_cell, &
             init_random, &
-            grylmr
+            grylmr,      &
+            distance
 
 contains
 
@@ -257,5 +258,12 @@ contains
     return
   end subroutine grylmr
 
+  real(kind=dp) function distance(r1, r2)
+    real(kind=dp), intent(in) :: r1(3)
+    real(kind=dp), intent(in) :: r2(3)
+
+    distance = sqrt(sum((r1(1:3)-r2(1:3))**2))
+
+  end function distance
 
 end module numeric_esl
