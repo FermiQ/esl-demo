@@ -41,7 +41,7 @@ program esl_demo
  call init_random()
  call system%init(of)
  call basis%init()
- call hamiltonian%init()
+ call hamiltonian%init(system)
  call scf%init()
  call smear%init()
 
