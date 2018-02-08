@@ -39,8 +39,18 @@ module mixing_esl
 
    !Mix the density
    !----------------------------------------------------
-   subroutine mixing_linear(this)
-     type(mixing_t) :: this
+   subroutine mixing_linear(this, np, rhoin, rhoout, rhonew)
+     type(mixing_t),    intent(in) :: this
+     integer,           intent(in) :: np
+     real(kind=dp),     intent(in) :: rhoin(:)
+     real(kind=dp),     intent(in) :: rhoout(:)
+     real(kind=dp),    intent(out) :: rhonew(:)
+
+     integer :: ip
+
+     forall(ip=1:np)
+       rhonew(ip) = rhoin(ip)*(1.0d0-this%alpha) + rhoout(ip)*this%alpha
+     end forall
 
    end subroutine mixing_linear
 

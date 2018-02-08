@@ -11,11 +11,15 @@ module density_esl
   
   !Data structure for the density
   type density_t
+    integer :: np !< Copied from grid
+
     real(kind=dp), allocatable :: density(:)
     real(kind=dp), allocatable :: density_matrix(:,:) 
    contains
      procedure, public :: init
      procedure, public :: calculate
+     procedure, public :: get_den
+     procedure, public :: set_den
      final  :: cleanup
   end type density_t
 
@@ -35,6 +39,8 @@ module density_esl
        case(ATOMICORBS)
        !Initialization structures for the LO case
      end select 
+
+     this%np = grid%np
 
    end subroutine init
  
@@ -62,5 +68,35 @@ module density_esl
      end select
 
    end subroutine calculate
+
+
+   !Copy the density to an array
+   !----------------------------------------------------
+   subroutine get_den(this, rho)
+     class(density_t) :: this
+     real(kind=dp),    intent(out) :: rho(:)
+
+     integer :: ip
+
+     forall(ip=1:this%np)
+       rho(ip) = this%density(ip)
+     end forall
+
+   end subroutine get_den
+
+   !Copyi the density from an array
+   !----------------------------------------------------
+   subroutine set_den(this, rho)
+     class(density_t) :: this
+     real(kind=dp),    intent(in) :: rho(:)
+
+     integer :: ip
+
+     forall(ip=1:this%np)
+       this%density(ip) = rho(ip)
+     end forall
+
+   end subroutine set_den
+
 
 end module density_esl
