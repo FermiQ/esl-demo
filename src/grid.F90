@@ -6,19 +6,26 @@ module grid_esl
  implicit none
  private
 
- public ::  grid_t
+ public ::           &
+           grid_t,   &
+           integrate
 
  !Data structure for the real space grid
  type grid_t
    real(kind=dp) :: hgrid(3) !< Real space spacing
    integer :: ndims(3)  !< Number of points in each directions
    integer :: np !< Total number of points in the real space grid
+   real(kind=dp) :: volelem !<Volume element
    contains
     private
     procedure, public :: init
     procedure, public :: summary
     final  :: cleanup
  end type grid_t
+
+ interface integrate
+    module procedure dintegrate, zintegrate
+ end interface integrate
 
  contains
 
@@ -39,6 +46,10 @@ module grid_esl
      end do
 
      this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
+
+     !We have a cubic cell
+     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
+
    end subroutine init
 
 
@@ -62,6 +73,41 @@ module grid_esl
      call yaml_mapping_close()
 
    end subroutine summary
+
+
+   !Integrate a function over the real-space grid
+   !----------------------------------------------------
+   subroutine dintegrate(grid, ff, int_ff)
+     type(grid_t),    intent(in) :: grid
+     real(kind=dp),   intent(in) :: ff(:)
+     real(kind=dp),  intent(out) :: int_ff
+
+     integer :: ip
+
+     int_ff = 0.d0
+     forall(ip=1:grid%np)
+       int_ff = int_ff + ff(ip)
+     end forall
+     int_ff = int_ff*grid%volelem
+
+   end subroutine dintegrate
+
+   !Integrate a function over the real-space grid
+   !----------------------------------------------------
+   subroutine zintegrate(grid, ff, int_ff)
+     type(grid_t),       intent(in) :: grid
+     complex(kind=dp),   intent(in) :: ff(:)
+     complex(kind=dp),  intent(out) :: int_ff
+
+     integer :: ip
+
+     int_ff = cmplx(0.d0,0.d0)
+     forall(ip=1:grid%np)
+       int_ff = int_ff + ff(ip)
+     end forall
+     int_ff = int_ff*grid%volelem
+
+   end subroutine zintegrate
 
 
 end module grid_esl
