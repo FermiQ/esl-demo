@@ -33,9 +33,9 @@ module grid_esl
 
      !For the moment the spacing in real space is hardcoded
      !For planewave, this must come from the number of G vectors
-     this%hgrid(1:3) = 0.25
+     this%ndims(1:3) = 16
      do idim = 1,3
-       this%ndims(idim) = nint(acell/this%hgrid(idim))
+       this%hgrid(idim) = acell/real(this%ndims(idim))
      end do
 
      this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
