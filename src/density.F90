@@ -7,24 +7,24 @@ module density_esl
   implicit none
   private
 
-  public ::                 &
-            density_t,      &
-            density_init,   &
-            density_calc,   &
-            density_end
+  public :: density_t
   
   !Data structure for the density
   type density_t
     real(kind=dp), allocatable :: density(:)
     real(kind=dp), allocatable :: density_matrix(:,:) 
+   contains
+     procedure, public :: init
+     procedure, public :: calculate
+     final  :: cleanup
   end type density_t
 
   contains
 
    !Initialize the density
    !----------------------------------------------------
-   subroutine density_init(this, basis, grid)
-     type(density_t), intent(inout) :: this
+   subroutine init(this, basis, grid)
+     class(density_t), intent(inout) :: this
      type(basis_t),   intent(in)    :: basis
      type(grid_t),    intent(in)    :: grid
 
@@ -36,22 +36,22 @@ module density_esl
        !Initialization structures for the LO case
      end select 
 
-   end subroutine density_init
+   end subroutine init
  
    !Release
    !----------------------------------------------------
-   subroutine density_end(this)
+   subroutine cleanup(this)
      type(density_t), intent(inout) :: this
 
      if(allocated(this%density_matrix)) deallocate(this%density_matrix)
      if(allocated(this%density)) deallocate(this%density)
 
-   end subroutine density_end
+   end subroutine cleanup
 
    !Calc density
    !----------------------------------------------------
-   subroutine density_calc(this, basis)
-     type(density_t), intent(inout) :: this
+   subroutine calculate(this, basis)
+     class(density_t), intent(inout) :: this
      type(basis_t),   intent(in)    :: basis
 
      select case(basis%basis_type)
@@ -61,6 +61,6 @@ module density_esl
 
      end select
 
-   end subroutine density_calc 
+   end subroutine calculate
 
 end module density_esl

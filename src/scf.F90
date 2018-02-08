@@ -68,10 +68,10 @@ module scf_esl
      call smear_calc_fermi_and_occ(smear, elsi, states)
 
      !Calc. density
-     call density_calc(hamiltonian%density, system%basis)  
+     call hamiltonian%density%calculate(system%basis)
 
      !Calc. potentials
-     call potential_calc(hamiltonian%potentials, hamiltonian%density, hamiltonian%energy)
+     call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
 
      !Calc. energies
      call hamiltonian%energy%calculate()  
