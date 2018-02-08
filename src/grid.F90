@@ -111,17 +111,18 @@ module grid_esl
      real(kind=dp), intent(out) :: grad_ao(:,:)
 
      integer :: ip
-     real(kind=dp) :: x, y, z
+     real(kind=dp) :: x, y, z, r
 
      do ip = 1, this%np
        x = this%r(1,ip) - r_at(1)
        y = this%r(2,ip) - r_at(2)
        z = this%r(3,ip) - r_at(3)
        call grylmr(x, y, z, ll, mm, ao(ip), grad_ao(1:3,ip)) 
+ 
+       r = sqrt(x**2+y**2+z**2)
+       !Here we need to multiply by the radial part
      end do
  
-     !Here we need to multiply by the radial part
-
    end subroutine get_atomic_orbital
 
    !Integrate a function over the real-space grid

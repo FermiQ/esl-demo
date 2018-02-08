@@ -24,6 +24,7 @@ module basis_esl
     contains
       private
       procedure, public :: init
+      procedure, public :: init_atomic_orbitals
       procedure, public :: summary
       final :: cleanup
   end type basis_t
@@ -65,6 +66,17 @@ module basis_esl
 
    end subroutine cleanup
 
+   !Initialize the atomic orbitals
+   !----------------------------------------------------
+   subroutine init_atomic_orbitals(this)
+     class(basis_t) :: this
+
+     if(this%basis_type /= ATOMICORBS) return
+
+   end subroutine init_atomic_orbitals
+   
+   !Summary
+   !----------------------------------------------------
    subroutine summary(basis)
      use yaml_output
      implicit none

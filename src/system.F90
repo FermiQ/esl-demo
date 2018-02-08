@@ -105,6 +105,8 @@ module system_esl
      else
      endif
 
+     call sys%basis%init_atomic_orbitals( )
+
      call sys%summary()
 
    end subroutine init
