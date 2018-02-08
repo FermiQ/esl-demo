@@ -17,4 +17,22 @@ eg of building
  bin/esl-demo.X <input file>
  ```
  by default will look to read from sample.inp
- 
+
+MPI Support
+-----------
+```
+cmake ../ -DWITH_MPI=On
+```
+
+Shared libraries
+-----------------
+```
+cmake ../ -DBUILD_SHARED_LIBS=on
+```
+
+to build API documentations
+---------------------------
+
+```
+cmake ../ -DWITH_DOC=on
+```
