@@ -24,18 +24,25 @@ module grid_esl
 
    !Initialize the grid
    !----------------------------------------------------
-   subroutine init(this, basis, acell)
+   subroutine init(this, basis, cell)
+     use module_fft_sg
      class(grid_t) :: this
      type(basis_t), intent(in) :: basis
-     real(kind=dp), intent(in) :: acell
+     real(kind=dp), dimension(3,3), intent(in) :: cell
  
-     integer :: idim
+     integer :: idim, n, twice
 
      !For the moment the spacing in real space is hardcoded
      !For planewave, this must come from the number of G vectors
-     this%ndims(1:3) = 16
+     this%hgrid(1:3) = .25
      do idim = 1,3
-       this%hgrid(idim) = acell/real(this%ndims(idim))
+        n = ceiling(cell(idim, idim) / this%hgrid(idim)) - 1
+        do
+           call fourier_dim(n, this%ndims(idim))
+           call fourier_dim(2 * n, twice)
+           this%hgrid(idim) = cell(idim, idim) / real(this%ndims(idim) + 1, dp)
+           if (2 * n == twice) exit ! Ensure that Poisson Solver double grid will work.
+        end do
      end do
 
      this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
