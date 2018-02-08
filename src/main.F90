@@ -32,7 +32,7 @@ contains
     use fdf, only : fdf_init, fdf_shutdown, fdf_string
     use hamiltonian_esl, only : hamiltonian_t
     use scf_esl, only : scf_t, scf_loop
-    use states_esl
+    use states_esl, only : states_t
     use system_esl, only : system_t
     use numeric_esl, only : init_random
     use smear_esl, only : smear_t
@@ -70,8 +70,8 @@ contains
     nspin = 1
     nel = 1
     !---------------------------------------
-    call states_init(states, system%basis, nstates, nspin, 1, nel)
-    call states_summary(states)
+    call states%init(system%basis, nstates, nspin, 1, nel)
+    call states%summary()
     call hamiltonian%init(system, states)
     call scf%init()
     call smear%init()
