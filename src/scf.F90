@@ -4,6 +4,7 @@ module scf_esl
 
   use basis_esl
   use density_esl
+  use grid_esl
   use hamiltonian_esl
   use mixing_esl
   use potential_esl
@@ -67,10 +68,11 @@ module scf_esl
    type(states_t),         intent(in) :: states
    type(smear_t), intent(inout) :: smear
   
-   integer :: iter !< Interation
+   integer :: iter, ip !< Interation
    real(kind=dp), allocatable :: rhoin(:)
    real(kind=dp), allocatable :: rhoout(:)
    real(kind=dp), allocatable :: rhonew(:)
+   real(kind=dp) :: reldens
 
    allocate(rhoin(1:system%grid%np))
    allocate(rhoout(1:system%grid%np))
@@ -91,7 +93,7 @@ module scf_esl
      !Calc. density
      call hamiltonian%density%calculate(system%basis)
      !Saving the out density for the mixing
-     call hamiltonian%density%get_den(rhoin)
+     call hamiltonian%density%get_den(rhoout)
      !Calc. potentials
      call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
 
@@ -99,6 +101,17 @@ module scf_esl
      call hamiltonian%energy%calculate()  
 
      !Test tolerance and print status
+     !We use rhonew to compute the relative density
+     do ip = 1, system%grid%np
+       rhonew(ip) = abs(rhoout(ip) - rhoin(ip))
+     end do
+     call integrate(system%grid, rhonew, reldens)
+     reldens = reldens/real(states%nel)
+     call yaml_map("Rel. Density", reldens)
+     if(reldens <= this%tol_reldens) then
+       call yaml_comment("SCF cycle converged.")
+       exit
+     end if
 
      !Mixing (BLAS/LAPACK)
      call mixing_linear(this%mixer, system%grid%np, rhoin, rhoout,rhonew)  
