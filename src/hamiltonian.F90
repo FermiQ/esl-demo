@@ -30,7 +30,7 @@ module hamiltonian_esl
      class(hamiltonian_t) :: this
      type(system_t), intent(in) :: sys
 
-     call density_init(this%density, sys%basis)
+     call density_init(this%density, sys%basis, sys%grid)
      call this%energy%init()
      call potential_init(this%potentials, sys%basis, sys%grid)
 
