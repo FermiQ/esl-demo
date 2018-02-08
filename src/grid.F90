@@ -2,7 +2,7 @@ module grid_esl
   use prec, only : dp,ip
 
   use basis_esl
-  use numeric_esl, only : grylmr
+  use numeric_esl
 
  implicit none
  private
@@ -167,6 +167,35 @@ module grid_esl
      int_ff = int_ff*grid%volelem
 
    end subroutine zintegrate
+
+
+   !Overlap
+   !----------------------------------------------------
+   real(kind=dp) function overlap(grid, r1, ao1,radius1, r2, ao2, radius2)
+     type(grid_t),    intent(in) :: grid
+     real(kind=dp),   intent(in) :: r1(3)
+     real(kind=dp),   intent(in) :: ao1(:)
+     real(kind=dp),   intent(in) :: radius1
+     real(kind=dp),   intent(in) :: r2(3)
+     real(kind=dp),   intent(in) :: ao2(:)
+     real(kind=dp),   intent(in) :: radius2
+
+     integer :: ip
+     real(kind=dp) :: dist
+
+     dist = distance(r1, r2)
+     if(dist > radius1 + radius2) then
+       !In this case there is no overlap
+       overlap = -1.0
+       return
+     end if
+
+     do ip=1,grid%np
+       overlap = overlap + ao1(ip)*ao2(ip)
+     end do
+     overlap = overlap*grid%volelem
+
+   end function overlap
 
    subroutine nDimsFromEcut(ndims, ecut, gcell, kpt)
      use numerics, only: pi
