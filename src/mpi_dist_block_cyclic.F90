@@ -9,7 +9,9 @@
 !< matrix processor to have rank 0.
 module mpi_dist_block_cyclic
 
+#ifdef _PLACEHOLDER_MPI
   use mpi
+#endif
   use mpi_dist
 
   implicit none
@@ -76,6 +78,7 @@ contains
     class(mpi_dist_block_cyclic_t), intent(in) :: this
     integer(ii_) :: N
 
+#ifdef _PLACEHOLDER_MPI
     integer(ii_) :: iblock
 
     ! Abstracted from ScaLAPACK/numroc
@@ -92,7 +95,10 @@ contains
        ! edge rank (remaining elements
        N = N + mod( this%global_N, this%block)
     end if
-    
+#else
+    ! Non MPI
+    N = this%global_N
+#endif
   end function local_N_
   
   function global_2_local_(this, global) result(local)
@@ -100,8 +106,13 @@ contains
     integer(ii_), intent(in) :: global
     integer(ii_) :: local
 
+#ifdef _PLACEHOLDER_MPI
     ! Abstracted from ScaLAPACK/indxg2l
     local = this%block*( (global-ONE)/(this%block*this%size)) + mod(global-ONE,this%block)+ONE
+#else
+    ! Non MPI
+    local = global
+#endif
 
   end function global_2_local_
 
@@ -110,9 +121,14 @@ contains
     integer(ii_), intent(in) :: local
     integer(ii_) :: global
     
+#ifdef _PLACEHOLDER_MPI
     ! Abstracted from ScaLAPACK/indxl2g
     global = this%size * this%block * ((local-ONE) / this%block) + &
          mod(local - ONE, this%block) + this%rank * this%block + ONE
+#else
+    ! Non MPI
+    global = local
+#endif
     
   end function local_2_global_
 
@@ -121,8 +137,13 @@ contains
     integer(ii_), intent(in) :: global
     integer(ii_) :: rank
     
+#ifdef _PLACEHOLDER_MPI
     ! Abstracted from ScaLAPACK/indxg2p
     rank = mod( (global - ONE) / this%block, this%size)
+#else
+    ! Non MPI
+    rank = 0
+#endif
     
   end function global_2_rank_
 

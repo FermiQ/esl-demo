@@ -7,7 +7,9 @@
 !< localities of linear quantities, i.e. 1D problems.
 module mpi_dist
 
+#ifdef _PLACEHOLDER_MPI
   use mpi
+#endif
 
   implicit none
 
@@ -82,8 +84,13 @@ contains
 
     ! Figure out the MPI things
     this%comm = comm
+#ifdef _PLACEHOLDER_MPI
     call MPI_Comm_rank(comm, this%rank, err)
     call MPI_Comm_rank(comm, this%size, err)
+#else
+    this%rank = 0
+    this%size = 1
+#endif
     this%global_N = global_N
     
   end subroutine init_
