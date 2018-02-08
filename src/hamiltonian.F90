@@ -5,50 +5,37 @@ module hamiltonian_esl
   use states_esl
   use system_esl
 
- implicit none
- private
+  implicit none
+  private
 
- public ::                   &
-           hamiltonian_t,    &
-           hamiltonian_apply
-          
- !Data structure for the Hamiltonian
- type hamiltonian_t
-   type(density_t)   :: density
-   type(energy_t)    :: energy
-   type(potential_t) :: potentials
-    contains
-      private
-      procedure, public :: init
-      final :: cleanup
- end type 
+  public ::                   &
+       hamiltonian_t,    &
+       hamiltonian_apply
 
- contains
+  !Data structure for the Hamiltonian
+  type hamiltonian_t
+     type(density_t)   :: density
+     type(energy_t)    :: energy
+     type(potential_t) :: potentials
+   contains
+     private
+     procedure, public :: init
+  end type hamiltonian_t
 
-   !Initialize the Hamiltonian
-   !----------------------------------------------------
+contains
+
+  !Initialize the Hamiltonian
+  !----------------------------------------------------
    subroutine init(this, sys, states)
      class(hamiltonian_t) :: this
      type(system_t), intent(in) :: sys
      type(states_t), intent(in) :: states
 
-     call density_init(this%density, sys%basis, sys%grid)
+     call this%density%init(sys%basis, sys%grid)
      call this%energy%init()
-     call potential_init(this%potentials, sys%basis, sys%grid, states)
+     call this%potentials%init(sys%basis, sys%grid, states)
 
    end subroutine init
-
-
-   !Release the Hamiltonian
-   !----------------------------------------------------
-   subroutine cleanup(this)
-     type(hamiltonian_t):: this
-
-     call density_end(this%density)
-     call potential_end(this%potentials)
-
-   end subroutine cleanup
-
 
    !Apply the Hamiltonian matrix
    !----------------------------------------------------

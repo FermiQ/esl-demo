@@ -8,85 +8,85 @@ module potential_esl
   use psolver_esl
   use states_esl
 
- implicit none
- private
+  implicit none
+  private
 
- public ::                   &
-           potential_t,      &
-           potential_init,   &
-           potential_end,    &
-           potential_calc
-          
- !Data structure for the potentials
- type potential_t
-   integer :: np !< Number of points in real space
+  public :: potential_t
 
-   real(kind=dp), allocatable :: hartree(:)  !Hartree potential
-   real(kind=dp), allocatable :: external(:) !External local potential
-   real(kind=dp), allocatable :: xc(:,:)  !xc potential
+  !Data structure for the potentials
+  type potential_t
+     integer :: np !< Number of points in real space
 
-   real(dp) :: ionicOffset !< Offset of the external potential
+     real(kind=dp), allocatable :: hartree(:)  !Hartree potential
+     real(kind=dp), allocatable :: external(:) !External local potential
+     real(kind=dp), allocatable :: xc(:,:)  !xc potential
 
-   type(psolver_t) :: psolver
- end type 
+     real(dp) :: ionicOffset !< Offset of the external potential
 
- contains
+     type(psolver_t) :: psolver
+   contains
+     procedure, public :: init
+     procedure, public :: calculate
+     final  :: cleanup
+  end type potential_t
 
-   !Initialize the potentials
-   !----------------------------------------------------
-   subroutine potential_init(this, basis, grid, states)
-     type(potential_t) :: this
-     type(basis_t), intent(in) :: basis
-     type(grid_t),  intent(in) :: grid
-     type(states_t), intent(in):: states
+contains
 
-     character(len = 1) :: geocode
+  !Initialize the potentials
+  !----------------------------------------------------
+  subroutine init(pot, basis, grid, states)
+    class(potential_t) :: pot
+    type(basis_t), intent(in) :: basis
+    type(grid_t),  intent(in) :: grid
+    type(states_t), intent(in):: states
 
-     this%np = grid%np 
+    character(len = 1) :: geocode
 
-     allocate(this%hartree(1:this%np))
-     allocate(this%external(1:this%np))
-     allocate(this%xc(1:this%np, 1:states%nspin))
+    pot%np = grid%np
 
-     select case(basis%basis_type)
-       case(PLANEWAVES)
-         geocode = 'P'
-       case(ATOMICORBS)
-         geocode = 'F'
-     end select
+    allocate(pot%hartree(1:pot%np))
+    allocate(pot%external(1:pot%np))
+    allocate(pot%xc(1:pot%np, 1:states%nspin))
 
-     this%ionicOffset = 0._dp
-     call this%psolver%init(1, 1, geocode, grid%ndims, grid%hgrid)    
+    select case(basis%basis_type)
+    case(PLANEWAVES)
+       geocode = 'P'
+    case(ATOMICORBS)
+       geocode = 'F'
+    end select
 
-     !Here we need to init the libxc and pspio parts 
+    pot%ionicOffset = 0._dp
+    call pot%psolver%init(0, 1, geocode, grid%ndims, grid%hgrid)
 
-   end subroutine potential_init
+    !Here we need to init the libxc and pspio parts
 
-
-   !Release the potentials
-   !----------------------------------------------------
-   subroutine potential_end(this)
-     type(potential_t):: this
-
-     if(allocated(this%hartree)) deallocate(this%hartree)
-     if(allocated(this%external)) deallocate(this%external)
-     if(allocated(this%xc)) deallocate(this%xc)
-
-   end subroutine potential_end
+  end subroutine init
 
 
-   !Compute the different potentials
-   !----------------------------------------------------
-   subroutine potential_calc(this, density, energy)
-     type(potential_t), intent(inout) :: this
-     type(density_t),   intent(in)    :: density
-     type(energy_t),    intent(inout) :: energy
+  !Release the potentials
+  !----------------------------------------------------
+  subroutine cleanup(pot)
+    type(potential_t):: pot
 
-     call this%psolver%h_potential(density, this%hartree, this%np, &
-          & this%external, this%ionicOffset, energy%hartree)
+    if(allocated(pot%hartree)) deallocate(pot%hartree)
+    if(allocated(pot%external)) deallocate(pot%external)
+    if(allocated(pot%xc)) deallocate(pot%xc)
 
-     !Here we need to compute the xc potential
+  end subroutine cleanup
 
-   end subroutine potential_calc
+
+  !Compute the different potentials
+  !----------------------------------------------------
+  subroutine calculate(pot, density, energy)
+    class(potential_t), intent(inout) :: pot
+    type(density_t),   intent(in)    :: density
+    type(energy_t),    intent(inout) :: energy
+
+    call pot%psolver%h_potential(density, pot%hartree, pot%np, &
+         & pot%external, pot%ionicOffset, energy%hartree)
+
+    !Here we need to compute the xc potential
+
+  end subroutine calculate
 
 end module potential_esl
