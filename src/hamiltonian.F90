@@ -1,4 +1,6 @@
 module hamiltonian_esl
+  use prec, only : dp,ip
+
   use density_esl
   use energy_esl
   use potential_esl
@@ -8,9 +10,10 @@ module hamiltonian_esl
   implicit none
   private
 
-  public ::                   &
-       hamiltonian_t,    &
-       hamiltonian_apply
+  public ::                          &
+       hamiltonian_t,                &
+       hamiltonian_apply,            &
+       hamiltonian_apply_local
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
@@ -21,6 +24,14 @@ module hamiltonian_esl
      private
      procedure, public :: init
   end type hamiltonian_t
+
+  interface hamiltonian_apply
+    module procedure hamiltonian_dapply, hamiltonian_zapply
+  end interface hamiltonian_apply
+
+  interface hamiltonian_apply_local
+    module procedure hamiltonian_dapply_local, hamiltonian_zapply_local
+  end interface hamiltonian_apply_local
 
 contains
 
@@ -39,9 +50,45 @@ contains
 
    !Apply the Hamiltonian matrix
    !----------------------------------------------------
-   subroutine hamiltonian_apply(this)
-     type(hamiltonian_t), intent(in) :: this
+   subroutine hamiltonian_dapply(this, psi, hpsi)
+     type(hamiltonian_t), intent(in)    :: this
+     real(kind=dp),       intent(in)    :: psi
+     real(kind=dp),       intent(inout) :: hpsi
 
-   end subroutine hamiltonian_apply
+     call hamiltonian_dapply_local(this, psi,hpsi)
+
+   end subroutine hamiltonian_dapply
+
+   !Apply the Hamiltonian matrix
+   !----------------------------------------------------
+   subroutine hamiltonian_zapply(this, psi, hpsi)
+     type(hamiltonian_t),   intent(in)    :: this
+     complex(kind=dp),      intent(in)    :: psi
+     complex(kind=dp),      intent(inout) :: hpsi
+
+     call hamiltonian_zapply_local(this, psi, hpsi)
+
+   end subroutine hamiltonian_zapply
+
+   !Apply the local part of the Hamitonian to a wavefunction
+   !----------------------------------------------------
+   subroutine hamiltonian_dapply_local(this, psi, hpsi)
+     type(hamiltonian_t),  intent(in)    :: this
+     real(kind=dp),        intent(in)    :: psi
+     real(kind=dp),        intent(inout) :: hpsi
+
+   end subroutine hamiltonian_dapply_local
+
+
+   !Apply the local part of the Hamitonian to a wavefunction
+   !----------------------------------------------------
+   subroutine hamiltonian_zapply_local(this, psi, hpsi)
+     type(hamiltonian_t),   intent(in)    :: this
+     complex(kind=dp),      intent(in)    :: psi
+     complex(kind=dp),      intent(inout) :: hpsi
+
+
+   end subroutine hamiltonian_zapply_local
+
 
 end module hamiltonian_esl
