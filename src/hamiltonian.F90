@@ -55,7 +55,9 @@ contains
      real(kind=dp),       intent(in)    :: psi
      real(kind=dp),       intent(inout) :: hpsi
 
+     !TODO: Here perform FFT-1
      call hamiltonian_dapply_local(this, psi,hpsi)
+     !TODO: Here perform FFT
 
    end subroutine hamiltonian_dapply
 
@@ -66,7 +68,9 @@ contains
      complex(kind=dp),      intent(in)    :: psi
      complex(kind=dp),      intent(inout) :: hpsi
 
+     !TODO: Here perform FFT-1
      call hamiltonian_zapply_local(this, psi, hpsi)
+     !TODO: Here perform FFT
 
    end subroutine hamiltonian_zapply
 
