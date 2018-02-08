@@ -14,6 +14,15 @@ module mpi_dist_block_cyclic
 #endif
   use mpi_dist
 
+  ! MPI relies on standard integer sizes
+  ! However, if one wishes to build this application
+  ! with default long integers, we have to be careful.
+  use prec, only: im_ => ip
+
+  ! To increase precision for the container
+  ! simply change the pointed to variable.
+  use prec, only: ii_ => ip
+
   implicit none
 
   private
@@ -21,20 +30,12 @@ module mpi_dist_block_cyclic
   ! Possibly we should reduce 
   public :: mpi_dist_block_cyclic_t
 
-  ! MPI relies on standard integer sizes
-  ! However, if one wishes to build this application
-  ! with default long integers, we have to be careful.
-  integer, parameter :: im_ = selected_int_kind(9)
-
-  ! Data-type for the contained elements
-  integer, parameter :: ii_ = selected_int_kind(9)
-
   integer(ii_), parameter :: ONE = 1_ii_
   
   type, extends(mpi_dist_t) :: mpi_dist_block_cyclic_t
      
      !< Block size of the cyclic distribution
-     integer(ii_) :: block = 1
+     integer(ii_) :: block = ONE
      
    contains
      
@@ -69,7 +70,7 @@ contains
   subroutine delete_(this)
     class(mpi_dist_block_cyclic_t), intent(inout) :: this
 
-    this%block = 1
+    this%block = ONE
     call this%mpi_dist_t%delete_()
 
   end subroutine delete_

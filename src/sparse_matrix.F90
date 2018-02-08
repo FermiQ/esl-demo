@@ -1,11 +1,9 @@
 module sparse_matrix
 
   use sparse_pattern, only: sparse_pattern_t
+  use prec, only: dp
   
   implicit none
-
-  ! We default to contain only double quantities
-  integer, parameter :: dp_ = selected_real_kind(14,100) ! int (integer*4)
 
   public :: sparse_matrix_t
 
@@ -23,7 +21,7 @@ module sparse_matrix
 
      !< A pointer to the sparse pattern that defines this matrix
      type(sparse_pattern_t), pointer :: sp => null()
-     real(dp_), allocatable :: M(:)
+     real(dp), allocatable :: M(:)
 
    contains
 
