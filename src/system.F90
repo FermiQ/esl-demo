@@ -1,6 +1,6 @@
 module system_esl
   use prec, only : dp,ip
-  use numeric_esl, only : invert_cell
+  use numeric_esl, only : matr3inv
   use fdf, only : block_fdf, fdf_integer, fdf_block,fdf_defined, &
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical
@@ -61,10 +61,10 @@ module system_esl
        sys%cell(2,2)=sys%cell(1,1)
        sys%cell(3,3)=sys%cell(1,1)
      endif
-     sys%icell=invert_cell(sys%cell)
+     sys%icell=matr3inv(sys%cell)
 
      !Init the grid
-     call sys%grid%init(sys%basis, sys%cell)
+     call sys%grid%init(sys%basis, sys%cell, sys%icell)
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)

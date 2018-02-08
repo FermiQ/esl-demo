@@ -3,16 +3,14 @@ module states_esl
 
   use basis_esl
   use numeric_esl
+  use yaml_output
 
  implicit none
  private
 
  public ::                   &
            states_t,         &
-           states_init,      &
-           states_end,       &
-           states_randomize, &
-           states_summary
+           states_randomize
 
  type wfn_t
    real(kind=dp),    allocatable :: dcoef(:) !<Coefficients of the wavefunction in the basis
@@ -32,14 +30,19 @@ module states_esl
 
    type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
    real(kind=dp), allocatable :: occ_numbers(:,:,:)
+   contains
+     private
+     procedure, public :: init
+     procedure, public :: summary
+     final :: cleanup
  end type states_t
 
  contains
 
    !Initialize the states
    !----------------------------------------------------
-   subroutine states_init(this, basis, nstates, nspin, nkpt, nel)
-     type(states_t), intent(inout) :: this
+   subroutine init(this, basis, nstates, nspin, nkpt, nel)
+     class(states_t)  :: this
      type(basis_t),  intent(in)    :: basis
      integer,        intent(in)    :: nstates
      integer,        intent(in)    :: nspin
@@ -79,12 +82,12 @@ module states_esl
          end do
      end select
 
-   end subroutine states_init
+   end subroutine init
 
 
    !Release the states
    !----------------------------------------------------
-   subroutine states_end(this)
+   subroutine cleanup(this)
      type(states_t):: this
 
      integer :: ist, isp, ik
@@ -104,7 +107,7 @@ module states_esl
      end if
      if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
 
-   end subroutine states_end
+   end subroutine cleanup
 
 
    !Randomize the states
@@ -144,8 +147,7 @@ module states_esl
 
    !Summary
    !----------------------------------------------------
-   subroutine states_summary(this)
-     use yaml_output
+   subroutine summary(this)
      class(states_t) :: this
 
      call yaml_mapping_open("States")
@@ -154,6 +156,6 @@ module states_esl
      call yaml_map("Number of k-points", this%nkpt)
      call yaml_mapping_close()
 
-   end subroutine states_summary
+   end subroutine summary
 
 end module states_esl

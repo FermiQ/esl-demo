@@ -6,7 +6,7 @@ module numeric_esl
   private
 
   public ::              &
-            invert_cell, &
+            matr3inv,    &
             init_random, &
             grylmr,      &
             distance
@@ -23,7 +23,7 @@ contains
   end function determinant
 
   !----------------------------------------------------
-  pure function invert_cell(a) result(b)
+  pure function matr3inv(a) result(b)
     real(kind=dp), intent(in)  :: a(3,3)
     real(kind=dp)  :: b(3,3)
 
@@ -41,7 +41,7 @@ contains
     b(3,1)= idet*(a(2,3)*a(1,2)-a(2,2)*a(1,3))
     b(3,2)= idet*(a(2,1)*a(1,3)-a(2,3)*a(1,1))
     b(3,3)= idet*(a(2,2)*a(1,1)-a(2,1)*a(1,2))
-  end function invert_cell
+  end function matr3inv
 
   ! init random numbers, optionally with a seed
   ! to generate them just use call randomn_number(d)
