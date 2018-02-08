@@ -2,6 +2,7 @@ module grid_esl
   use prec, only : dp,ip
 
   use basis_esl
+  use numeric_esl, only : grylmr
 
  implicit none
  private
@@ -13,9 +14,12 @@ module grid_esl
    real(kind=dp) :: hgrid(3) !< Real space spacing
    integer :: ndims(3)  !< Number of points in each directions
    integer :: np !< Total number of points in the real space grid
+
+   real(kind=dp), allocatable :: r(:,:) !<Grid point coordinates 
    contains
     private
     procedure, public :: init
+    procedure, public :: get_atomic_orbital
     procedure, public :: summary
     final  :: cleanup
  end type grid_t
@@ -29,7 +33,7 @@ module grid_esl
      type(basis_t), intent(in) :: basis
      real(kind=dp), intent(in) :: acell
  
-     integer :: idim
+     integer :: idim, ix, iy, iz, ip
 
      !For the moment the spacing in real space is hardcoded
      !For planewave, this must come from the number of G vectors
@@ -39,6 +43,20 @@ module grid_esl
      end do
 
      this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
+
+     !Generation of the grid points
+     allocate(this%r(3,this%np))
+     ip = 0
+     do ix = 1, this%ndims(1)
+       do iy = 1, this%ndims(2)
+         do iz = 1, this%ndims(3)
+           ip = ip + 1
+           this%r(1, ip) = ix*this%hgrid(1) - 0.5d0*acell
+           this%r(2, ip) = iy*this%hgrid(2) - 0.5d0*acell
+           this%r(3, ip) = iz*this%hgrid(3) - 0.5d0*acell
+         end do
+       end do
+     end do
    end subroutine init
 
 
@@ -46,6 +64,8 @@ module grid_esl
    !----------------------------------------------------
    subroutine cleanup(this)
      type(grid_t) :: this
+
+     if(allocated(this%r)) deallocate(this%r)
 
    end subroutine cleanup
 
@@ -63,5 +83,21 @@ module grid_esl
 
    end subroutine summary
 
+   subroutine get_atomic_orbital(this, ll, mm, ao, grad_ao)
+     class(grid_t) :: this
+     integer,        intent(in) :: ll
+     integer,        intent(in) :: mm
+     real(kind=dp), intent(out) :: ao(:)
+     real(kind=dp), intent(out) :: grad_ao(:,:)
+
+     integer :: ip
+
+     do ip = 1, this%np
+       call grylmr(this%r(1,ip),this%r(2,ip),this%r(3,ip), ll, mm, ao(ip), grad_ao(1:3,ip)) 
+     end do
+ 
+     !Here we need to multiply by the radial part
+
+   end subroutine get_atomic_orbital
 
 end module grid_esl
