@@ -41,7 +41,7 @@ module grid_esl
      real(kind=dp), dimension(3,3), intent(in) :: cell
  
      integer :: idim, ix, iy, iz, ip
-     integer :: twice
+     integer :: n, twice
 
      !For the moment the spacing in real space is hardcoded
      !For planewave, this must come from the number of G vectors
@@ -65,9 +65,9 @@ module grid_esl
        do iy = 1, this%ndims(2)
          do iz = 1, this%ndims(3)
            ip = ip + 1
-           this%r(1, ip) = ix*this%hgrid(1) - 0.5d0*acell
-           this%r(2, ip) = iy*this%hgrid(2) - 0.5d0*acell
-           this%r(3, ip) = iz*this%hgrid(3) - 0.5d0*acell
+           this%r(1, ip) = ix*this%hgrid(1) - 0.5d0*cell(1,1)
+           this%r(2, ip) = iy*this%hgrid(2) - 0.5d0*cell(2,2)
+           this%r(3, ip) = iz*this%hgrid(3) - 0.5d0*cell(3,3)
          end do
        end do
      end do
