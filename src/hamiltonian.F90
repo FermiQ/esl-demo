@@ -52,8 +52,8 @@ contains
    !----------------------------------------------------
    subroutine hamiltonian_dapply(this, psi, hpsi)
      type(hamiltonian_t), intent(in)    :: this
-     real(kind=dp),       intent(in)    :: psi
-     real(kind=dp),       intent(inout) :: hpsi
+     real(kind=dp),       intent(in)    :: psi(:)
+     real(kind=dp),       intent(inout) :: hpsi(:)
 
      !TODO: Here perform FFT-1
      call hamiltonian_dapply_local(this, psi,hpsi)
@@ -65,8 +65,8 @@ contains
    !----------------------------------------------------
    subroutine hamiltonian_zapply(this, psi, hpsi)
      type(hamiltonian_t),   intent(in)    :: this
-     complex(kind=dp),      intent(in)    :: psi
-     complex(kind=dp),      intent(inout) :: hpsi
+     complex(kind=dp),      intent(in)    :: psi(:)
+     complex(kind=dp),      intent(inout) :: hpsi(:)
 
      !TODO: Here perform FFT-1
      call hamiltonian_zapply_local(this, psi, hpsi)
@@ -78,8 +78,15 @@ contains
    !----------------------------------------------------
    subroutine hamiltonian_dapply_local(this, psi, hpsi)
      type(hamiltonian_t),  intent(in)    :: this
-     real(kind=dp),        intent(in)    :: psi
-     real(kind=dp),        intent(inout) :: hpsi
+     real(kind=dp),        intent(in)    :: psi(:)
+     real(kind=dp),        intent(inout) :: hpsi(:)
+
+     integer :: ip
+
+     !TODO: Here there is no spin
+     forall(ip = 1:this%potentials%np)
+       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%xc(ip,1))*psi(ip)
+     end forall 
 
    end subroutine hamiltonian_dapply_local
 
@@ -88,9 +95,15 @@ contains
    !----------------------------------------------------
    subroutine hamiltonian_zapply_local(this, psi, hpsi)
      type(hamiltonian_t),   intent(in)    :: this
-     complex(kind=dp),      intent(in)    :: psi
-     complex(kind=dp),      intent(inout) :: hpsi
+     complex(kind=dp),      intent(in)    :: psi(:)
+     complex(kind=dp),      intent(inout) :: hpsi(:)
 
+     integer :: ip
+
+     !TODO: Here there is no spin
+     forall(ip = 1:this%potentials%np)
+       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%xc(ip,1))*psi(ip)
+     end forall
 
    end subroutine hamiltonian_zapply_local
 
