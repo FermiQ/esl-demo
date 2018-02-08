@@ -43,6 +43,9 @@ module basis_esl
        call message_error("The specified basis set is not correct.")
      endif
 
+     !TEMP
+     this%size = 1
+
    end subroutine init
  
    !Release

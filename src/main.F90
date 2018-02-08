@@ -53,6 +53,7 @@ program esl_demo
  nspin = 1
  !---------------------------------------
  call states_init(states, system%basis, nstates, nspin, 1)
+ call states_summary(states)
  call hamiltonian%init(system, states)
  call scf%init()
  call smear%init()

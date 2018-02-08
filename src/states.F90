@@ -11,7 +11,8 @@ module states_esl
            states_t,         &
            states_init,      &
            states_end,       &
-           states_randomize
+           states_randomize, &
+           states_summary
 
  type wfn_t
    real(kind=dp), allocatable :: coef(:) !<Coefficients of the wavefunction in the basis
@@ -49,6 +50,7 @@ module states_esl
 
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
      allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
+
      
      do ik = 1, nkpt
        do isp = 1, nspin
@@ -103,5 +105,19 @@ module states_esl
      end do
 
    end subroutine states_randomize
+
+   !Summary
+   !----------------------------------------------------
+   subroutine states_summary(this)
+     use yaml_output
+     class(states_t) :: this
+
+     call yaml_mapping_open("States")
+     call yaml_map("Number of states", this%nstates)
+     call yaml_map("Spin components", this%nspin)
+     call yaml_map("Number of k-points", this%nkpt)
+     call yaml_mapping_close()
+
+   end subroutine states_summary
 
 end module states_esl
