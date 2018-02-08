@@ -32,6 +32,9 @@ program esl_demo
 
  echo_file=trim(input_file)//".echo"
  write(ou,'(a)')"reading instructions from: "//trim(input_file)//" echo in "//trim(echo_file)
+
+ ! To be able to use YAML
+ call f_lib_initialize()
  
  !Parsing the input file
  call fdf_init(input_file, echo_file)
@@ -57,6 +60,7 @@ program esl_demo
 
  !Release memory
  ! which is not released in final procedure for different types
+ call f_lib_finalize()
 
  !End of the calculation
 end program esl_demo

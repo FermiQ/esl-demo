@@ -19,11 +19,7 @@ module psolver_esl
   type psolver_t
      private
      type(coulomb_operator) :: pkernel
-
-     real(gp) :: ionicOffset
-     real(gp), dimension(:,:,:), pointer :: ionicPot
    contains
-     private
      procedure, public :: init
      procedure, public :: h_potential
      final  :: cleanup
@@ -49,9 +45,6 @@ contains
     !!      the computation later.
     ps%pkernel = pkernel_init(iproc, nproc, dict_input, geocode, ndims, hgrids)
     call pkernel_set(ps%pkernel, verbose=.true.)
-    !>@todo Associate the ionic potential later.
-    nullify(ps%ionicPot)
-    ps%ionicOffset = 0._gp
   end subroutine init
 
   subroutine cleanup(ps)
@@ -62,14 +55,25 @@ contains
     call pkernel_free(ps%pkernel)
   end subroutine cleanup
 
-  subroutine h_potential(ps, rhopot, ehartree)
+  subroutine h_potential(ps, rho, hartree, np, ionicPot, ionicOffset, ehartree)
+    use density_esl, only: density_t
     use Poisson_Solver, only: PS_H_potential => H_potential
     implicit none
     class(psolver_t), intent(inout) :: ps
-    real(gp), dimension(*), intent(inout) :: rhopot
+    type(density_t), intent(in) :: rho
+    real(gp), dimension(*), intent(out) :: hartree
+    integer, intent(in) :: np
+    real(gp), dimension(*), intent(out) :: ionicPot
+    real(gp), intent(in) :: ionicOffset
     real(gp), intent(out) :: ehartree
 
-    call PS_H_potential('G', ps%pkernel, rhopot, ps%ionicPot, ehartree, &
-         & ps%ionicOffset, associated(ps%ionicPot))
+    integer :: ip
+
+    !Computing the hartree potential
+    !We first copy the density into the potential array
+    forall(ip = 1:np)
+       hartree(ip) = rho%density(ip)
+    end forall
+    call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true.)
   end subroutine h_potential
 end module psolver_esl
