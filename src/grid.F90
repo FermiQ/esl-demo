@@ -10,8 +10,9 @@ module grid_esl
 
  !Data structure for the real space grid
  type grid_t
-   real(kind=dp) :: hgrid(3)
-   integer :: ndims(3) 
+   real(kind=dp) :: hgrid(3) !< Real space spacing
+   integer :: ndims(3)  !< Number of points in each directions
+   integer :: np !< Total number of points in the real space grid
    contains
     private
     procedure, public :: init
@@ -35,6 +36,8 @@ module grid_esl
      do idim = 1,3
        this%ndims(idim) = acell/this%hgrid(idim)
      end do
+
+     this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
 
    end subroutine init
 

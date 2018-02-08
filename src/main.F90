@@ -1,5 +1,4 @@
 program esl_demo
- use basis_esl, only : basis_t
  use fdf, only : fdf_init, fdf_shutdown, fdf_string
  use hamiltonian_esl, only : hamiltonian_t
  use iso_fortran_env, only : ou=>OUTPUT_UNIT
@@ -12,7 +11,6 @@ program esl_demo
 
  implicit none
 
- type(basis_t)       :: basis
  type(hamiltonian_t) :: hamiltonian
  type(system_t)      :: system
  type(scf_t)         :: scf
@@ -40,8 +38,7 @@ program esl_demo
  open(newunit=of,file=trim(output_file),action="write")
  call init_random()
  call system%init(of)
- call basis%init()
- call hamiltonian%init(basis,grid)
+ call hamiltonian%init(system)
  call scf%init()
  call smear%init()
 

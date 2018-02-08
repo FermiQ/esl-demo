@@ -1,8 +1,8 @@
 module hamiltonian_esl
-  use basis_esl
   use density_esl
   use energy_esl
   use potential_esl
+  use system_esl
 
  implicit none
  private
@@ -26,13 +26,13 @@ module hamiltonian_esl
 
    !Initialize the Hamiltonian
    !----------------------------------------------------
-   subroutine init(this, basis)
+   subroutine init(this, sys)
      class(hamiltonian_t) :: this
-     type(basis_t), intent(in) :: basis
+     type(system_t), intent(in) :: sys
 
-     call density_init(this%density, basis)
+     call density_init(this%density, sys%basis)
      call this%energy%init()
-     call potential_init(this%potentials, basis)
+     call potential_init(this%potentials, sys%basis, sys%grid)
 
    end subroutine init
 
