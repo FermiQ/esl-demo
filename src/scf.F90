@@ -5,6 +5,7 @@ module scf_esl
   use basis_esl
   use density_esl
   use hamiltonian_esl
+  use mixing_esl
   use potential_esl
   use system_esl
 
@@ -19,6 +20,8 @@ module scf_esl
   type scf_t 
    real(kind=dp) :: tol_reldens 
    integer(kind=ip) :: max_iter !< Maximum number of iterations
+ 
+   type(mixing_t)   :: mixer
    contains
      private
      procedure, public :: init
@@ -36,6 +39,9 @@ module scf_esl
    this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
    this%max_iter    = fdf_get('SCFMaxIterations', 100)
    !Parse here the data for the SCF
+
+   call this%mixer%init()
+
  end subroutine init
 
  !Cleaning up
@@ -49,17 +55,25 @@ module scf_esl
  !Perform the self-consistent field calculation
  !----------------------------------------------------
  subroutine scf_loop(this, elsi, hamiltonian, system, states, smear)
-  use smear_esl
-  use states_esl
-    use elsi_wrapper_esl
-    type(scf_t),         intent(inout) :: this
-    type(elsi_t), intent(inout) :: elsi
+   use smear_esl
+   use states_esl
+   use elsi_wrapper_esl
+
+   type(scf_t),         intent(inout) :: this
+   type(elsi_t), intent(inout) :: elsi
    type(hamiltonian_t), intent(inout) :: hamiltonian
    type(system_t),         intent(in) :: system
    type(states_t),         intent(in) :: states
    type(smear_t), intent(inout) :: smear
   
    integer :: iter !< Interation
+   real(kind=dp), allocatable :: rhoin(:)
+   real(kind=dp), allocatable :: rhoout(:)
+   real(kind=dp), allocatable :: rhonew(:)
+
+   allocate(rhoin(1:system%grid%np))
+   allocate(rhoout(1:system%grid%np))
+   allocate(rhonew(1:system%grid%np))
 
    do iter = 1, this%max_iter
      !Diagonalization (ELSI/KSsolver)
@@ -67,8 +81,13 @@ module scf_esl
      !Update occupations
      call smear_calc_fermi_and_occ(smear, elsi, states)
 
+
+     !Saving the in density for the mixing
+     call hamiltonian%density%get_den(rhoin)
      !Calc. density
      call hamiltonian%density%calculate(system%basis)
+     !Saving the out density for the mixing
+     call hamiltonian%density%get_den(rhoin)
 
      !Calc. potentials
      call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
@@ -79,10 +98,14 @@ module scf_esl
      !Test tolerance and print status
 
      !Mixing (BLAS/LAPACK)
+     call mixing_linear(this%mixer, system%grid%np, rhoin, rhoout,rhonew)  
+     call hamiltonian%density%set_den(rhonew)
 
      !Update Hamiltonian matrix
 
    end do
+
+   deallocate(rhoin, rhoout, rhonew)
 
  end subroutine scf_loop
 

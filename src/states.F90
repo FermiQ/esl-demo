@@ -48,11 +48,13 @@ module states_esl
      this%ncoef = basis%size
 
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
+     allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
      
      do ik = 1, nkpt
        do isp = 1, nspin
          do ist = 1, nstates
-           allocate(this%states(ist, isp, ik)%coef(1:basis%size))
+            allocate(this%states(ist, isp, ik)%coef(1:basis%size))
+            this%occ_numbers(ist, isp, ik) = 0._dp
          end do 
        end do
      end do
@@ -67,16 +69,18 @@ module states_esl
 
      integer :: ist, isp, ik
 
-     do ik = 1, this%nkpt
-       do isp = 1, this%nspin
-         do ist = 1, this%nstates
-           if(allocated(this%states(ist, isp, ik)%coef)) &
-             deallocate(this%states(ist, isp, ik)%coef)
-         end do 
-       end do
-     end do
-
-     if(allocated(this%states)) deallocate(this%states)
+     if(allocated(this%states)) then
+        do ik = 1, this%nkpt
+           do isp = 1, this%nspin
+              do ist = 1, this%nstates
+                 if(allocated(this%states(ist, isp, ik)%coef)) &
+                      deallocate(this%states(ist, isp, ik)%coef)
+              end do
+           end do
+        end do
+        deallocate(this%states)
+     end if
+     if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
 
    end subroutine states_end
 
