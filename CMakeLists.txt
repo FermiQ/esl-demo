@@ -37,6 +37,7 @@ add_executable(${target_name}
   ${src_dir}/grid.F90
   ${src_dir}/hamiltonian.F90
   ${src_dir}/message.F90
+  ${src_dir}/mixing.F90
   ${src_dir}/numeric.F90
   ${src_dir}/psolver.F90
   ${src_dir}/potential.F90

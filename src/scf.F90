@@ -5,6 +5,7 @@ module scf_esl
   use basis_esl
   use density_esl
   use hamiltonian_esl
+  use mixing_esl
   use potential_esl
   use system_esl
 
@@ -19,6 +20,8 @@ module scf_esl
   type scf_t 
    real(kind=dp) :: tol_reldens 
    integer(kind=ip) :: max_iter !< Maximum number of iterations
+ 
+   type(mixing_t)   :: mixer
    contains
      private
      procedure, public :: init
@@ -36,6 +39,9 @@ module scf_esl
    this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
    this%max_iter    = fdf_get('SCFMaxIterations', 100)
    !Parse here the data for the SCF
+
+   call this%mixer%init()
+
  end subroutine init
 
  !Cleaning up
@@ -79,6 +85,7 @@ module scf_esl
      !Test tolerance and print status
 
      !Mixing (BLAS/LAPACK)
+     call mixing_linear(this%mixer)  
 
      !Update Hamiltonian matrix
 
