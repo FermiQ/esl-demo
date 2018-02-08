@@ -15,7 +15,8 @@ module states_esl
            states_summary
 
  type wfn_t
-   real(kind=dp), allocatable :: coef(:) !<Coefficients of the wavefunction in the basis
+   real(kind=dp),    allocatable :: dcoef(:) !<Coefficients of the wavefunction in the basis
+   complex(kind=dp), allocatable :: zcoef(:)
  end type wfn_t
 
           
@@ -26,6 +27,8 @@ module states_esl
    integer :: nspin
    integer :: ncoef
    integer :: nel  !< Number of electrons
+
+   logical :: complex_states
 
    type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
    real(kind=dp), allocatable :: occ_numbers(:,:,:)
@@ -53,16 +56,28 @@ module states_esl
 
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
      allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
+     this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
 
-     
-     do ik = 1, nkpt
-       do isp = 1, nspin
-         do ist = 1, nstates
-            allocate(this%states(ist, isp, ik)%coef(1:basis%size))
-            this%occ_numbers(ist, isp, ik) = 0._dp
-         end do 
-       end do
-     end do
+     select case(basis%basis_type)
+       case(PLANEWAVES)
+         this%complex_states = .true.
+         do ik = 1, nkpt
+           do isp = 1, nspin
+             do ist = 1, nstates
+               allocate(this%states(ist, isp, ik)%zcoef(1:basis%size))
+             end do 
+           end do
+         end do
+       case(ATOMICORBS)
+         this%complex_states = .false.
+         do ik = 1, nkpt
+           do isp = 1, nspin
+             do ist = 1, nstates
+               allocate(this%states(ist, isp, ik)%dcoef(1:basis%size))
+             end do
+           end do
+         end do
+     end select
 
    end subroutine states_init
 
@@ -78,8 +93,10 @@ module states_esl
         do ik = 1, this%nkpt
            do isp = 1, this%nspin
               do ist = 1, this%nstates
-                 if(allocated(this%states(ist, isp, ik)%coef)) &
-                      deallocate(this%states(ist, isp, ik)%coef)
+                 if(allocated(this%states(ist, isp, ik)%dcoef)) &
+                      deallocate(this%states(ist, isp, ik)%dcoef)
+                 if(allocated(this%states(ist, isp, ik)%zcoef)) &
+                      deallocate(this%states(ist, isp, ik)%zcoef)
               end do
            end do
         end do
@@ -96,16 +113,32 @@ module states_esl
      type(states_t):: this
 
      integer :: ist, isp, ik
+     real(kind=dp), allocatable :: tmp_re(:), tmp_im(:)
 
      call init_random()
 
-     do ik = 1, this%nkpt
-       do isp = 1, this%nspin
-         do ist = 1, this%nstates
-           call random_number(this%states(ist, isp, ik)%coef(1:this%ncoef))
+     if(this%complex_states) then
+       allocate(tmp_re(1:this%ncoef))
+       allocate(tmp_im(1:this%ncoef))
+       do ik = 1, this%nkpt
+         do isp = 1, this%nspin
+           do ist = 1, this%nstates
+             call random_number(tmp_re(1:this%ncoef))
+             call random_number(tmp_im(1:this%ncoef))
+             this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) + cmplx(0.d0,1.d0)*tmp_im(1:this%ncoef) 
+           end do
          end do
        end do
-     end do
+       deallocate(tmp_re, tmp_im)
+     else 
+       do ik = 1, this%nkpt
+         do isp = 1, this%nspin
+           do ist = 1, this%nstates
+             call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
+           end do
+         end do
+       end do
+     end if
 
    end subroutine states_randomize
 
