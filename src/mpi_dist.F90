@@ -11,19 +11,20 @@ module mpi_dist
   use mpi
 #endif
 
+  ! MPI relies on standard integer sizes
+  ! However, if one wishes to build this application
+  ! with default long integers, we have to be careful.
+  use prec, only: im_ => ip
+
+  ! To increase precision for the container
+  ! simply change the pointed to variable.
+  use prec, only: ii_ => ip
+
   implicit none
 
   private
 
   public :: mpi_dist_t
-
-  ! MPI relies on standard integer sizes
-  ! However, if one wishes to build this application
-  ! with default long integers, we have to be careful.
-  integer, parameter :: im_ = selected_int_kind(9)
-
-  ! Data-type for the contained elements
-  integer, parameter :: ii_ = selected_int_kind(9)
 
   ! There are problems with having abstract interfaces and
   ! methods callable from sub-classed types.

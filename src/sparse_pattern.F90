@@ -1,12 +1,11 @@
 module sparse_pattern
 
+  ! The default container integer kind
+  use prec, only: ii_ => ip
+  
   implicit none
   
   private
-
-  ! This sparse pattern uses basic integers, but may easily be switched
-  ! to use long integers.
-  integer, parameter :: ii_ = selected_int_kind(9) ! int (integer*4)
 
   ! Often used private variables
   integer(ii_), parameter :: ONE = 1_ii_
@@ -156,19 +155,19 @@ contains
     end if
 
     ! initial number of non-zero elements
-    this%nz = 0
+    this%nz = ZERO
     ! this object is *not* finalized
     this%finalized = .false.
 
     ! Allocate data-structure
-    allocate(this%rptr(nr+1))
+    allocate(this%rptr(nr+ONE))
     allocate(this%nrow(nr))
     this%nrow = ZERO
     allocate(this%column(this%nt))
 
     ! pre-define pointers to sparse pattern
     lnp = this%nt / this%nr
-    this%rptr(1) = ONE
+    this%rptr(ONE) = ONE
     do i = ONE , nr
        this%rptr(i) = this%rptr(i-ONE) + np
     end do
@@ -251,12 +250,12 @@ contains
       ! So if the following pointer is placed further, then proceed
       lind = this%rptr(ir) + this%nrow(ir)
       ! Check whether there is room
-      add = this%rptr(ir + 1) - lind > 0
+      add = this%rptr(ir + ONE) - lind > ZERO
 
       if ( .not. add ) return
 
       this%column(lind) = ic
-      this%nrow(ir) = this%nrow(ir) + 1
+      this%nrow(ir) = this%nrow(ir) + ONE
 
     end function simple_add
 
