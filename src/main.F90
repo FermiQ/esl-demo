@@ -8,7 +8,8 @@ program esl_demo
  use system_esl, only : system_t
  use numeric_esl, only : init_random
  use smear_esl, only : smear_t
- use elsi_esl, only : elsi_t
+ use states_esl, only : states_t
+ use elsi_wrapper_esl, only : elsi_t
 
  implicit none
 
@@ -17,6 +18,7 @@ program esl_demo
  type(system_t)      :: system
  type(scf_t)         :: scf
  type(smear_t)         :: smear
+ type(states_t)         :: states
  type(elsi_t)         :: elsi
  character(len=100) :: input_file,echo_file,output_file
  integer :: of
@@ -42,9 +44,9 @@ program esl_demo
  output_file = fdf_string('output', 'sample.out')
  open(newunit=of,file=trim(output_file),action="write")
  call init_random()
- call system%init(of)
+ call system%init()
  call basis%init()
- call hamiltonian%init(system)
+ call hamiltonian%init(basis, states)
  call scf%init()
  call smear%init()
 
@@ -53,7 +55,7 @@ program esl_demo
 
 
  !SCF loop
- call scf_loop(scf)
+ call scf_loop(scf, elsi, hamiltonian, system, states, basis, smear)
 
  
  !Outputs

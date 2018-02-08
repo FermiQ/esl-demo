@@ -5,10 +5,6 @@ module system_esl
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical
 
-  use basis_esl
-  use smear_esl
-  use states_esl
-
   implicit none
   private
 
@@ -25,9 +21,6 @@ module system_esl
     character(len=10), dimension(:), allocatable :: el,sp
     character(len=100), dimension(:), allocatable :: potName
     real(dp) :: vol
-
-    type(basis_t) :: basis
-    real(dp) :: nElectrons
   contains
     private
     procedure, public :: init
@@ -47,11 +40,6 @@ module system_esl
      integer :: j,i
      type(block_fdf)            :: blk
      type(parsed_line), pointer :: pline
-
-     integer :: nstates, nspin
-
-     call sys%basis%init()
-     call states_init(sys%states, sys%basis, nstates, nspin, 1)
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
@@ -114,8 +102,6 @@ module system_esl
     if (allocated(sys%el)) deallocate(sys%el)
     if (allocated(sys%sp)) deallocate(sys%sp)
     if (allocated(sys%potName)) deallocate(sys%potName)
-
-    call states_end(sys%states)
 
   end subroutine cleanup
 
