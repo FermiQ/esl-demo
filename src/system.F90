@@ -64,7 +64,7 @@ module system_esl
      sys%icell=invert_cell(sys%cell)
 
      !Init the grid
-     call sys%grid%init(sys%basis, sys%cell(1,1))
+     call sys%grid%init(sys%basis, sys%cell)
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
@@ -142,6 +142,7 @@ module system_esl
     call yaml_mapping_close()
 
     call sys%grid%summary()
+    call sys%basis%summary()
   end subroutine summary
 
   !----------------------------------------------------

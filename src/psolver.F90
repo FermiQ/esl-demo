@@ -29,7 +29,7 @@ contains
 
   subroutine init(ps, iproc, nproc, geocode, ndims, hgrids)
     use Poisson_Solver, only: pkernel_init, pkernel_set
-    use dictionaries, only: dictionary, dict_init
+    use dictionaries, only: dictionary, dict_init, dict_free
     implicit none
     class(psolver_t), intent(inout) :: ps
     integer, intent(in) :: iproc, nproc
@@ -45,6 +45,7 @@ contains
     !>@todo Poisson kernel is initialised _and_ computed here, may differ
     !!      the computation later.
     ps%pkernel = pkernel_init(iproc, nproc, dict_input, geocode, ndims, hgrids)
+    call dict_free(dict_input)
     call pkernel_set(ps%pkernel, verbose=.true.)
   end subroutine init
 
