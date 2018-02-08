@@ -100,17 +100,24 @@ module grid_esl
 
    end subroutine summary
 
-   subroutine get_atomic_orbital(this, ll, mm, ao, grad_ao)
+   !Evaluate an atomic orbital on the real-space grid
+   !----------------------------------------------------
+   subroutine get_atomic_orbital(this, ll, mm, r_at, ao, grad_ao)
      class(grid_t) :: this
      integer,        intent(in) :: ll
      integer,        intent(in) :: mm
+     real(kind=dp), intent(out) :: r_at(3)
      real(kind=dp), intent(out) :: ao(:)
      real(kind=dp), intent(out) :: grad_ao(:,:)
 
      integer :: ip
+     real(kind=dp) :: x, y, z
 
      do ip = 1, this%np
-       call grylmr(this%r(1,ip),this%r(2,ip),this%r(3,ip), ll, mm, ao(ip), grad_ao(1:3,ip)) 
+       x = this%r(1,ip) - r_at(1)
+       y = this%r(2,ip) - r_at(2)
+       z = this%r(3,ip) - r_at(3)
+       call grylmr(x, y, z, ll, mm, ao(ip), grad_ao(1:3,ip)) 
      end do
  
      !Here we need to multiply by the radial part
