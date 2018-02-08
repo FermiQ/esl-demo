@@ -9,7 +9,7 @@
 !< matrix processor to have rank 0.
 module mpi_dist_block_cyclic
 
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
   use mpi
 #endif
   use mpi_dist
@@ -79,7 +79,7 @@ contains
     class(mpi_dist_block_cyclic_t), intent(in) :: this
     integer(ii_) :: N
 
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     integer(ii_) :: iblock
 
     ! Abstracted from ScaLAPACK/numroc
@@ -107,7 +107,7 @@ contains
     integer(ii_), intent(in) :: global
     integer(ii_) :: local
 
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     ! Abstracted from ScaLAPACK/indxg2l
     local = this%block*( (global-ONE)/(this%block*this%size)) + mod(global-ONE,this%block)+ONE
 #else
@@ -122,7 +122,7 @@ contains
     integer(ii_), intent(in) :: local
     integer(ii_) :: global
     
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     ! Abstracted from ScaLAPACK/indxl2g
     global = this%size * this%block * ((local-ONE) / this%block) + &
          mod(local - ONE, this%block) + this%rank * this%block + ONE
@@ -138,7 +138,7 @@ contains
     integer(ii_), intent(in) :: global
     integer(ii_) :: rank
     
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     ! Abstracted from ScaLAPACK/indxg2p
     rank = mod( (global - ONE) / this%block, this%size)
 #else

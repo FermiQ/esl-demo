@@ -4,7 +4,7 @@
 !< 1 element in a cyclic manner.
 module mpi_dist_cyclic
 
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
   use mpi
 #endif
   use mpi_dist
@@ -68,7 +68,7 @@ contains
     class(mpi_dist_cyclic_t), intent(in) :: this
     integer(ii_) :: N
 
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     N = this%global_N / this%size
     ! Figure out if this node has any remaining elements
     if ( this%glob_2_rank(this%global_N) <= this%rank ) then
@@ -86,7 +86,7 @@ contains
     integer(ii_), intent(in) :: global
     integer(ii_) :: local
     
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     ! Figure out if this node has this element
     if ( this%glob_2_rank(global) == this%rank ) then
        local = global / this%size
@@ -105,7 +105,7 @@ contains
     integer(ii_), intent(in) :: local
     integer(ii_) :: global
     
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     global = this%size * local + this%rank
 #else
     ! Non MPI
@@ -119,7 +119,7 @@ contains
     integer(ii_), intent(in) :: global
     integer(ii_) :: rank
 
-#ifdef _PLACEHOLDER_MPI
+#ifdef WITH_MPI
     rank = mod(global - ONE, this%global_N)
 #else
     ! Non MPI
