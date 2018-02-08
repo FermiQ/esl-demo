@@ -48,10 +48,16 @@ module scf_esl
 
  !Perform the self-consistent field calculation
  !----------------------------------------------------
- subroutine scf_loop(this, hamiltonian, system)
-   type(scf_t),         intent(inout) :: this
+ subroutine scf_loop(this, elsi, hamiltonian, system, states, smear)
+  use smear_esl
+  use states_esl
+    use elsi_wrapper_esl
+    type(scf_t),         intent(inout) :: this
+    type(elsi_t), intent(inout) :: elsi
    type(hamiltonian_t), intent(inout) :: hamiltonian
    type(system_t),         intent(in) :: system
+   type(states_t),         intent(in) :: states
+   type(smear_t), intent(inout) :: smear
   
    integer :: iter !< Interation
 
@@ -59,7 +65,7 @@ module scf_esl
      !Diagonalization (ELSI/KSsolver)
  
      !Update occupations
-     call smear_calc_fermi_and_occ(system%smear, system%states)
+     call smear_calc_fermi_and_occ(smear, elsi, states)
 
      !Calc. density
      call density_calc(hamiltonian%density, system%basis)  

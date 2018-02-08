@@ -44,6 +44,8 @@ add_executable(${target_name}
   ${src_dir}/smear.F90
   ${src_dir}/states.F90
   ${src_dir}/system.F90
+  ${src_dir}/elsi_wrapper.F90
+  ${src_dir}/elsi_fake.F90
   )
 target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES})
 target_include_directories(${target_name} PUBLIC ${FDF_INCLUDE_DIRS} ${PSOLVER_INCLUDE_DIRS})

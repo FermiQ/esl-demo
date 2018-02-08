@@ -26,7 +26,7 @@ module density_esl
    subroutine density_init(this, basis, grid)
      type(density_t), intent(inout) :: this
      type(basis_t),   intent(in)    :: basis
-     type(basis_t),   intent(in)    :: grid
+     type(grid_t),    intent(in)    :: grid
 
      !Parse the informations from the input file
      select case(basis%basis_type)

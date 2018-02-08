@@ -58,16 +58,24 @@ contains
 
   subroutine cleanup(this)
     type(smear_t) :: this
-    end cleanup
+  end subroutine cleanup
 
    !Compute the Fermi level and occupation numbers
    !----------------------------------------------------
-   subroutine smear_calc_fermi_and_occ(this, states)
+  subroutine smear_calc_fermi_and_occ(this, elsi, states)
+    use elsi_wrapper_esl
      type(smear_t), intent(inout) :: this
+     type(elsi_t), intent(inout) :: elsi
      type(states_t),   intent(in) :: states
 
-     call elsi_calc_fermi_and_occ(this%smearing,this%eigenvalues,&
-          states%occ_numbers,this%fermi_level)
+     integer :: n_electron
+     !@todo: put this in states
+     real(dp), dimension(states%nkpt) :: k_weights
+
+     !@todo: don't compute n_electron
+     n_electron = sum(states%occ_numbers(:,:,1))
+     call elsi_calc_fermi_and_occ(elsi, n_electron, states%nstates, states%nspin, states%nkpt, &
+          & this%eigenvalues, states%occ_numbers, k_weights, this%fermi_level)
 
     end subroutine smear_calc_fermi_and_occ
 

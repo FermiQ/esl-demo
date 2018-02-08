@@ -6,6 +6,7 @@ module potential_esl
   use energy_esl
   use grid_esl
   use psolver_esl
+  use states_esl
 
  implicit none
  private
@@ -22,7 +23,9 @@ module potential_esl
 
    real(kind=dp), allocatable :: hartree(:)  !Hartree potential
    real(kind=dp), allocatable :: external(:) !External local potential
-   real(kind=dp), allocatable :: xc(:)  !xc potential
+   real(kind=dp), allocatable :: xc(:,:)  !xc potential
+
+   real(dp) :: ionicOffset !< Offset of the external potential
 
    type(psolver_t) :: psolver
  end type 
@@ -31,10 +34,11 @@ module potential_esl
 
    !Initialize the potentials
    !----------------------------------------------------
-   subroutine potential_init(this, basis, grid)
+   subroutine potential_init(this, basis, grid, states)
      type(potential_t) :: this
      type(basis_t), intent(in) :: basis
      type(grid_t),  intent(in) :: grid
+     type(states_t), intent(in):: states
 
      character(len = 1) :: geocode
 
@@ -42,7 +46,7 @@ module potential_esl
 
      allocate(this%hartree(1:this%np))
      allocate(this%external(1:this%np))
-     allocate(this%xc(1:this%np))
+     allocate(this%xc(1:this%np, 1:states%nspin))
 
      select case(basis%basis_type)
        case(PLANEWAVES)
@@ -50,6 +54,8 @@ module potential_esl
        case(ATOMICORBS)
          geocode = 'F'
      end select
+
+     this%ionicOffset = 0._dp
      call this%psolver%init(1, 1, geocode, grid%ndims, grid%hgrid)    
 
      !Here we need to init the libxc and pspio parts 
@@ -62,9 +68,9 @@ module potential_esl
    subroutine potential_end(this)
      type(potential_t):: this
 
-     if(allocated(this%hartree)) call deallocate(this%hartree)
-     if(allocated(this%external)) call deallocate(this%external)
-     if(allocated(this%xc)) call deallocate(this%xc)
+     if(allocated(this%hartree)) deallocate(this%hartree)
+     if(allocated(this%external)) deallocate(this%external)
+     if(allocated(this%xc)) deallocate(this%xc)
 
    end subroutine potential_end
 
@@ -76,14 +82,8 @@ module potential_esl
      type(density_t),   intent(in)    :: density
      type(energy_t),    intent(inout) :: energy
 
-     integer :: ip
-
-     !Computing the hartree potential
-     !We first copy the density into the potential array
-     forall(ip = 1:this%np)
-       this%hartree(ip) = density%density(ip)
-     end forall
-     call this%psolver%h_potential(this%hartree, energy%hartree) 
+     call this%psolver%h_potential(density, this%hartree, this%np, &
+          & this%external, this%ionicOffset, energy%hartree)
 
      !Here we need to compute the xc potential
 
