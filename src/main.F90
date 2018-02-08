@@ -2,7 +2,7 @@ program esl_demo
  use fdf, only : fdf_init, fdf_shutdown, fdf_string
  use hamiltonian_esl, only : hamiltonian_t
  use iso_fortran_env, only : ou=>OUTPUT_UNIT
- use prec, only : dp, ip
+ use prec, only : dp
  use scf_esl, only : scf_t, scf_loop
  use states_esl
  use system_esl, only : system_t
