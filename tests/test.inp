@@ -18,3 +18,5 @@ Smearing COLD
 
 BasisSet Planewaves
 cut-off 25
+
+SCFMaxIterations 5
