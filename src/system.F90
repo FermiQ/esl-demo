@@ -6,6 +6,7 @@ module system_esl
                    fdf_physical
 
   use basis_esl
+  use grid_esl
   use smear_esl
   use states_esl
 
@@ -27,6 +28,7 @@ module system_esl
     real(dp) :: vol
 
     type(basis_t) :: basis
+    type(grid_t)  :: grid
     real(dp) :: nElectrons
   contains
     private
@@ -52,6 +54,19 @@ module system_esl
      integer :: nstates, nspin
 
      call sys%basis%init()
+
+     isdef = fdf_defined('cubic')
+     sys%cell=0.0_dp
+     if (isDef) then
+       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Bohr')
+       sys%cell(2,2)=sys%cell(1,1)
+       sys%cell(3,3)=sys%cell(1,1)
+     endif
+     sys%icell=invert_cell(sys%cell)
+
+     !Init the grid
+     call sys%grid%init(sys%basis, sys%cell(1,1))
+
      call states_init(sys%states, sys%basis, nstates, nspin, 1)
 
      isdef = .false.
@@ -93,15 +108,6 @@ module system_esl
      else
      endif
 
-     isdef = fdf_defined('cubic')
-     sys%cell=0.0_dp
-     if (isDef) then
-       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Bohr')
-       sys%cell(2,2)=sys%cell(1,1)
-       sys%cell(3,3)=sys%cell(1,1)
-     endif
-
-     sys%icell=invert_cell(sys%cell)
      call sys%summary(of)
 
    end subroutine init
