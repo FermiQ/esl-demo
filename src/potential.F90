@@ -69,9 +69,9 @@ module potential_esl
    subroutine potential_end(this)
      type(potential_t):: this
 
-     if(allocated(this%hartree)) call deallocate(this%hartree)
-     if(allocated(this%external)) call deallocate(this%external)
-     if(allocated(this%xc)) call deallocate(this%xc)
+     if(allocated(this%hartree)) deallocate(this%hartree)
+     if(allocated(this%external)) deallocate(this%external)
+     if(allocated(this%xc)) deallocate(this%xc)
 
    end subroutine potential_end
 

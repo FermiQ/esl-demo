@@ -1,11 +1,12 @@
 module elsi_wrapper_esl
-
+  use prec
+  use elsi
   implicit none
   private
 
   public :: elsi_t
   public :: elsi_calc_dm            !< Compute density matrix
-  public :: elsi_calc_ev            !< Compute eigensolutions
+  !public :: elsi_calc_ev            !< Compute eigensolutions
   public :: elsi_calc_fermi_and_occ !< Compute Fermi level and occupations
   
   !Data structure for ELSI
@@ -39,15 +40,15 @@ module elsi_wrapper_esl
 
      !Initialize an ELSI handle
      !TODO: Feed in system info
-     call elsi_init(this%e_h,ELPA,MULTI_PROC,PEXSI_CSC,n_basis,n_electron,n_state)
+     !call elsi_init(this%e_h,ELPA,MULTI_PROC,PEXSI_CSC,n_basis,n_electron,n_state)
 
      !Initialize ELSI MPI
      !TODO: Feed in whatever communicator
-     call elsi_set_mpi(this%e_h,mpi_comm)
+     !call elsi_set_mpi(this%e_h,mpi_comm)
 
      !Initialize ELSI SPARSITY PATTERN
      !TODO: Feed in sparse matrix info
-     call elsi_set_csc(this%e_h,global_nnz,local_nnz,local_ncol,row_idx,col_ptr)
+     !call elsi_set_csc(this%e_h,global_nnz,local_nnz,local_ncol,row_idx,col_ptr)
 
    end subroutine init
  
@@ -56,7 +57,7 @@ module elsi_wrapper_esl
    subroutine cleanup(this)
      type(elsi_t) :: this
 
-     call elsi_finalize(elsi_t%e_h)
+     call elsi_finalize(this%e_h)
 
    end subroutine cleanup
 
@@ -72,11 +73,18 @@ module elsi_wrapper_esl
 
    !Compute density matrix by ELSI
    !----------------------------------------------------
-   subroutine elsi_calc_fermi_and_occ()
+   subroutine elsi_calc_fermi_and_occ(this, n_electron, n_state, n_spin, n_kpt, &
+        & evals, occ_nums, k_weights, fermi)
+     type(elsi_t), intent(inout) :: this
+     integer, intent(in) :: n_electron, n_state, n_spin, n_kpt
+     real(dp), dimension(n_state,n_spin,n_kpt), intent(in) :: evals
+     real(dp), dimension(n_state,n_spin,n_kpt), intent(in) :: occ_nums
+     real(dp), dimension(n_kpt), intent(in) :: k_weights
+     real(dp), intent(out) :: fermi
 
      !TODO: Wait for the input info
      call elsi_compute_mu_and_occ(this%e_h,n_electron,n_state,n_spin,n_kpt,&         
-             k_weights,evals,occ_nums,fermi)
+          k_weights,evals,occ_nums,fermi)
 
    end subroutine elsi_calc_fermi_and_occ
 
