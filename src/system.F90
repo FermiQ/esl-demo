@@ -130,15 +130,15 @@ module system_esl
     integer :: i
 
     call yaml_mapping_open("system")
+    call yaml_map("Cell", sys%cell)
+    call yaml_sequence_open("Atom Coordinates", advance = "no")
     call yaml_comment("Element | X| Y| Z|", hfill = "-")
-    call yaml_sequence_open("Atom Coordinates")
     do i =1, sys%nAtoms
-       call yaml_mapping_open(flow = .true.)
+       call yaml_sequence(advance="no")
        call yaml_map(trim(sys%el(i)), sys%coord(:,i))
-       call yaml_mapping_close()
     enddo
-    call yaml_map("Volume (Bohr^3)", sys%volume())
     call yaml_sequence_close()
+    call yaml_map("Volume (Bohr^3)", sys%volume())
     call yaml_mapping_close()
 
   end subroutine summary

@@ -29,9 +29,9 @@ contains
 
   subroutine init(ps, iproc, nproc, geocode, ndims, hgrids)
     use Poisson_Solver, only: pkernel_init, pkernel_set
-    use dictionaries, only: dictionary
+    use dictionaries, only: dictionary, dict_init
     implicit none
-    class(psolver_t), intent(out) :: ps
+    class(psolver_t), intent(inout) :: ps
     integer, intent(in) :: iproc, nproc
     character(len = 1), intent(in) :: geocode
     integer, dimension(3), intent(in) :: ndims
@@ -41,6 +41,7 @@ contains
 
     !>@todo Use default options in kernel creation for the moment.
     nullify(dict_input)
+    call dict_init(dict_input)
     !>@todo Poisson kernel is initialised _and_ computed here, may differ
     !!      the computation later.
     ps%pkernel = pkernel_init(iproc, nproc, dict_input, geocode, ndims, hgrids)
