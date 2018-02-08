@@ -15,3 +15,6 @@ H nameH
 %endblock potentials
 
 Smearing COLD
+
+BasisSet Planewaves
+cut-off 25
