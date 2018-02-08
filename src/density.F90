@@ -2,6 +2,7 @@ module density_esl
   use prec, only : dp,ip
 
   use basis_esl
+  use grid_esl
 
   implicit none
   private
@@ -22,9 +23,10 @@ module density_esl
 
    !Initialize the density
    !----------------------------------------------------
-   subroutine density_init(this, basis)
+   subroutine density_init(this, basis, grid)
      type(density_t), intent(inout) :: this
      type(basis_t),   intent(in)    :: basis
+     type(grid_t),    intent(in)    :: grid
 
      !Parse the informations from the input file
      select case(basis%basis_type)

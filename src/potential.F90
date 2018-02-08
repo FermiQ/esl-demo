@@ -4,6 +4,7 @@ module potential_esl
   use basis_esl
   use density_esl
   use energy_esl
+  use grid_esl
   use psolver_esl
   use states_esl
 
@@ -33,17 +34,15 @@ module potential_esl
 
    !Initialize the potentials
    !----------------------------------------------------
-   subroutine potential_init(this, basis, states)
+   subroutine potential_init(this, basis, grid, states)
      type(potential_t) :: this
      type(basis_t), intent(in) :: basis
+     type(grid_t),  intent(in) :: grid
      type(states_t), intent(in):: states
 
-     integer :: ndim
-     real(kind=dp) :: hgrid
      character(len = 1) :: geocode
 
-     this%np = ndim*ndim*ndim
-     
+     this%np = grid%np 
 
      allocate(this%hartree(1:this%np))
      allocate(this%external(1:this%np))
@@ -54,10 +53,10 @@ module potential_esl
          geocode = 'P'
        case(ATOMICORBS)
          geocode = 'F'
-      end select
+     end select
 
-      this%ionicOffset = 0._dp
-     call this%psolver%init(1, 1, geocode, (/ndim, ndim, ndim/), (/hgrid, hgrid, hgrid/))    
+     this%ionicOffset = 0._dp
+     call this%psolver%init(1, 1, geocode, grid%ndims, grid%hgrid)    
 
      !Here we need to init the libxc and pspio parts 
 

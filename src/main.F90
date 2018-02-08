@@ -1,19 +1,17 @@
 program esl_demo
- use basis_esl, only : basis_t
  use fdf, only : fdf_init, fdf_shutdown, fdf_string
  use hamiltonian_esl, only : hamiltonian_t
  use iso_fortran_env, only : ou=>OUTPUT_UNIT
  use prec, only : dp, ip
  use scf_esl, only : scf_t, scf_loop
+ use states_esl
  use system_esl, only : system_t
  use numeric_esl, only : init_random
  use smear_esl, only : smear_t
- use states_esl, only : states_t
  use elsi_wrapper_esl, only : elsi_t
 
  implicit none
 
- type(basis_t)       :: basis
  type(hamiltonian_t) :: hamiltonian
  type(system_t)      :: system
  type(scf_t)         :: scf
@@ -22,6 +20,12 @@ program esl_demo
  type(elsi_t)         :: elsi
  character(len=100) :: input_file,echo_file,output_file
  integer :: of
+
+ !--------------TEMP --------------------
+ integer :: nstates, nspin
+ !--------------------------------------
+
+
  !Init MPI
 
  !Init data basis strucutes 
@@ -45,8 +49,8 @@ program esl_demo
  open(newunit=of,file=trim(output_file),action="write")
  call init_random()
  call system%init()
- call basis%init()
- call hamiltonian%init(basis, states)
+ call states_init(states, system%basis, nstates, nspin, 1)
+ call hamiltonian%init(system, states)
  call scf%init()
  call smear%init()
 
@@ -55,7 +59,7 @@ program esl_demo
 
 
  !SCF loop
- call scf_loop(scf, elsi, hamiltonian, system, states, basis, smear)
+ call scf_loop(scf, elsi, hamiltonian, system, states, smear)
 
  
  !Outputs

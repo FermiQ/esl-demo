@@ -48,8 +48,7 @@ module scf_esl
 
  !Perform the self-consistent field calculation
  !----------------------------------------------------
- subroutine scf_loop(this, elsi, hamiltonian, system, states, basis, smear)
-  use basis_esl
+ subroutine scf_loop(this, elsi, hamiltonian, system, states, smear)
   use smear_esl
   use states_esl
     use elsi_wrapper_esl
@@ -58,7 +57,6 @@ module scf_esl
    type(hamiltonian_t), intent(inout) :: hamiltonian
    type(system_t),         intent(in) :: system
    type(states_t),         intent(in) :: states
-   type(basis_t),         intent(in) :: basis
    type(smear_t), intent(inout) :: smear
   
    integer :: iter !< Interation
@@ -70,7 +68,7 @@ module scf_esl
      call smear_calc_fermi_and_occ(smear, elsi, states)
 
      !Calc. density
-     call density_calc(hamiltonian%density, basis)  
+     call density_calc(hamiltonian%density, system%basis)  
 
      !Calc. potentials
      call potential_calc(hamiltonian%potentials, hamiltonian%density, hamiltonian%energy)

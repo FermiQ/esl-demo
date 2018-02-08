@@ -5,6 +5,11 @@ module system_esl
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical
 
+  use basis_esl
+  use grid_esl
+  use smear_esl
+  use states_esl
+
   implicit none
   private
 
@@ -21,6 +26,10 @@ module system_esl
     character(len=10), dimension(:), allocatable :: el,sp
     character(len=100), dimension(:), allocatable :: potName
     real(dp) :: vol
+
+    type(basis_t) :: basis
+    type(grid_t)  :: grid
+    real(dp) :: nElectrons
   contains
     private
     procedure, public :: init
@@ -40,6 +49,22 @@ module system_esl
      integer :: j,i
      type(block_fdf)            :: blk
      type(parsed_line), pointer :: pline
+
+     integer :: nstates, nspin
+
+     call sys%basis%init()
+
+     isdef = fdf_defined('cubic')
+     sys%cell=0.0_dp
+     if (isDef) then
+       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Bohr')
+       sys%cell(2,2)=sys%cell(1,1)
+       sys%cell(3,3)=sys%cell(1,1)
+     endif
+     sys%icell=invert_cell(sys%cell)
+
+     !Init the grid
+     call sys%grid%init(sys%basis, sys%cell(1,1))
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
@@ -80,15 +105,6 @@ module system_esl
      else
      endif
 
-     isdef = fdf_defined('cubic')
-     sys%cell=0.0_dp
-     if (isDef) then
-       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Bohr')
-       sys%cell(2,2)=sys%cell(1,1)
-       sys%cell(3,3)=sys%cell(1,1)
-     endif
-
-     sys%icell=invert_cell(sys%cell)
      call sys%summary()
 
    end subroutine init
