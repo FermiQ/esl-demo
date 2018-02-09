@@ -1,8 +1,7 @@
 module basis_esl
-  use fdf, only : block_fdf, fdf_block,fdf_defined, &
-                  parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
-                  fdf_get
+
   use prec
+  use fdf, only : fdf_get, leqi
 
   use message_esl
 
@@ -18,7 +17,7 @@ module basis_esl
 
   !Data structure for the basis
   type basis_t
-     integer :: basis_type
+     integer :: type
      type(pw_basis_t) :: pw_basis
     integer :: size !< Number of coefficients in the basis
     contains
@@ -30,8 +29,8 @@ module basis_esl
   end type basis_t
 
   integer, public, parameter :: &
-    PLANEWAVES   = 1,           &
-    ATOMICORBS   = 2
+       PLANEWAVES   = 1, &
+       ATOMICORBS   = 2
 
 
   contains
@@ -44,14 +43,14 @@ module basis_esl
      character(len=100) :: str
      real(dp) :: ecut
 
-     str=fdf_get('BasisSet','Planewaves')
-     if (str == 'Planewaves')  Then
-        this%basis_type=PLANEWAVES
-        this%pw_basis%ecut=fdf_get('cut-off', 10._dp)
-     else if (str=='AtomicOrbitals') then
-       this%basis_type=ATOMICORBS
+     str = fdf_get('BasisSet','Planewaves')
+     if ( leqi(str, 'Planewaves') )  Then
+        this%type = PLANEWAVES
+        this%pw_basis%ecut = fdf_get('cut-off', 10._dp, 'Ha')
+     else if ( leqi(str, 'AtomicOrbitals') ) then
+        this%type = ATOMICORBS
      else
-       call message_error("The specified basis set is not correct.")
+        call message_error("The specified basis set is not correct.")
      endif
 
      !TEMP
@@ -71,7 +70,7 @@ module basis_esl
    subroutine init_atomic_orbitals(this)
      class(basis_t) :: this
 
-     if(this%basis_type /= ATOMICORBS) return
+     if( this%type /= ATOMICORBS ) return
 
    end subroutine init_atomic_orbitals
    
@@ -79,15 +78,14 @@ module basis_esl
    !----------------------------------------------------
    subroutine summary(basis)
      use yaml_output
-     implicit none
      class(basis_t), intent(in) :: basis
 
      call yaml_mapping_open("basis")
-     select case (basis%basis_type)
-     case (PLANEWAVES)
+     select case (basis%type)
+     case ( PLANEWAVES )
         call yaml_map("Type", "Plane waves")
         call yaml_map("Cut-off (Ha)", basis%pw_basis%ecut)
-     case (ATOMICORBS)
+     case ( ATOMICORBS )
         call yaml_map("Type", "Atomic orbitals")
      end select
      call yaml_mapping_close()
