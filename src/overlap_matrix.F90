@@ -13,9 +13,10 @@ module overlap_matrix_esl
 contains
 
   subroutine calc_overlap_matrix(sys, sp, S)
+    
     use system_esl, only: system_t
-    use sparse_pattern, sparse_pattern_t
-    use sparse_matrix, sparse_matrix_t
+    use sparse_pattern, only: sparse_pattern_t
+    use sparse_matrix, only: sparse_matrix_t
 
     class(system_t), intent(inout) :: sys
     class(sparse_pattern_t), intent(inout) :: sp

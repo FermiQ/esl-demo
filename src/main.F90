@@ -29,7 +29,7 @@ program esl_demo
 contains
 
   subroutine main(input_file)
-    use fdf, only : fdf_init, fdf_shutdown, fdf_string
+    use fdf, only : fdf_init, fdf_shutdown, fdf_get
     use hamiltonian_esl, only : hamiltonian_t
     use scf_esl, only : scf_t, scf_loop
     use states_esl, only : states_t
@@ -64,7 +64,7 @@ contains
     !Parsing the input file
     call fdf_init(input_file, echo_file)
 
-    output_file = fdf_string('output', 'sample.out')
+    output_file = fdf_get('output', 'sample.out')
     call yaml_map("Output file", trim(output_file))
     open(newunit=of,file=trim(output_file),action="write")
     call init_random()
