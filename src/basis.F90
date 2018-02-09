@@ -73,7 +73,7 @@ module basis_esl
      integer, dimension(3), intent(in) :: ndims
      real(dp), dimension(3,3), intent(in) :: gcell
 
-     select case (basis%basis_type)
+     select case (basis%type)
      case (PLANEWAVES)
         basis%pw_basis%npw = getNumberOfPW(ndims, basis%pw_basis%ecut, gcell, [0._dp, 0._dp, 0._dp])
      case (ATOMICORBS)

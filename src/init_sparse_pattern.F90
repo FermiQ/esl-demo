@@ -94,7 +94,7 @@ contains
          end do
       end do
       
-    end subroutine add_atom
+    end subroutine add_elements
 
   end subroutine init_sparse_pattern
 
