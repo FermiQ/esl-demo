@@ -10,8 +10,8 @@ H -1.2 -1.2 0.0
 %endblock coordinates
 
 %block potentials
-O nameO
-H nameH
+O O.UPF
+H H.UPF
 %endblock potentials
 
 Smearing COLD
