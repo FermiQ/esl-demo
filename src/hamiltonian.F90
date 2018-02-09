@@ -3,6 +3,8 @@ module hamiltonian_esl
 
   use density_esl
   use energy_esl
+  use force_esl
+  use ion_interaction_esl
   use potential_esl
   use states_esl
   use system_esl
@@ -17,9 +19,11 @@ module hamiltonian_esl
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
-     type(density_t)   :: density
-     type(energy_t)    :: energy
-     type(potential_t) :: potentials
+     type(density_t)         :: density
+     type(energy_t)          :: energy
+     type(force_t)           :: forces
+     type(ion_interaction_t) :: ion_inter
+     type(potential_t)       :: potentials
    contains
      private
      procedure, public :: init
@@ -45,6 +49,15 @@ contains
      call this%density%init(sys%basis, sys%grid)
      call this%energy%init()
      call this%potentials%init(sys%basis, sys%grid, states)
+     call this%forces%init(sys%natoms)
+     call this%ion_inter%init()
+
+     select case(basis%type)
+       case(PLANEWAVES)
+         call this%ion_inter%calculate_periodic(sys, this%forces%ionion, this%energy%ionion
+       case(ATOMICORBS)
+         call this%ion_inter%calculate_isolated(sys, this%forces%ionion, this%energy%ionion
+     end select
 
    end subroutine init
 
