@@ -66,6 +66,7 @@ add_executable(${target_name}
   ${src_dir}/mixing.F90
   ${src_dir}/new_step.F90
   ${src_dir}/numeric.F90
+  ${src_dir}/overlap_matrix.F90
   ${src_dir}/psolver.F90
   ${src_dir}/potential.F90
   ${src_dir}/scf.F90
