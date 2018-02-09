@@ -58,6 +58,7 @@ add_executable(${target_name}
   ${src_dir}/main.F90
   ${src_dir}/basis.F90
   ${src_dir}/density.F90
+  ${src_dir}/density_matrix.F90
   ${src_dir}/energy.F90
   ${src_dir}/grid.F90
   ${src_dir}/hamiltonian.F90
