@@ -122,8 +122,9 @@ module scf_esl
      !Update Hamiltonian matrix
 
    end do
-
    call yaml_mapping_close()
+
+   call hamiltonian%energy%display()
 
    deallocate(rhoin, rhoout, rhonew)
 

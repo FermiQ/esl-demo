@@ -23,6 +23,7 @@ module energy_esl
     private
     procedure, public :: init
     procedure, public :: calculate
+    procedure, public :: display
   end type energy_t
 
 
@@ -56,5 +57,27 @@ module energy_esl
      this%total = this%total + 0.5d0*(this%eigenvalues + this%kinetic + this%extern + this%int_nvxc)
 
    end subroutine calculate
+
+
+  !Display de different components of the total energy
+  !----------------------------------------------------
+  subroutine display(this)
+    use yaml_output
+    class(energy_t) :: this
+
+    integer :: i
+
+    call yaml_mapping_open("Energy")
+    call yaml_map("Total", this%total)
+    call yaml_map("Eigenvalues", this%eigenvalues)
+    call yaml_map("Hatree", this%hartree)
+    call yaml_map("Ion-ion", this%ionion)
+    call yaml_map("Extern", this%extern)
+    call yaml_map("Int_nvxc", this%int_nvxc)
+    call yaml_map("Kinetic", this%kinetic)
+    call yaml_mapping_close()
+
+  end subroutine display
+
  
 end module energy_esl
