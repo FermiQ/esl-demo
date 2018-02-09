@@ -31,9 +31,22 @@ contains
   contains
 
     subroutine new_atomicorbs()
+      use init_sparse_pattern_esl, only: init_sparse_pattern
+      use overlap_matrix_esl, only: calc_overlap_matrix
 
       ! Initialize the sparse pattern
       call init_sparse_pattern(system, system%sparse_pattern)
+
+      ! Essentially we have to figure out whether the previous
+      ! sparse patterns and quantities needs mangling (i.e.
+      ! copy the "old" DM -> "new" DM.
+      ! There are various choices here.
+      ! TODO Handle new-step DM changes
+
+      ! Calculate the overlap matrix
+      ! This requires that the grid information is present
+      call calc_overlap_matrix(system, &
+           system%sparse_pattern, system%S)
 
     end subroutine new_atomicorbs
 
