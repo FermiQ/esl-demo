@@ -57,6 +57,7 @@ contains
     ! One element per spin component.
     class(sparse_matrix_t), intent(inout), allocatable :: DM(:)
 
+    real(dp) :: frac_s
     integer :: ia, is, io, iio, ind
 
     ! Initialize the density matrix
@@ -100,6 +101,6 @@ contains
        
     end do
 
-  end subroutine next_density_matrix
+  end subroutine init_atomic_density_matrix
 
 end module density_matrix_esl

@@ -31,6 +31,7 @@ contains
   contains
 
     subroutine new_atomicorbs()
+      
       use init_sparse_pattern_esl, only: init_sparse_pattern
       use overlap_matrix_esl, only: calc_overlap_matrix
       use density_matrix_esl, only: next_density_matrix
@@ -62,6 +63,9 @@ contains
       ! atomic fillings.
       call next_density_matrix(system, old_sp, &
            system%sparse_pattern, system%DM)
+
+      ! Clean-up the old sparse-matrix
+      call old_sp%delete()
 
     end subroutine new_atomicorbs
 
