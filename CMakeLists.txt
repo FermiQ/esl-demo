@@ -86,7 +86,6 @@ add_executable(${target_name}
   ${src_dir}/elsi_wrapper.F90
   ${src_dir}/elsi_fake.F90
   ${src_dir}/xc.F90
-  ${src_dir}/pseudos.F90
   )
 target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
 if(WITH_MPI)
