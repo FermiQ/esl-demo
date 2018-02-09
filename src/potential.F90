@@ -50,7 +50,7 @@ contains
     allocate(pot%external(1:pot%np))
     allocate(pot%vxc(1:pot%np, 1:states%nspin))
 
-    select case(basis%basis_type)
+    select case(basis%type)
     case(PLANEWAVES)
        geocode = 'P'
     case(ATOMICORBS)

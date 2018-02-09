@@ -44,7 +44,7 @@ module grid_esl
      integer :: idim, ix, iy, iz, ip
      integer :: n, twice
 
-     select case (basis%basis_type)
+     select case (basis%type)
      case (PLANEWAVES)
         call nDimsFromEcut(this%ndims, basis%pw_basis%ecut, gcell, [0._dp, 0._dp, 0._dp])
      case (ATOMICORBS)

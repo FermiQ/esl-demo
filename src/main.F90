@@ -38,7 +38,8 @@ contains
     use smear_esl, only : smear_t
     use elsi_wrapper_esl, only : elsi_t
     use yaml_output
-    implicit none
+    use new_step_esl, only: new_step
+    
     character(len = *), intent(in) :: input_file
     type(hamiltonian_t) :: hamiltonian
     type(system_t)      :: system
@@ -53,6 +54,9 @@ contains
     integer :: nstates, nspin, nel
     !--------------------------------------
 
+    ! Steps
+    integer :: istep, nstep
+
     echo_file=trim(input_file)//".echo"
     call yaml_map("Input file", trim(input_file))
     call yaml_map("Input file (echo)", trim(echo_file))
@@ -65,6 +69,7 @@ contains
     open(newunit=of,file=trim(output_file),action="write")
     call init_random()
     call system%init()
+    
     !--------------TEMP --------------------
     nstates = 1
     nspin = 1
@@ -72,16 +77,33 @@ contains
     !---------------------------------------
     call states%init(system%basis, nstates, nspin, 1, nel)
     call states%summary()
-    call hamiltonian%init(system, states)
-    call scf%init()
-    call smear%init()
+
+    ! TODO Nstep should probably be read from another entity
+    ! Or even better be a logical (do while ( step_finished )
+    nstep = 1
+    do istep = 1, nstep ! steps to run through for the SCF
+       ! this step is not adhearing to anything, it could be
+       ! md-steps, or whatever.
+       
+       ! Initialize a new step
+       ! This initializes all variables that
+       call new_step(system)
+       
+       call hamiltonian%init(system, states)
+       call scf%init()
+       call smear%init()
+
+       !SCF loop
+       call scf_loop(scf, elsi, hamiltonian, system, states, smear)
+
+    end do
+
+    ! The overhead of having FDF up while running is negligeble.
+    ! It serves a good dictionary for parameters.
+    call fdf_shutdown()
 
     close(of)
-    call fdf_shutdown() ! no Input after this point
-
-
-    !SCF loop
-    call scf_loop(scf, elsi, hamiltonian, system, states, smear)
 
   end subroutine main
+  
 end program esl_demo

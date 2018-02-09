@@ -65,7 +65,7 @@ module states_esl
      allocate(this%k_weights(1:nkpt))
      this%k_weights(:) = 1.d0/this%nkpt
 
-     select case(basis%basis_type)
+     select case(basis%type)
        case(PLANEWAVES)
          this%complex_states = .true.
          do ik = 1, nkpt
