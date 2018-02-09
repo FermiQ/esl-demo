@@ -204,7 +204,7 @@ module grid_esl
      integer, dimension(3), intent(out) :: ndims
      real(dp), intent(in) :: ecut
      real(dp), dimension(3,3), intent(in) :: gcell
-     real(dp), dimension(3) :: kpt
+     real(dp), dimension(3), intent(in) :: kpt
 
      real(dp) :: threshold
      integer :: dir, n, i
@@ -234,7 +234,7 @@ module grid_esl
        integer, intent(out) :: dir
        real(dp) :: smallest
 
-       integer :: i1, i2, i3, alpha, beta, gamma, s1, s2, s3, idir
+       integer :: i1, i2, i3, s1, s2, s3, idir
        real(dp) :: prev
 
        smallest = dsq(ndims(1) / 2, -ndims(2) / 2, -ndims(3) / 2) + 0.01_dp
@@ -278,4 +278,5 @@ module grid_esl
 
      end function dsq
    end subroutine nDimsFromEcut
+
 end module grid_esl
