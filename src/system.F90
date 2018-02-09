@@ -122,7 +122,7 @@ module system_esl
      else
      endif
 
-     call sys%basis%init_atomic_orbitals( )
+     call sys%basis%init_basis(sys%grid%ndims, sys%icell)
 
      call sys%summary()
 
