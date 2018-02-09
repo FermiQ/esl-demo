@@ -78,6 +78,8 @@ module scf_esl
    allocate(rhoout(1:system%grid%np))
    allocate(rhonew(1:system%grid%np))
 
+   call  hamiltonian%density%guess(system)
+
    call yaml_mapping_open("SCF cycle")
 
    do iter = 1, this%max_iter
