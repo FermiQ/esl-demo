@@ -5,6 +5,11 @@ module system_esl
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical
 
+  ! Sparse pattern for LO
+  use sparse_pattern, only: sparse_pattern_t
+  ! Sparse matrix for LO (only real(dp))
+  use sparse_matrix, only: sparse_matrix_t
+
   use basis_esl
   use grid_esl
   use smear_esl
@@ -29,6 +34,18 @@ module system_esl
 
     type(basis_t) :: basis
     type(grid_t)  :: grid
+
+    ! TODO decide whether the system should be inherited for the LO/PW
+    ! case. It may make the system a lot easier to figure out.
+    ! However, it will prohibit switching from PW/LO -> LO/PW within the same
+    ! calculation.
+
+    ! LO dependent variables
+    type(sparse_t)  :: sparse_pattern
+    type(sparse_matrix_t) :: overlap ! always 1D
+    type(sparse_matrix_t), allocatable :: H(:) ! one per spin
+    type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
+
     real(dp) :: nElectrons
   contains
     private
