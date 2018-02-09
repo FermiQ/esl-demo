@@ -1,0 +1,10 @@
+test:opensuse:
+  image: drfaustroll/esl:tumbleweed
+  script:
+    - sh utils/opensuse-gcc-openmpi.sh
+
+test:debian:
+  image: drfaustroll/esl:debian
+  script:
+    - sh utils/debian-gcc-openmpi.sh
+
