@@ -5,8 +5,6 @@
 !< This also allows one to "play" with shrinking sparse matrices
 !< in certain cases.
 module overlap_matrix_esl
-
-  use prec, only: dp
   
   implicit none
 
@@ -15,7 +13,7 @@ module overlap_matrix_esl
 contains
 
   subroutine calc_overlap_matrix(sys, sp, S)
-    use system, only: system_t
+    use system_esl, only: system_t
     use sparse_pattern, sparse_pattern_t
     use sparse_matrix, sparse_matrix_t
 
