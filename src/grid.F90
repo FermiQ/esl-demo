@@ -144,9 +144,9 @@ module grid_esl
      integer :: ip
 
      int_ff = 0.d0
-     forall(ip=1:grid%np)
+     do ip=1,grid%np
        int_ff = int_ff + ff(ip)
-     end forall
+     end do
      int_ff = int_ff*grid%volelem
 
    end subroutine dintegrate
@@ -161,9 +161,9 @@ module grid_esl
      integer :: ip
 
      int_ff = cmplx(0.d0,0.d0)
-     forall(ip=1:grid%np)
+     do ip = 1,grid%np
        int_ff = int_ff + ff(ip)
-     end forall
+     end do
      int_ff = int_ff*grid%volelem
 
    end subroutine zintegrate

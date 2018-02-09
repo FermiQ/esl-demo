@@ -61,13 +61,17 @@ add_executable(${target_name}
   ${src_dir}/energy.F90
   ${src_dir}/grid.F90
   ${src_dir}/hamiltonian.F90
+  ${src_dir}/init_sparse_pattern.F90
   ${src_dir}/message.F90
   ${src_dir}/mixing.F90
+  ${src_dir}/new_step.F90
   ${src_dir}/numeric.F90
   ${src_dir}/psolver.F90
   ${src_dir}/potential.F90
   ${src_dir}/scf.F90
   ${src_dir}/smear.F90
+  ${src_dir}/sparse_pattern.F90
+  ${src_dir}/sparse_matrix.F90
   ${src_dir}/states.F90
   ${src_dir}/system.F90
   ${src_dir}/elsi_wrapper.F90
