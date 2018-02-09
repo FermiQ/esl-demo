@@ -14,7 +14,8 @@ module system_esl
   use grid_esl
   use smear_esl
   use states_esl
-
+  use species_esl
+  
   implicit none
   private
 
@@ -24,14 +25,16 @@ module system_esl
   !Data structure for the system
   type system_t
     integer(kind=ip) :: nAtoms
-    real(kind=dp),allocatable :: xyz(:,:) ! (1:3,natoms)
+    integer(ip), allocatable :: species_index(:) ! (1:natoms)
+    real(kind=dp),allocatable :: xyz(:,:) ! (1:3,1:natoms)
     integer(kind=ip) :: nSpecies
+    type(species_t), allocatable :: species(:)
     real(kind=dp) :: cell(3,3)=0.0_dp
     real(kind=dp) :: icell(3,3)=0.0_dp
     character(len=10), dimension(:), allocatable :: el,sp
     character(len=100), dimension(:), allocatable :: potName
     real(dp) :: vol
-
+    
     type(basis_t) :: basis
     type(grid_t)  :: grid
 
@@ -102,20 +105,20 @@ module system_esl
 
      endif
 
-     isDef = fdf_defined('potentials')
+     isDef = fdf_defined('species')
      if (isDef) then
-       if (fdf_block('potentials', blk)) then
+       if (fdf_block('species', blk)) then
          sys%nSpecies=0
          do while((fdf_bline(blk, pline)))
            sys%nSpecies=sys%nSpecies+1
          enddo
        endif
-       allocate(sys%sp(sys%nSpecies),sys%potName(sys%nSpecies))
-       if (fdf_block('potentials', blk)) then
+       allocate(sys%sp(sys%nSpecies),sys%species(sys%nSpecies))
+       if (fdf_block('species', blk)) then
          j = 1
          do while((fdf_bline(blk, pline)) .and. (j <= sys%nSpecies))
            sys%sp(j) = fdf_bnames(pline, 1)
-           sys%potName(j) = fdf_bnames(pline, 2)
+           call sys%species(j)%init(fdf_bnames(pline, 2))
            j = j + 1
          enddo
        endif
