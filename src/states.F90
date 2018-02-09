@@ -30,6 +30,7 @@ module states_esl
 
    type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
    real(kind=dp), allocatable :: occ_numbers(:,:,:)
+   real(kind=dp), allocatable :: k_weights(:)
    contains
      private
      procedure, public :: init
@@ -60,6 +61,9 @@ module states_esl
      allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
      allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
      this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
+
+     allocate(this%k_weights(1:nkpt))
+     this%k_weights(:) = 1.d0/this%nkpt
 
      select case(basis%type)
        case(PLANEWAVES)
@@ -106,6 +110,7 @@ module states_esl
         deallocate(this%states)
      end if
      if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
+     if(allocated(this%k_weights)) deallocate(this%k_weights)
 
    end subroutine cleanup
 

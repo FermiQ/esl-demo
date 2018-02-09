@@ -68,13 +68,9 @@ contains
      type(elsi_t), intent(inout) :: elsi
      type(states_t),   intent(in) :: states
 
-     integer :: n_electron
-     !@todo: put this in states
-     real(dp), dimension(states%nkpt) :: k_weights
-
      if(this%smearing /= COLD) then
        call elsi_calc_fermi_and_occ(elsi,states%nel, states%nstates, states%nspin, states%nkpt, &
-          & this%eigenvalues, states%occ_numbers, k_weights, this%fermi_level)
+          & this%eigenvalues, states%occ_numbers, states%k_weights, this%fermi_level)
      end if
 
     end subroutine smear_calc_fermi_and_occ
