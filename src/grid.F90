@@ -171,29 +171,28 @@ module grid_esl
 
    !Overlap
    !----------------------------------------------------
-   real(kind=dp) function overlap(grid, r1, ao1,radius1, r2, ao2, radius2)
+   real(kind=dp) function overlap(grid, xyz1, ao1, r1, xyz2, ao2, r2)
      type(grid_t),    intent(in) :: grid
-     real(kind=dp),   intent(in) :: r1(3)
+     real(kind=dp),   intent(in) :: xyz1(3)
      real(kind=dp),   intent(in) :: ao1(:)
-     real(kind=dp),   intent(in) :: radius1
-     real(kind=dp),   intent(in) :: r2(3)
+     real(kind=dp),   intent(in) :: r1
+     real(kind=dp),   intent(in) :: xyz2(3)
      real(kind=dp),   intent(in) :: ao2(:)
-     real(kind=dp),   intent(in) :: radius2
+     real(kind=dp),   intent(in) :: r2
 
      integer :: ip
      real(kind=dp) :: dist
 
-     dist = distance(r1, r2)
-     if(dist > radius1 + radius2) then
-       !In this case there is no overlap
-       overlap = -1.0
-       return
+     dist = sqrt(sum( (xyz1 - xyz2) ** 2 ))
+     overlap = 0._dp
+     if ( dist < r1 + r2 ) then
+        
+        do ip = 1 , grid%np
+           overlap = overlap + ao1(ip)*ao2(ip)
+        end do
+        overlap = overlap*grid%volelem
+        
      end if
-
-     do ip=1,grid%np
-       overlap = overlap + ao1(ip)*ao2(ip)
-     end do
-     overlap = overlap*grid%volelem
 
    end function overlap
 

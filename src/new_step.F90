@@ -31,9 +31,41 @@ contains
   contains
 
     subroutine new_atomicorbs()
+      
+      use init_sparse_pattern_esl, only: init_sparse_pattern
+      use overlap_matrix_esl, only: calc_overlap_matrix
+      use density_matrix_esl, only: next_density_matrix
 
+      ! Target is necessary to preserve old pointers
+      type(sparse_pattern_t), target :: old_sp
+
+      ! Preserve the old sparse pattern such that the
+      ! sparse matrices still points to the pattern.
+      call move_alloc(system%sparse_pattern_t, old_sp)
+      
+      ! copy old sparse pattern
       ! Initialize the sparse pattern
       call init_sparse_pattern(system, system%sparse_pattern)
+
+      ! Essentially we have to figure out whether the previous
+      ! sparse patterns and quantities needs mangling (i.e.
+      ! copy the "old" DM -> "new" DM.
+      ! There are various choices here.
+      ! TODO Handle new-step DM changes
+
+      ! Calculate the overlap matrix
+      ! This requires that the grid information is present
+      call calc_overlap_matrix(system, &
+           system%sparse_pattern, system%S)
+
+      ! Figure out the next density matrix
+      ! This routine will initially fill it with the
+      ! atomic fillings.
+      call next_density_matrix(system, old_sp, &
+           system%sparse_pattern, system%DM)
+
+      ! Clean-up the old sparse-matrix
+      call old_sp%delete()
 
     end subroutine new_atomicorbs
 

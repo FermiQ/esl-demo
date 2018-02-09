@@ -52,6 +52,9 @@ module sparse_pattern
 
      procedure, public :: init => init_dim_
 
+     !< True if the sparse pattern is initialized
+     procedure, public :: initialized => initialized_
+
      !< Query number of nonzero elements currently in the sparse pattern
      procedure, public :: nonzeros => nonzeros_
      !< Query maximum number of nonzero elements that this sparse pattern may contain
@@ -80,6 +83,12 @@ module sparse_pattern
   end type sparse_pattern_t
   
 contains
+
+  function initialized_(this) result(initd)
+    class(sparse_pattern_t), intent(in) :: this
+    logical :: initd
+    initd = allocated(this%column)
+  end function initialized_
 
   function nonzeros_(this) result(nnzs)
     class(sparse_pattern_t), intent(in) :: this

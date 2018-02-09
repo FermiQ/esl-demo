@@ -24,7 +24,7 @@ module system_esl
   !Data structure for the system
   type system_t
     integer(kind=ip) :: nAtoms
-    real(kind=dp),allocatable :: coord(:,:) ! (1:3,natoms)
+    real(kind=dp),allocatable :: xyz(:,:) ! (1:3,natoms)
     integer(kind=ip) :: nSpecies
     real(kind=dp) :: cell(3,3)=0.0_dp
     real(kind=dp) :: icell(3,3)=0.0_dp
@@ -85,7 +85,7 @@ module system_esl
 
      isdef = .false.
      sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
-     allocate(sys%coord(1:3,sys%nAtoms))
+     allocate(sys%xyz(1:3,sys%nAtoms))
      allocate(sys%el(sys%nAtoms))
 
      isdef = fdf_defined('coordinates')
@@ -93,7 +93,7 @@ module system_esl
        if (fdf_block('coordinates', blk)) then
          j = 1
          do while((fdf_bline(blk, pline)) .and. (j <= sys%nAtoms))
-           sys%coord(1:3,j) = [(fdf_breals(pline, i),i=1,3)]
+           sys%xyz(1:3,j) = [(fdf_breals(pline, i),i=1,3)]
            sys%el(j) = fdf_bnames(pline, 1)
            j = j + 1
          enddo
@@ -133,7 +133,7 @@ module system_esl
    subroutine cleanup(sys)
      type(system_t) :: sys
 
-    if (allocated(sys%coord)) deallocate(sys%coord)
+    if (allocated(sys%xyz)) deallocate(sys%xyz)
     if (allocated(sys%el)) deallocate(sys%el)
     if (allocated(sys%sp)) deallocate(sys%sp)
     if (allocated(sys%potName)) deallocate(sys%potName)
@@ -154,7 +154,7 @@ module system_esl
     call yaml_comment("Element | X| Y| Z|", hfill = "-")
     do i =1, sys%nAtoms
        call yaml_sequence(advance="no")
-       call yaml_map(trim(sys%el(i)), sys%coord(:,i))
+       call yaml_map(trim(sys%el(i)), sys%xyz(:,i))
     enddo
     call yaml_sequence_close()
     call yaml_map("Volume (Bohr^3)", sys%volume())
