@@ -2,6 +2,7 @@ module grid_esl
   use prec, only : dp,ip
 
   use basis_esl
+  use numeric_esl
 
  implicit none
  private
@@ -15,10 +16,12 @@ module grid_esl
    real(kind=dp) :: hgrid(3) !< Real space spacing
    integer :: ndims(3)  !< Number of points in each directions
    integer :: np !< Total number of points in the real space grid
+   real(kind=dp), allocatable :: r(:,:) !<Grid point coordinates 
    real(kind=dp) :: volelem !<Volume element
    contains
     private
     procedure, public :: init
+    procedure, public :: get_atomic_orbital
     procedure, public :: summary
     final  :: cleanup
  end type grid_t
@@ -31,17 +34,19 @@ module grid_esl
 
    !Initialize the grid
    !----------------------------------------------------
-   subroutine init(this, basis, cell)
+   subroutine init(this, basis, cell, gcell)
      use module_fft_sg
      class(grid_t) :: this
      type(basis_t), intent(in) :: basis
      real(kind=dp), dimension(3,3), intent(in) :: cell
+     real(kind=dp), dimension(3,3), intent(in) :: gcell
  
-     integer :: idim, n, twice
+     integer :: idim, ix, iy, iz, ip
+     integer :: n, twice
 
      select case (basis%basis_type)
      case (PLANEWAVES)
-        call nDimsFromEcut(this%ndims, basis%pw_basis%ecut, cell, [0._dp, 0._dp, 0._dp])
+        call nDimsFromEcut(this%ndims, basis%pw_basis%ecut, gcell, [0._dp, 0._dp, 0._dp])
      case (ATOMICORBS)
         !For the moment the spacing in real space is hardcoded
         !For planewave, this must come from the number of G vectors
@@ -62,6 +67,19 @@ module grid_esl
      end do
      this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
 
+     !Generation of the grid points
+     allocate(this%r(3,this%np))
+     ip = 0
+     do ix = 1, this%ndims(1)
+       do iy = 1, this%ndims(2)
+         do iz = 1, this%ndims(3)
+           ip = ip + 1
+           this%r(1, ip) = ix*this%hgrid(1) - 0.5d0*cell(1,1)
+           this%r(2, ip) = iy*this%hgrid(2) - 0.5d0*cell(2,2)
+           this%r(3, ip) = iz*this%hgrid(3) - 0.5d0*cell(3,3)
+         end do
+       end do
+     end do
      !We have a cubic cell
      this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
 
@@ -72,6 +90,8 @@ module grid_esl
    !----------------------------------------------------
    subroutine cleanup(this)
      type(grid_t) :: this
+
+     if(allocated(this%r)) deallocate(this%r)
 
    end subroutine cleanup
 
@@ -88,6 +108,31 @@ module grid_esl
      call yaml_mapping_close()
 
    end subroutine summary
+
+   !Evaluate an atomic orbital on the real-space grid
+   !----------------------------------------------------
+   subroutine get_atomic_orbital(this, ll, mm, r_at, ao, grad_ao)
+     class(grid_t) :: this
+     integer,        intent(in) :: ll
+     integer,        intent(in) :: mm
+     real(kind=dp), intent(out) :: r_at(3)
+     real(kind=dp), intent(out) :: ao(:)
+     real(kind=dp), intent(out) :: grad_ao(:,:)
+
+     integer :: ip
+     real(kind=dp) :: x, y, z, r
+
+     do ip = 1, this%np
+       x = this%r(1,ip) - r_at(1)
+       y = this%r(2,ip) - r_at(2)
+       z = this%r(3,ip) - r_at(3)
+       call grylmr(x, y, z, ll, mm, ao(ip), grad_ao(1:3,ip)) 
+ 
+       r = sqrt(x**2+y**2+z**2)
+       !Here we need to multiply by the radial part
+     end do
+ 
+   end subroutine get_atomic_orbital
 
    !Integrate a function over the real-space grid
    !----------------------------------------------------
@@ -123,21 +168,49 @@ module grid_esl
 
    end subroutine zintegrate
 
-   subroutine nDimsFromEcut(ndims, ecut, cell, kpt)
+
+   !Overlap
+   !----------------------------------------------------
+   real(kind=dp) function overlap(grid, r1, ao1,radius1, r2, ao2, radius2)
+     type(grid_t),    intent(in) :: grid
+     real(kind=dp),   intent(in) :: r1(3)
+     real(kind=dp),   intent(in) :: ao1(:)
+     real(kind=dp),   intent(in) :: radius1
+     real(kind=dp),   intent(in) :: r2(3)
+     real(kind=dp),   intent(in) :: ao2(:)
+     real(kind=dp),   intent(in) :: radius2
+
+     integer :: ip
+     real(kind=dp) :: dist
+
+     dist = distance(r1, r2)
+     if(dist > radius1 + radius2) then
+       !In this case there is no overlap
+       overlap = -1.0
+       return
+     end if
+
+     do ip=1,grid%np
+       overlap = overlap + ao1(ip)*ao2(ip)
+     end do
+     overlap = overlap*grid%volelem
+
+   end function overlap
+
+   subroutine nDimsFromEcut(ndims, ecut, gcell, kpt)
      use numerics, only: pi
      use yaml_output
      implicit none
      integer, dimension(3), intent(out) :: ndims
      real(dp), intent(in) :: ecut
-     real(dp), dimension(3,3), intent(in) :: cell
+     real(dp), dimension(3,3), intent(in) :: gcell
      real(dp), dimension(3) :: kpt
 
      real(dp) :: threshold
      integer :: dir, n, i
-     real(dp), dimension(3,3) :: gmet, gcell
+     real(dp), dimension(3,3) :: gmet
      real(dp), parameter :: boxcutmin = 2.0_dp
 
-     call matr3inv(cell, gcell)
      do i = 1, 3
         gmet(i, :) = gcell(1, i) * gcell(1, :) + &
              &   gcell(2, i) * gcell(2, :) + &
@@ -153,27 +226,6 @@ module grid_esl
      end do
 
    contains
-     subroutine matr3inv(matin, matout)
-       implicit none
-       real(dp), dimension(3,3), intent(in) :: matin
-       real(dp), dimension(3,3), intent(out) :: matout
-
-       real(dp) :: dd,t1,t2,t3
-
-       t1 = matin(2,2) * matin(3,3) - matin(3,2) * matin(2,3)
-       t2 = matin(3,2) * matin(1,3) - matin(1,2) * matin(3,3)
-       t3 = matin(1,2) * matin(2,3) - matin(2,2) * matin(1,3)
-       dd  = 1.d0/ (matin(1,1) * t1 + matin(2,1) * t2 + matin(3,1) * t3)
-       matout(1,1) = t1 * dd
-       matout(2,1) = t2 * dd
-       matout(3,1) = t3 * dd
-       matout(1,2) = (matin(3,1)*matin(2,3)-matin(2,1)*matin(3,3)) * dd
-       matout(2,2) = (matin(1,1)*matin(3,3)-matin(3,1)*matin(1,3)) * dd
-       matout(3,2) = (matin(2,1)*matin(1,3)-matin(1,1)*matin(2,3)) * dd
-       matout(1,3) = (matin(2,1)*matin(3,2)-matin(3,1)*matin(2,2)) * dd
-       matout(2,3) = (matin(3,1)*matin(1,2)-matin(1,1)*matin(3,2)) * dd
-       matout(3,3) = (matin(1,1)*matin(2,2)-matin(2,1)*matin(1,2)) * dd
-     end subroutine matr3inv
 
      function smallest(ndims, gmet, dir)
        implicit none
