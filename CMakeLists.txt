@@ -15,8 +15,10 @@ set(DESCRIPTION "ESL Demonstator")
 set(src_dir ${CMAKE_SOURCE_DIR}/src)
 set(target_name esl-demo.X)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 include(GNUInstallDirs)
 include(FeatureSummary)
+include(ESLDemoBuildOptions)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 
