@@ -85,7 +85,7 @@ contains
 
      !TODO: Here there is no spin
      forall(ip = 1:this%potentials%np)
-       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%xc(ip,1))*psi(ip)
+       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
      end forall 
 
    end subroutine hamiltonian_dapply_local
@@ -102,7 +102,7 @@ contains
 
      !TODO: Here there is no spin
      forall(ip = 1:this%potentials%np)
-       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%xc(ip,1))*psi(ip)
+       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
      end forall
 
    end subroutine hamiltonian_zapply_local

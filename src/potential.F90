@@ -7,6 +7,7 @@ module potential_esl
   use grid_esl
   use psolver_esl
   use states_esl
+  use xc_esl
 
   implicit none
   private
@@ -19,11 +20,12 @@ module potential_esl
 
      real(kind=dp), allocatable :: hartree(:)  !Hartree potential
      real(kind=dp), allocatable :: external(:) !External local potential
-     real(kind=dp), allocatable :: xc(:,:)  !xc potential
+     real(kind=dp), allocatable :: vxc(:,:)  !xc potential
 
      real(dp) :: ionicOffset !< Offset of the external potential
 
      type(psolver_t) :: psolver
+     type(xc_t) :: xc
    contains
      procedure, public :: init
      procedure, public :: calculate
@@ -46,7 +48,7 @@ contains
 
     allocate(pot%hartree(1:pot%np))
     allocate(pot%external(1:pot%np))
-    allocate(pot%xc(1:pot%np, 1:states%nspin))
+    allocate(pot%vxc(1:pot%np, 1:states%nspin))
 
     select case(basis%basis_type)
     case(PLANEWAVES)
@@ -58,6 +60,7 @@ contains
     pot%ionicOffset = 0._dp
     call pot%psolver%init(0, 1, geocode, grid%ndims, grid%hgrid)
 
+    call pot%xc%init()
     !Here we need to init the libxc and pspio parts
 
   end subroutine init
@@ -70,7 +73,7 @@ contains
 
     if(allocated(pot%hartree)) deallocate(pot%hartree)
     if(allocated(pot%external)) deallocate(pot%external)
-    if(allocated(pot%xc)) deallocate(pot%xc)
+    if(allocated(pot%vxc)) deallocate(pot%vxc)
 
   end subroutine cleanup
 
@@ -86,6 +89,7 @@ contains
          & pot%external, pot%ionicOffset, energy%hartree)
 
     !Here we need to compute the xc potential
+    call pot%xc%calculate(density, pot%vxc)
 
   end subroutine calculate
 
