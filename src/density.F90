@@ -35,7 +35,7 @@ module density_esl
      type(grid_t),    intent(in)    :: grid
 
      !Parse the informations from the input file
-     select case(basis%basis_type)
+     select case(basis%type)
        case(PLANEWAVES)
          !Initialization structures for the PW case
          allocate(this%density(1:grid%np))
@@ -103,7 +103,7 @@ module density_esl
      class(density_t), intent(inout) :: this
      type(basis_t),   intent(in)    :: basis
 
-     select case(basis%basis_type)
+     select case(basis%type)
        case(PLANEWAVES)
 
        case(ATOMICORBS)

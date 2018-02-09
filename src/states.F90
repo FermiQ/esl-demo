@@ -61,7 +61,7 @@ module states_esl
      allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
      this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
 
-     select case(basis%basis_type)
+     select case(basis%type)
        case(PLANEWAVES)
          this%complex_states = .true.
          do ik = 1, nkpt
