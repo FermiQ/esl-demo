@@ -23,6 +23,8 @@ contains
     class(sparse_pattern_t), intent(inout) :: sp
     class(sparse_matrix_t), intent(inout) :: S
 
+    integer :: ia, is, io, iio, ind, jo, ja, js, jjo
+
     ! Re-initialize the sparse matrix
     call S%init(sp)
 
@@ -37,7 +39,7 @@ contains
           iio = io - sys%first_orb(ia) + 1
 
           ! Loop entries in the sparse pattern
-          do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io)
+          do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
 
              ! Figure out which atom this orbital belongs too
              jo = sp%column(ind)
