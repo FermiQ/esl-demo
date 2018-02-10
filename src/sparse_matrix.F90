@@ -1,6 +1,6 @@
 module esl_sparse_matrix_m
 
-  use sparse_pattern, only: sparse_pattern_t
+  use esl_sparse_pattern_m, only: sparse_pattern_t
   use prec, only: dp
 
   implicit none

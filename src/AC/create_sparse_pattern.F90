@@ -21,7 +21,7 @@ contains
     
     use prec, only: dp
     use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
+    use esl_sparse_pattern_m, only: sparse_pattern_t
     
     class(system_t), intent(in) :: sys
     type(sparse_pattern_t), intent(inout) :: sp

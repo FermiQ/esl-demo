@@ -31,7 +31,8 @@ contains
   contains
 
     subroutine next_atomicorbs()
-      
+
+      use esl_sparse_pattern_m, only: sparse_pattern_t
       use esl_create_sparse_pattern_ac_m, only: create_sparse_pattern_ac_create
       use esl_overlap_matrix_ac_m, only: overlap_matrix_ac_calculate
       use esl_density_matrix_ac_m, only: density_matrix_ac_next

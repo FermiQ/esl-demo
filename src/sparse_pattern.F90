@@ -1,10 +1,10 @@
-module sparse_pattern
+module esl_sparse_pattern_m
 
   ! The default container integer kind
   use prec, only: ii_ => ip
-  
+
   implicit none
-  
+
   private
 
   ! Often used private variables
@@ -24,12 +24,12 @@ module sparse_pattern
   !< with no sparse elements. The pool of elements can then be
   !< consecutively populated via the `this%add(r, c)` method.
   type sparse_pattern_t
-     
+
      integer(ii_) :: nr = ZERO !< Number of rows in sparse pattern
      integer(ii_) :: nc = ZERO !< Number of columns in sparse pattern
      integer(ii_) :: nz = ZERO !< Number of non-zero elements in sparse pattern
      integer(ii_) :: nt = ZERO !< Maximum number of non-zero elements in sparse pattern
-     
+
      logical :: finalized = .false. !< Parameter to check whether the sparse pattern is finalized (nz == nt)
 
      !< 1-based pointers for each row.
@@ -38,16 +38,16 @@ module sparse_pattern
      !<   column(rptr(2) + nrow(2) - 1)
      !< is the last column in the sparse pattern for row 2.
      integer(ii_), allocatable :: rptr(:)
-     
+
      !< Number of entries per row (size() == nr), sum(nrow) == nz
      !< This is a necessity only when constructing the matrix.
      !< It however, has some added benefits when one wishes to figure
      !< out the edges of a given node.
      integer(ii_), allocatable :: nrow(:)
-     
+
      !< Column indices.
      integer(ii_), allocatable :: column(:)
-     
+
    contains
 
      procedure, public :: init => init_dim_
@@ -64,7 +64,7 @@ module sparse_pattern
      procedure, public :: rows => rows_
      !< Number of columns in the sparse pattern 
      procedure, public :: columns => columns_
-     
+
      !< Directly query the sparse index for a given `row, column`
      procedure, public :: index => index_
 
@@ -79,9 +79,9 @@ module sparse_pattern
 
      !< Delete this sparse object
      procedure, public :: delete => delete_
-     
+
   end type sparse_pattern_t
-  
+
 contains
 
   function initialized_(this) result(initd)
@@ -101,25 +101,25 @@ contains
     integer(ii_) :: nt
     nt = this%nt
   end function max_nonzeros_
-  
+
   function rows_(this) result(rows)
     class(sparse_pattern_t), intent(in) :: this
     integer(ii_) :: rows
     rows = this%nr
   end function rows_
-  
+
   function columns_(this) result(cols)
     class(sparse_pattern_t), intent(in) :: this
     integer(ii_) :: cols
     cols = this%nc
   end function columns_
-  
+
   subroutine print_(this)
     class(sparse_pattern_t), intent(in) :: this
     write(*,'(3(a,i0),a)') "<sparse_pattern rows=", this%nr, &
          ", columns=", this%nc, ", non-zeros=",this%nz, "/>"
   end subroutine print_
-  
+
   subroutine delete_(this, stat)
     class(sparse_pattern_t), intent(inout) :: this
     integer, intent(out), optional :: stat
@@ -129,10 +129,10 @@ contains
     this%nz = 0
     this%nt = 0
     this%finalized = .false.
-    
+
     if ( present(stat) ) stat = 0
     if ( .not. allocated(this%column) ) return
-    
+
     deallocate(this%rptr, stat=istat)
     max_stat = istat
     deallocate(this%column, stat=stat)
@@ -141,9 +141,9 @@ contains
     if ( istat /= 0 ) max_stat = istat
 
     if ( present(stat) ) stat = max_stat
-    
+
   end subroutine delete_
-  
+
   subroutine init_dim_(this, nr, nc, nt, np)
     class(sparse_pattern_t), intent(inout) :: this
     integer(ii_), intent(in) :: nr, nc
@@ -181,7 +181,7 @@ contains
        this%rptr(i) = this%rptr(i-ONE) + np
     end do
     this%rptr(nr+ONE) = this%rptr(nr) + ONE
-    
+
   end subroutine init_dim_
 
   !< Figure out index of row, column for the sparse pattern. If the element is zero (non-existing) we return -1
@@ -200,22 +200,22 @@ contains
     class(sparse_pattern_t), intent(inout) :: this
     integer(ii_) :: ind, ir, rind, first_ind
     integer(ii_), allocatable :: col(:)
-    
+
     ! Current "new" index point
     ind = ONE
-    
+
     ! Loop rows
     do ir = ONE, this%nr
-       
+
        ! Loop over sparse elements
        first_ind = ind
        do rind = this%rptr(ir), this%rptr(ir) + this%nrow(ir) - ONE
           this%column(ind) = this%column(rind)
           ind = ind + ONE
        end do
-       
+
        this%rptr(ir) = first_ind
-       
+
     end do
 
     allocate(col(ind - ONE))
@@ -227,11 +227,11 @@ contains
 
     ! Update last pointer
     this%rptr(this%nr) = ind
-    
+
     this%finalized = .true.
-    
+
   end subroutine finalize_
-  
+
   subroutine add_(this, ir, ic, ind)
     class(sparse_pattern_t), intent(inout) :: this
     integer(ii_), intent(in) :: ir, ic
@@ -249,7 +249,7 @@ contains
     ! This means heavy work due to deallocation, allocation, etc.
     call complex_add()
     if ( present(ind) ) ind = lind
-    
+
   contains
 
     function simple_add() result(add)
@@ -273,9 +273,9 @@ contains
       integer(ii_), allocatable :: cols(:)
 
       stop 'currently not implemented'
-      
+
     end subroutine complex_add
 
   end subroutine add_
-  
-end module sparse_pattern
+
+end module esl_sparse_pattern_m

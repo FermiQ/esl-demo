@@ -4,7 +4,11 @@
 !< an initial (valence filled) density matrix and/or
 !< read-in/extrapolate a DM to a different structure.
 module esl_density_matrix_ac_m
-  
+
+  use system_esl, only: system_t
+  use esl_sparse_pattern_m, only: sparse_pattern_t
+  use esl_sparse_matrix_m, only: sparse_matrix_t
+
   implicit none
   
   public :: density_matrix_ac_next
@@ -19,11 +23,6 @@ contains
   !< When the old sparse pattern is not allocated (created)
   !< we automatically initialize the DM with the atomic fillings.
   subroutine density_matrix_ac_next(sys, old_sp, new_sp, DM)
-
-    use prec, only: dp
-    use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
-    use esl_sparse_matrix_m, only: sparse_matrix_t
 
     class(system_t), intent(in) :: sys
     class(sparse_pattern_t), intent(in) :: old_sp
@@ -48,9 +47,6 @@ contains
   subroutine density_matrix_ac_init_atomic(sys, sp, DM)
 
     use prec, only: dp
-    use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
-    use esl_sparse_matrix_m, only: sparse_matrix_t
 
     class(system_t), intent(in) :: sys
     class(sparse_pattern_t), intent(in), target :: sp

@@ -8,7 +8,7 @@ module system_esl
                    fdf_physical
 
   ! Sparse pattern for LO
-  use sparse_pattern, only: sparse_pattern_t
+  use esl_sparse_pattern_m, only: sparse_pattern_t
   ! Sparse matrix for LO (only real(dp))
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
