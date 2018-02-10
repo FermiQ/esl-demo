@@ -1,53 +1,51 @@
-module xc_esl
+module esl_xc_m
   use prec, only : dp
 
-  use density_esl
-
+  use esl_density_t
 
   implicit none
   private
 
   public :: xc_t
-  
+
   !Data structure for the xc potential
   type xc_t
-    integer :: exchange
-    integer :: correlation
+     integer :: exchange
+     integer :: correlation
    contains
      procedure, public :: init
      procedure, public :: calculate
      final  :: cleanup
   end type xc_t
 
-  contains
+contains
 
-   !Initialize the xc 
-   !----------------------------------------------------
-   subroutine init(this)
-     class(xc_t), intent(inout) :: this
+  !Initialize the xc 
+  !----------------------------------------------------
+  subroutine init(this)
+    class(xc_t), intent(inout) :: this
 
-     !Here parse the exchange and correlation functionals
-     !and do libxc related initialization
+    !Here parse the exchange and correlation functionals
+    !and do libxc related initialization
 
-   end subroutine init
- 
-   !Release
-   !----------------------------------------------------
-   subroutine cleanup(this)
-     type(xc_t), intent(inout) :: this
+  end subroutine init
 
-   end subroutine cleanup
+  !Release
+  !----------------------------------------------------
+  subroutine cleanup(this)
+    type(xc_t), intent(inout) :: this
 
-   !Calc the xc potential from the density
-   !----------------------------------------------------
-   subroutine calculate(this, density, vxc)
-     class(xc_t),           intent(in) :: this
-     type(density_t),       intent(in) :: density 
-     real(kind=dp),        intent(out) :: vxc(:,:)
+  end subroutine cleanup
 
-     !Here add the libxc business
+  !Calc the xc potential from the density
+  !----------------------------------------------------
+  subroutine calculate(this, density, vxc)
+    class(xc_t),           intent(in) :: this
+    type(density_t),       intent(in) :: density 
+    real(dp),        intent(out) :: vxc(:,:)
 
-   end subroutine calculate
+    !Here add the libxc business
 
+  end subroutine calculate
 
-end module xc_esl
+end module esl_xc_m

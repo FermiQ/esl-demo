@@ -4,19 +4,19 @@
 !< pre-cursor for when two orbitals are overlapping.
 !< This also allows one to "play" with shrinking sparse matrices
 !< in certain cases.
-module overlap_matrix_esl
-  
+module esl_overlap_matrix_ac_m
+
   implicit none
 
-  public :: calc_overlap_matrix
+  public :: overlap_matrix_ac_calculate
 
 contains
 
-  subroutine calc_overlap_matrix(sys, sp, S)
-    
-    use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
-    use sparse_matrix, only: sparse_matrix_t
+  subroutine overlap_matrix_ac_calculate(sys, sp, S)
+
+    use esl_system_m, only: system_t
+    use esl_sparse_pattern_m, only: sparse_pattern_t
+    use esl_sparse_matrix_m, only: sparse_matrix_t
 
     class(system_t), intent(inout) :: sys
     class(sparse_pattern_t), intent(inout) :: sp
@@ -55,13 +55,13 @@ contains
              S%M(ind) = &
                   sys%grid%overlap(sys%xyz(:,ia), TODO-AO, sys%pseudo(is)%rmax, &
                   sys%xyz(:,ja), TODO-AO, sys%pseudo(js)%rmax)
-             
+
           end do
-          
+
        end do
-       
+
     end do
 
-  end subroutine calc_overlap_matrix
-  
-end module overlap_matrix_esl
+  end subroutine overlap_matrix_ac_calculate
+
+end module esl_overlap_matrix_ac_m

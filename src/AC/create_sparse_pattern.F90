@@ -6,23 +6,22 @@
 !<
 !< Note that this will *only* create the initial sparse pattern and will finish
 !< by finalizing the sparse_pattern_t
-module init_sparse_pattern_esl
-
-  use prec, only: dp
+module esl_create_sparse_pattern_ac_m
 
   implicit none
 
-  public :: init_sparse_pattern
+  public :: create_sparse_pattern_ac_create
 
 contains
 
   !< The arguments of this routine are
   !< @param system the system with containing atomic coordinates and their basis functions
   !< @param sp the sparse pattern which we need to create, it will be deleted.
-  subroutine init_sparse_pattern(sys, sp)
-    
+  subroutine create_sparse_pattern_ac_create(sys, sp)
+
+    use prec, only: dp
     use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
+    use esl_sparse_pattern_m, only: sparse_pattern_t
 
     class(system_t), intent(in) :: sys
     type(sparse_pattern_t), intent(inout) :: sp
@@ -65,13 +64,13 @@ contains
 
           ! Only process if the maximum distance is within range.
           if ( dist <= r2 ) then
-             
+
              ! Add all orbitals to the sparse pattern
              call add_elements(ia, ja, dist)
              call add_elements(ja, ia, dist)
-             
+
           end if
-          
+
        end do
     end do
 
@@ -86,18 +85,18 @@ contains
       integer :: io, jo
 
       ! TODO do orbital dependent distances
-      
+
       ! Loop orbitals on both atoms
       do io = sys%first_orb(ia) , sys%first_orb(ia + 1) - 1
          do jo = sys%first_orb(ja) , sys%first_orb(ja + 1) - 1
             call sp%add(io, jo)
          end do
       end do
-      
+
     end subroutine add_elements
 
-  end subroutine init_sparse_pattern
+  end subroutine create_sparse_pattern_ac_create
 
-end module init_sparse_pattern_esl
-    
+end module esl_create_sparse_pattern_ac_m
+
 

@@ -1,45 +1,45 @@
 program esl_demo
- implicit none
+  implicit none
 
- character(len=100) :: input_file
+  character(len=100) :: input_file
 
- !Init MPI
+  !Init MPI
 
- !Init data basis strucutes 
+  !Init data basis strucutes 
 
- !Read Input variables and init corresponding data structures
- input_file="sample.inp"
- if (command_argument_count() == 1 ) Then
-   call get_command_argument(1, input_file)
- end if
+  !Read Input variables and init corresponding data structures
+  input_file="sample.inp"
+  if (command_argument_count() == 1 ) Then
+     call get_command_argument(1, input_file)
+  end if
 
- ! To be able to use YAML
- call f_lib_initialize()
- 
- call main(trim(input_file))
- 
- !Outputs
+  ! To be able to use YAML
+  call f_lib_initialize()
 
- !Release memory
- ! which is not released in final procedure for different types
- call f_lib_finalize()
+  call main(trim(input_file))
 
- !End of the calculation
+  !Outputs
+
+  !Release memory
+  ! which is not released in final procedure for different types
+  call f_lib_finalize()
+
+  !End of the calculation
 
 contains
 
   subroutine main(input_file)
     use fdf, only : fdf_init, fdf_shutdown, fdf_get
-    use hamiltonian_esl, only : hamiltonian_t
-    use scf_esl, only : scf_t, scf_loop
-    use states_esl, only : states_t
-    use system_esl, only : system_t
-    use numeric_esl, only : init_random
-    use smear_esl, only : smear_t
+    use esl_hamiltonian_m, only : hamiltonian_t
+    use esl_scf_m, only : scf_t, scf_loop
+    use esl_states_m, only : states_t
+    use esl_system_m, only : system_t
+    use esl_numeric_m, only : init_random
+    use esl_smear_m, only : smear_t
     use elsi_wrapper_esl, only : elsi_t
     use yaml_output
-    use new_step_esl, only: new_step
-    
+    use esl_next_step_m, only: next_step_setup
+
     character(len = *), intent(in) :: input_file
     type(hamiltonian_t) :: hamiltonian
     type(system_t)      :: system
@@ -69,7 +69,7 @@ contains
     open(newunit=of,file=trim(output_file),action="write")
     call init_random()
     call system%init()
-    
+
     !--------------TEMP --------------------
     nstates = 1
     nspin = 1
@@ -84,11 +84,11 @@ contains
     do istep = 1, nstep ! steps to run through for the SCF
        ! this step is not adhearing to anything, it could be
        ! md-steps, or whatever.
-       
+
        ! Initialize a new step
        ! This initializes all variables that
-       call new_step(system)
-       
+       call next_step_setup(system)
+
        call hamiltonian%init(system, states)
        call scf%init()
        call smear%init()
@@ -105,5 +105,5 @@ contains
     close(of)
 
   end subroutine main
-  
+
 end program esl_demo

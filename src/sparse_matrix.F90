@@ -1,8 +1,8 @@
-module sparse_matrix
+module esl_sparse_matrix_m
 
-  use sparse_pattern, only: sparse_pattern_t
+  use esl_sparse_pattern_m, only: sparse_pattern_t
   use prec, only: dp
-  
+
   implicit none
 
   public :: sparse_matrix_t
@@ -46,12 +46,12 @@ contains
     if ( .not. sparse_pattern%finalized ) then
        stop 'The sparse pattern has not been finalized before creating a sparse matrix'
     end if
-    
+
     if ( allocated(this%M) ) then
        deallocate(this%M)
     end if
     allocate(this%M(this%sp%nt))
-    
+
   end subroutine init_
 
   subroutine delete_(this, stat)
@@ -61,12 +61,12 @@ contains
 
     ! Ensure clean pointer
     nullify(this%sp)
-    
+
     if ( present(stat) ) stat = 0
     if ( .not. allocated(this%M) ) return
     deallocate(this%M, stat=istat)
     if ( present(stat) ) stat = istat
-    
+
   end subroutine delete_
 
   subroutine print_(this)
@@ -76,9 +76,9 @@ contains
     write(*,'(a)') "</sparse_matrix>"
   end subroutine print_
 
-end module sparse_matrix
-    
+end module esl_sparse_matrix_m
 
-  
-  
-  
+
+
+
+

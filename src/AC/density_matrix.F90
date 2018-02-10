@@ -3,12 +3,16 @@
 !< This module should implement the basics of creating
 !< an initial (valence filled) density matrix and/or
 !< read-in/extrapolate a DM to a different structure.
-module density_matrix_esl
+module esl_density_matrix_ac_m
+
+  use system_esl, only: system_t
+  use esl_sparse_pattern_m, only: sparse_pattern_t
+  use esl_sparse_matrix_m, only: sparse_matrix_t
 
   implicit none
 
-  public :: next_density_matrix
-  public :: init_atomic_density_matrix
+  public :: density_matrix_ac_next
+  public :: density_matrix_ac_init_atomic
 
 contains
 
@@ -18,12 +22,7 @@ contains
   !< new sparse pattern.
   !< When the old sparse pattern is not allocated (created)
   !< we automatically initialize the DM with the atomic fillings.
-  subroutine next_density_matrix(sys, old_sp, new_sp, DM)
-
-    use prec, only: dp
-    use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
-    use sparse_matrix, only: sparse_matrix_t
+  subroutine density_matrix_ac_next(sys, old_sp, new_sp, DM)
 
     class(system_t), intent(in) :: sys
     class(sparse_pattern_t), intent(in) :: old_sp
@@ -34,23 +33,20 @@ contains
     if ( old_sp%initialized() ) then
 
        ! For now we still do the atomic fillings...
-       call init_atomic_density_matrix(sys, new_sp, DM)
+       call density_matrix_ac_init_atomic(sys, new_sp, DM)
 
     else
-       
-       call init_atomic_density_matrix(sys, new_sp, DM)
+
+       call density_matrix_ac_init_atomic(sys, new_sp, DM)
 
     end if
 
-  end subroutine next_density_matrix
+  end subroutine density_matrix_ac_next
 
   !< Initialize the diagonal density matrix with atomic fillings
-  subroutine init_atomic_density_matrix(sys, sp, DM)
+  subroutine density_matrix_ac_init_atomic(sys, sp, DM)
 
     use prec, only: dp
-    use system_esl, only: system_t
-    use sparse_pattern, only: sparse_pattern_t
-    use sparse_matrix, only: sparse_matrix_t
 
     class(system_t), intent(in) :: sys
     class(sparse_pattern_t), intent(in), target :: sp
@@ -81,7 +77,7 @@ contains
     ! set the diagonal density matrix
     do ia = 1, sys%nAtoms
        is = sys%ispecie(ia)
-       
+
        ! Loop on orbitals
        do io = sys%first_orb(ia), sys%first_orb(ia+1) - 1
           ! Orbital index on atom
@@ -98,9 +94,9 @@ contains
           end do
 
        end do
-       
+
     end do
 
-  end subroutine init_atomic_density_matrix
+  end subroutine density_matrix_ac_init_atomic
 
-end module density_matrix_esl
+end module esl_density_matrix_ac_m

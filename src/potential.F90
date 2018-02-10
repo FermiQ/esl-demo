@@ -1,13 +1,14 @@
-module potential_esl
+module esl_potential_m
+
   use prec, only : dp,ip
 
-  use basis_esl
-  use density_esl
-  use energy_esl
-  use grid_esl
-  use psolver_esl
-  use states_esl
-  use xc_esl
+  use esl_basis_m
+  use esl_density_t
+  use esl_energy_t
+  use esl_grid_m
+  use esl_psolver_m
+  use esl_states_m
+  use esl_xc_m
 
   implicit none
   private
@@ -18,9 +19,9 @@ module potential_esl
   type potential_t
      integer :: np !< Number of points in real space
 
-     real(kind=dp), allocatable :: hartree(:)  !Hartree potential
-     real(kind=dp), allocatable :: external(:) !External local potential
-     real(kind=dp), allocatable :: vxc(:,:)  !xc potential
+     real(dp), allocatable :: hartree(:)  !Hartree potential
+     real(dp), allocatable :: external(:) !External local potential
+     real(dp), allocatable :: vxc(:,:)  !xc potential
 
      real(dp) :: ionicOffset !< Offset of the external potential
 
@@ -93,4 +94,4 @@ contains
 
   end subroutine calculate
 
-end module potential_esl
+end module esl_potential_m

@@ -20,11 +20,11 @@ contains
   subroutine elsi_compute_mu_and_occ(eh, n_electron, nstates, nspin, nkpt, &
        & eigenvalues, occ_numbers, k_weights, fermi_level)
     type(elsi_handle), intent(in) :: eh
-     integer, intent(in) :: n_electron, nstates, nspin, nkpt
-     real(dp), dimension(nstates,nspin,nkpt), intent(in) :: eigenvalues
-     real(dp), dimension(nstates,nspin,nkpt), intent(in) :: occ_numbers
-     real(dp), dimension(nkpt), intent(in) :: k_weights
-     real(dp), intent(out) :: fermi_level
-    
+    integer, intent(in) :: n_electron, nstates, nspin, nkpt
+    real(dp), dimension(nstates,nspin,nkpt), intent(in) :: eigenvalues
+    real(dp), dimension(nstates,nspin,nkpt), intent(in) :: occ_numbers
+    real(dp), dimension(nkpt), intent(in) :: k_weights
+    real(dp), intent(out) :: fermi_level
+
   end subroutine elsi_compute_mu_and_occ
 end module elsi

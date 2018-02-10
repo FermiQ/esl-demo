@@ -1,13 +1,13 @@
-module hamiltonian_esl
+module esl_hamiltonian_m
   use prec, only : dp,ip
 
-  use density_esl
-  use energy_esl
-  use force_esl
-  use ion_interaction_esl
-  use potential_esl
-  use states_esl
-  use system_esl
+  use esl_density_t
+  use esl_energy_t
+  use esl_force_t
+  use esl_ion_interaction_t
+  use esl_potential_m
+  use esl_states_m
+  use esl_system_m
 
   implicit none
   private
@@ -21,7 +21,7 @@ module hamiltonian_esl
   type hamiltonian_t
      type(density_t)         :: density
      type(energy_t)          :: energy
-     type(force_t)           :: forces
+     type(force_t)           :: force
      type(ion_interaction_t) :: ion_inter
      type(potential_t)       :: potentials
    contains
@@ -30,95 +30,94 @@ module hamiltonian_esl
   end type hamiltonian_t
 
   interface hamiltonian_apply
-    module procedure hamiltonian_dapply, hamiltonian_zapply
+     module procedure hamiltonian_dapply, hamiltonian_zapply
   end interface hamiltonian_apply
 
   interface hamiltonian_apply_local
-    module procedure hamiltonian_dapply_local, hamiltonian_zapply_local
+     module procedure hamiltonian_dapply_local, hamiltonian_zapply_local
   end interface hamiltonian_apply_local
 
 contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-   subroutine init(this, sys, states)
-     class(hamiltonian_t) :: this
-     type(system_t), intent(in) :: sys
-     type(states_t), intent(in) :: states
+  subroutine init(this, sys, states)
+    class(hamiltonian_t) :: this
+    type(system_t), intent(in) :: sys
+    type(states_t), intent(in) :: states
 
-     call this%density%init(sys%basis, sys%grid)
-     call this%energy%init()
-     call this%potentials%init(sys%basis, sys%grid, states)
-     call this%forces%init(sys%natoms)
-     call this%ion_inter%init()
+    call this%density%init(sys%basis, sys%grid)
+    call this%energy%init()
+    call this%potentials%init(sys%basis, sys%grid, states)
+    call this%force%init(sys%natoms)
+    call this%ion_inter%init()
 
-     select case(basis%type)
-       case(PLANEWAVES)
-         call this%ion_inter%calculate_periodic(sys, this%forces%ionion, this%energy%ionion
-       case(ATOMICORBS)
-         call this%ion_inter%calculate_isolated(sys, this%forces%ionion, this%energy%ionion
-     end select
+    select case(basis%type)
+    case(PLANEWAVES)
+       call this%ion_inter%calculate_periodic(sys, this%force%ionion, this%energy%ionion
+    case(ATOMICORBS)
+       call this%ion_inter%calculate_isolated(sys, this%force%ionion, this%energy%ionion
+    end select
 
-   end subroutine init
+  end subroutine init
 
-   !Apply the Hamiltonian matrix
-   !----------------------------------------------------
-   subroutine hamiltonian_dapply(this, psi, hpsi)
-     type(hamiltonian_t), intent(in)    :: this
-     real(kind=dp),       intent(in)    :: psi(:)
-     real(kind=dp),       intent(inout) :: hpsi(:)
+  !Apply the Hamiltonian matrix
+  !----------------------------------------------------
+  subroutine hamiltonian_dapply(this, psi, hpsi)
+    type(hamiltonian_t), intent(in)    :: this
+    real(dp),       intent(in)    :: psi(:)
+    real(dp),       intent(inout) :: hpsi(:)
 
-     !TODO: Here perform FFT-1
-     call hamiltonian_dapply_local(this, psi,hpsi)
-     !TODO: Here perform FFT
+    !TODO: Here perform FFT-1
+    call hamiltonian_dapply_local(this, psi,hpsi)
+    !TODO: Here perform FFT
 
-   end subroutine hamiltonian_dapply
+  end subroutine hamiltonian_dapply
 
-   !Apply the Hamiltonian matrix
-   !----------------------------------------------------
-   subroutine hamiltonian_zapply(this, psi, hpsi)
-     type(hamiltonian_t),   intent(in)    :: this
-     complex(kind=dp),      intent(in)    :: psi(:)
-     complex(kind=dp),      intent(inout) :: hpsi(:)
+  !Apply the Hamiltonian matrix
+  !----------------------------------------------------
+  subroutine hamiltonian_zapply(this, psi, hpsi)
+    type(hamiltonian_t),   intent(in)    :: this
+    complex(dp),      intent(in)    :: psi(:)
+    complex(dp),      intent(inout) :: hpsi(:)
 
-     !TODO: Here perform FFT-1
-     call hamiltonian_zapply_local(this, psi, hpsi)
-     !TODO: Here perform FFT
+    !TODO: Here perform FFT-1
+    call hamiltonian_zapply_local(this, psi, hpsi)
+    !TODO: Here perform FFT
 
-   end subroutine hamiltonian_zapply
+  end subroutine hamiltonian_zapply
 
-   !Apply the local part of the Hamitonian to a wavefunction
-   !----------------------------------------------------
-   subroutine hamiltonian_dapply_local(this, psi, hpsi)
-     type(hamiltonian_t),  intent(in)    :: this
-     real(kind=dp),        intent(in)    :: psi(:)
-     real(kind=dp),        intent(inout) :: hpsi(:)
+  !Apply the local part of the Hamitonian to a wavefunction
+  !----------------------------------------------------
+  subroutine hamiltonian_dapply_local(this, psi, hpsi)
+    type(hamiltonian_t),  intent(in)    :: this
+    real(dp),        intent(in)    :: psi(:)
+    real(dp),        intent(inout) :: hpsi(:)
 
-     integer :: ip
+    integer :: ip
 
-     !TODO: Here there is no spin
-     forall(ip = 1:this%potentials%np)
+    !TODO: Here there is no spin
+    forall(ip = 1:this%potentials%np)
        hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
-     end forall 
+    end forall
 
-   end subroutine hamiltonian_dapply_local
+  end subroutine hamiltonian_dapply_local
 
 
-   !Apply the local part of the Hamitonian to a wavefunction
-   !----------------------------------------------------
-   subroutine hamiltonian_zapply_local(this, psi, hpsi)
-     type(hamiltonian_t),   intent(in)    :: this
-     complex(kind=dp),      intent(in)    :: psi(:)
-     complex(kind=dp),      intent(inout) :: hpsi(:)
+  !Apply the local part of the Hamitonian to a wavefunction
+  !----------------------------------------------------
+  subroutine hamiltonian_zapply_local(this, psi, hpsi)
+    type(hamiltonian_t),   intent(in)    :: this
+    complex(dp),      intent(in)    :: psi(:)
+    complex(dp),      intent(inout) :: hpsi(:)
 
-     integer :: ip
+    integer :: ip
 
-     !TODO: Here there is no spin
-     forall(ip = 1:this%potentials%np)
+    !TODO: Here there is no spin
+    forall(ip = 1:this%potentials%np)
        hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
-     end forall
+    end forall
 
-   end subroutine hamiltonian_zapply_local
+  end subroutine hamiltonian_zapply_local
 
-
-end module hamiltonian_esl
+end module esl_hamiltonian_m

@@ -1,77 +1,80 @@
-module density_esl
-  use prec, only : dp,ip
+module esl_density_t
 
-  use basis_esl
-  use grid_esl
-  use system_esl
+  use prec, only : dp
+
+  use esl_basis_m
+  use esl_grid_m
+  use esl_system_m
 
   implicit none
   private
 
   public :: density_t
-  
+
   !Data structure for the density
   type density_t
-    integer :: np !< Copied from grid
+     integer :: np !< Copied from grid
 
-    real(kind=dp), allocatable :: density(:)
-    real(kind=dp), allocatable :: density_matrix(:,:) 
+     real(dp), allocatable :: density(:)
+     real(dp), allocatable :: density_matrix(:,:)
    contains
+
      procedure, public :: init
      procedure, public :: guess
      procedure, public :: calculate
      procedure, public :: get_den
      procedure, public :: set_den
      final  :: cleanup
+
   end type density_t
 
-  contains
+contains
 
-   !Initialize the density
-   !----------------------------------------------------
-   subroutine init(this, basis, grid)
-     class(density_t), intent(inout) :: this
-     type(basis_t),   intent(in)    :: basis
-     type(grid_t),    intent(in)    :: grid
+  !Initialize the density
+  !----------------------------------------------------
+  subroutine init(this, basis, grid)
+    class(density_t), intent(inout) :: this
+    type(basis_t), intent(in) :: basis
+    type(grid_t), intent(in) :: grid
 
-     !Parse the informations from the input file
-     select case(basis%type)
-       case(PLANEWAVES)
-         !Initialization structures for the PW case
-         allocate(this%density(1:grid%np))
-         this%density(1:grid%np) = 0.d0
-       case(ATOMICORBS)
-         !Initialization structures for the LO case
-         !TEMP
-         allocate(this%density(1:grid%np))
-         this%density(1:grid%np) = 0.d0
-     end select 
+    !Parse the informations from the input file
+    select case(basis%type)
+    case(PLANEWAVES)
+       !Initialization structures for the PW case
+       allocate(this%density(1:grid%np))
+       this%density(1:grid%np) = 0.d0
+    case(ATOMICORBS)
+       !Initialization structures for the LO case
+       !TEMP
+       allocate(this%density(1:grid%np))
+       this%density(1:grid%np) = 0.d0
+    end select
 
-     this%np = grid%np
+    this%np = grid%np
 
-   end subroutine init
+  end subroutine init
 
-   !Guess the initial density from the atomic orbitals
-   !----------------------------------------------------
-   subroutine guess(this, system)
-     class(density_t), intent(inout) :: this
-     type(system_t),   intent(in)    :: system
+  !Guess the initial density from the atomic orbitals
+  !----------------------------------------------------
+  subroutine guess(this, system)
+    class(density_t), intent(inout) :: this
+    type(system_t), intent(in) :: system
 
-     real(kind=dp), allocatable :: radial(:)
-     real(kind=dp), allocatable :: atomicden(:)
-     integer :: iat, np_radial, ip
+    real(dp), allocatable :: radial(:)
+    real(dp), allocatable :: atomicden(:)
+    integer :: iat, np_radial, ip
 
-     this%density(1:system%grid%np) = 0.d0
-     
-     allocate(atomicden(1:system%grid%np))
-     atomicden(1:system%grid%np) = 0.d0
+    this%density(1:system%grid%np) = 0.d0
 
-     do iat = 1, system%natoms
+    allocate(atomicden(1:system%grid%np))
+    atomicden(1:system%grid%np) = 0.d0
+
+    do iat = 1, system%natoms
        !Get the number of points in the radial grid
        np_radial = 1
        allocate(radial(1:np_radial))
        !Get atomic density on the radial grid
-        
+
        !Convert the radial density to the cartesian grid
 
        !We do not need the radial density anymore
@@ -79,67 +82,66 @@ module density_esl
 
        !Summing up to the total density
        forall(ip=1:system%grid%np)
-         this%density(ip) = this%density(ip) + atomicden(ip)
+          this%density(ip) = this%density(ip) + atomicden(ip)
        end forall
-     end do
+    end do
 
-     deallocate(atomicden)
+    deallocate(atomicden)
 
-   end subroutine guess
- 
-   !Release
-   !----------------------------------------------------
-   subroutine cleanup(this)
-     type(density_t), intent(inout) :: this
+  end subroutine guess
 
-     if(allocated(this%density_matrix)) deallocate(this%density_matrix)
-     if(allocated(this%density)) deallocate(this%density)
+  !Release
+  !----------------------------------------------------
+  subroutine cleanup(this)
+    type(density_t), intent(inout) :: this
 
-   end subroutine cleanup
+    if(allocated(this%density_matrix)) deallocate(this%density_matrix)
+    if(allocated(this%density)) deallocate(this%density)
 
-   !Calc density
-   !----------------------------------------------------
-   subroutine calculate(this, basis)
-     class(density_t), intent(inout) :: this
-     type(basis_t),   intent(in)    :: basis
+  end subroutine cleanup
 
-     select case(basis%type)
-       case(PLANEWAVES)
+  !Calc density
+  !----------------------------------------------------
+  subroutine calculate(this, basis)
+    class(density_t), intent(inout) :: this
+    type(basis_t), intent(in) :: basis
 
-       case(ATOMICORBS)
+    select case(basis%type)
+    case(PLANEWAVES)
 
-     end select
+    case(ATOMICORBS)
 
-   end subroutine calculate
+    end select
+
+  end subroutine calculate
 
 
-   !Copy the density to an array
-   !----------------------------------------------------
-   subroutine get_den(this, rho)
-     class(density_t) :: this
-     real(kind=dp),    intent(out) :: rho(:)
+  !Copy the density to an array
+  !----------------------------------------------------
+  subroutine get_den(this, rho)
+    class(density_t) :: this
+    real(dp), intent(out) :: rho(:)
 
-     integer :: ip
+    integer :: ip
 
-     forall(ip=1:this%np)
+    forall(ip=1:this%np)
        rho(ip) = this%density(ip)
-     end forall
+    end forall
 
-   end subroutine get_den
+  end subroutine get_den
 
-   !Copyi the density from an array
-   !----------------------------------------------------
-   subroutine set_den(this, rho)
-     class(density_t) :: this
-     real(kind=dp),    intent(in) :: rho(:)
+  !Copyi the density from an array
+  !----------------------------------------------------
+  subroutine set_den(this, rho)
+    class(density_t) :: this
+    real(dp), intent(in) :: rho(:)
 
-     integer :: ip
+    integer :: ip
 
-     forall(ip=1:this%np)
+    forall(ip=1:this%np)
        this%density(ip) = rho(ip)
-     end forall
+    end forall
 
-   end subroutine set_den
+  end subroutine set_den
 
-
-end module density_esl
+end module esl_density_t
