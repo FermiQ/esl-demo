@@ -1,4 +1,4 @@
-option(WITH_MPI "build a MPI version" OFF)
+option(WITH_MPI "build a MPI version" ON)
 option(WITH_OPENMP "build an OpenMP version" OFF)
 option(BUILD_TESTING "Build with Testing support" OFF)
 option(WITH_COVERAGE "Build with instrumentation for code coverage" OFF)
