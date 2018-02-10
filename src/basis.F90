@@ -2,8 +2,8 @@ module esl_basis_m
 
   use prec
   use fdf, only : fdf_get, leqi
-  use message_esl
   use esl_basis_pw_m
+  use yaml_output
 
   implicit none
 
@@ -15,6 +15,7 @@ module esl_basis_m
   type basis_t
      integer :: type
      type(basis_pw_t) :: pw
+     integer :: size
    contains
      private
      procedure, public :: init
@@ -40,18 +41,20 @@ contains
 
     str = fdf_get('BasisSet', 'Planewaves')
     if ( leqi(str, 'Planewaves') ) then
-       this%type = PLANEWAVES
+      this%type = PLANEWAVES
 
-       ecut = fdf_get('cut-off', 10._dp, 'Ha')
-       call this%pw%init(ecut, ndims, gcell)
+      ecut = fdf_get('cut-off', 10._dp, 'Ha')
+      call this%pw%init(ecut, ndims, gcell)
 
+      this%size = this%pw%npw
     else if ( leqi(str, 'AtomicOrbitals') ) then
-       this%type = ATOMCENTERED
+      this%type = ATOMCENTERED
 
     else
-       call message_error("Unknown basis set: "//trim(str))
+      call message_error("Unknown basis set: "//trim(str))
     end if
 
+    
   end subroutine init
 
   !Release
@@ -63,17 +66,16 @@ contains
 
   !Summary
   !----------------------------------------------------
-  subroutine summary(basis)
-    use yaml_output
-    class(basis_t), intent(in) :: basis
+  subroutine summary(this)
+    class(basis_t), intent(in) :: this
 
     call yaml_mapping_open("basis")
-    select case (basis%type)
+    select case (this%type)
     case ( PLANEWAVES )
-       call yaml_map("Type", "Plane waves")
-       call basis%pw%summary()
+      call yaml_map("Type", "Plane waves")
+      call this%pw%summary()
     case ( ATOMCENTERED )
-       call yaml_map("Type", "Atomic orbitals")
+      call yaml_map("Type", "Atomic orbitals")
     end select
     call yaml_mapping_close()
 

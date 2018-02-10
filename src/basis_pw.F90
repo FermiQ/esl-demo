@@ -40,12 +40,12 @@ contains
 
   !Summary
   !----------------------------------------------------
-  subroutine summary(basis)
-    class(basis_pw_t), intent(in) :: basis
+  subroutine summary(this)
+    class(basis_pw_t), intent(in) :: this
 
     call yaml_mapping_open("basis_pw")
-    call yaml_map("Cut-off (Ha)", basis%ecut)
-    call yaml_map("Number of plane-waves", basis%npw)
+    call yaml_map("Cut-off (Ha)", this%ecut)
+    call yaml_map("Number of plane-waves", this%npw)
     call yaml_mapping_close()
 
   end subroutine summary
