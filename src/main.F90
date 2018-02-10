@@ -1,7 +1,7 @@
 program esl_demo
   use yaml_output
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
   use flook, only : luaState
   use esl_flook_if_m
 #endif
@@ -12,7 +12,7 @@ program esl_demo
   character(len=256) :: input_file
   integer :: out_unit
   
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
   ! LUA-handle, we really do need it up here to be able to use it
   type(luaState) :: LUA
 #endif
@@ -54,7 +54,7 @@ contains
 
     call system%init()
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
     ! Call lua at given state
     call flook_if_call(LUA, LUA_INITIALIZE)
 #endif
@@ -75,7 +75,7 @@ contains
       ! this step is not adhearing to anything, it could be
       ! md-steps, or whatever.
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
       ! Call lua just before we are to initialize a new step.
       call flook_if_call(LUA, LUA_INIT_STEP)
 #endif
@@ -90,14 +90,14 @@ contains
       !SCF loop
       call scf_loop(scf, elsi, hamiltonian, system, states, smear)
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
       ! Call lua after the forces has been calculated.
       call flook_if_call(LUA, LUA_FORCES)
 #endif
 
       ! Insert molecular dynamics, etc.
       
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
       ! Call lua after the SCF-loop.
       ! At this point we can change variables, i.e. perform MD etc.
       call flook_if_call(LUA, LUA_NEXT_STEP)
@@ -143,7 +143,7 @@ contains
     ! Initialize random sequences
     call init_random()
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
     ! Initialize Lua interface
     call flook_if_init(LUA)
 #endif

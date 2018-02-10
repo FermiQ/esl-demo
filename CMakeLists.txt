@@ -31,14 +31,6 @@ else()
   message(STATUS "Build without MPI support!")
 endif()
 
-if(WITH_LUA)
-  find_package(FLOOK REQUIRED)
-  include_directories(${FLOOK_Fortran_INCLUDE_PATH})
-  message(STATUS "Build with Lua-interface support (flook)!")
-else()
-  message(STATUS "Build without Lua-interface support (flook)!")
-endif()
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
 pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
@@ -53,6 +45,15 @@ message(STATUS "Found PSPIO support: ${PSPIO_INCLUDE_DIRS};")
 link_directories(${PSPIO_LIBRARY_DIRS})
 
 
+if(WITH_FLOOK)
+  pkg_check_modules(FLOOK REQUIRED flook)
+  include_directories(${FLOOK_Fortran_INCLUDE_PATH})
+  message(STATUS "Build with flook library and Lua-interface support!")
+  add_definitions("-DWITH_FLOOK")
+else()
+  message(STATUS "Build without flook library (no Lua-interface support)!")
+endif()
+
 if(WITH_MPI)
   add_library(esldmpi
     ${src_dir}/mpi_dist_block_cyclic.F90 
@@ -65,11 +66,7 @@ if(WITH_MPI)
     SOVERSION ${PROJECT_VERSION_MAJOR}
     )
 endif()
-
-if(WITH_LUA)
-   ### How do I add a pre-processor flag?
-endif()
-
+ 
 
 add_executable(${target_name}
   ${src_dir}/main.F90

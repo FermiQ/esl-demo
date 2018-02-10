@@ -2,13 +2,13 @@
 module esl_dict_m
 
   use prec, only : dp
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
   use dictionary
 #endif
 
   implicit none
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
 
   private
 

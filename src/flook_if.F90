@@ -6,7 +6,7 @@
 !< and the dictionaries within.
 module esl_flook_if_m
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
   use flook
 #endif
 
@@ -26,7 +26,7 @@ module esl_flook_if_m
   ! when moving the atoms, right after the FORCES step
   integer, parameter, public :: LUA_NEXT_STEP = 5
 
-#ifdef WITH_LUA
+#ifdef WITH_FLOOK
 
   public :: flook_if_init, flook_if_call, flook_if_close
 
