@@ -45,6 +45,15 @@ message(STATUS "Found PSPIO support: ${PSPIO_INCLUDE_DIRS};")
 link_directories(${PSPIO_LIBRARY_DIRS})
 
 
+if(WITH_FLOOK)
+  pkg_check_modules(FLOOK REQUIRED flook)
+  include_directories(${FLOOK_Fortran_INCLUDE_PATH})
+  message(STATUS "Build with flook library and Lua-interface support!")
+  add_definitions("-DWITH_FLOOK")
+else()
+  message(STATUS "Build without flook library (no Lua-interface support)!")
+endif()
+
 if(WITH_MPI)
   add_library(esldmpi
     ${src_dir}/mpi_dist_block_cyclic.F90 
@@ -57,7 +66,7 @@ if(WITH_MPI)
     SOVERSION ${PROJECT_VERSION_MAJOR}
     )
 endif()
-
+ 
 
 add_executable(${target_name}
   ${src_dir}/main.F90
@@ -69,6 +78,8 @@ add_executable(${target_name}
   ${src_dir}/energy.F90
   ${src_dir}/force.F90
   ${src_dir}/grid.F90
+  ${src_dir}/flook_if.F90
+  ${src_dir}/esl_dict.F90
   ${src_dir}/hamiltonian.F90
   ${src_dir}/AC/create_sparse_pattern.F90
   ${src_dir}/ion_interaction.F90
