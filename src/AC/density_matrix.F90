@@ -5,7 +5,8 @@
 !< read-in/extrapolate a DM to a different structure.
 module esl_density_matrix_ac_m
 
-  use esl_system_m, only: system_t
+  use esl_geometry_m, only: geometry_t
+  use esl_basis_ac_m, only: basis_ac_t
   use esl_sparse_pattern_m, only: sparse_pattern_t
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
@@ -22,9 +23,10 @@ contains
   !< new sparse pattern.
   !< When the old sparse pattern is not allocated (created)
   !< we automatically initialize the DM with the atomic fillings.
-  subroutine density_matrix_ac_next(sys, old_sp, new_sp, DM)
+  subroutine density_matrix_ac_next(geo, basis, old_sp, new_sp, DM)
 
-    class(system_t), intent(in) :: sys
+    class(geometry_t), intent(in) :: geo
+    class(basis_ac_t), intent(in) :: basis
     type(sparse_pattern_t), intent(in) :: old_sp
     type(sparse_pattern_t), intent(in), target :: new_sp
     ! One element per spin component.
@@ -33,22 +35,23 @@ contains
     if ( old_sp%initialized() ) then
 
       ! For now we still do the atomic fillings...
-      call density_matrix_ac_init_atomic(sys, new_sp, DM)
+      call density_matrix_ac_init_atomic(geo, basis, new_sp, DM)
 
     else
 
-      call density_matrix_ac_init_atomic(sys, new_sp, DM)
+      call density_matrix_ac_init_atomic(geo, basis, new_sp, DM)
 
     end if
 
   end subroutine density_matrix_ac_next
 
   !< Initialize the diagonal density matrix with atomic fillings
-  subroutine density_matrix_ac_init_atomic(sys, sp, DM)
+  subroutine density_matrix_ac_init_atomic(geo, basis, sp, DM)
 
     use prec, only: dp
 
-    class(system_t), intent(in) :: sys
+    class(geometry_t), intent(in) :: geo
+    class(basis_ac_t), intent(in) :: basis
     type(sparse_pattern_t), intent(in), target :: sp
     ! One element per spin component.
     type(sparse_matrix_t), intent(inout), allocatable :: DM(:)
@@ -78,13 +81,13 @@ contains
 
     ! Loop over all orbital connections in the sparse pattern and
     ! set the diagonal density matrix
-    do ia = 1, sys%geo%n_atoms
-      is = sys%geo%species_idx(ia)
+    do ia = 1, geo%n_atoms
+      is = geo%species_idx(ia)
 
       ! Loop on orbitals
-      do io = sys%basis%ac%site_function_start(ia), sys%basis%ac%site_function_start(ia + 1) - 1
+      do io = basis%site_function_start(ia), basis%site_function_start(ia + 1) - 1
         ! Orbital index on atom
-        iio = io - sys%basis%ac%site_function_start(ia) + 1
+        iio = io - basis%site_function_start(ia) + 1
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -92,8 +95,8 @@ contains
           if ( sp%column(ind) /= io ) cycle
 
           ! Set diagonal component
-! TODO add atomic charge specification
-!          DM(:)%M(ind) = sys%basis% TODO basis %info(is)%q0(iio) * frac_s
+          ! TODO add atomic charge specification
+          !          DM(:)%M(ind) = basis% TODO basis %info(is)%q0(iio) * frac_s
 
         end do
 
