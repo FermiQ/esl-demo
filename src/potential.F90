@@ -7,7 +7,7 @@ module esl_potential_m
   use esl_energy_t
   use esl_grid_m
   use esl_psolver_m
-  use states_esl
+  use esl_states_m
   use xc_esl
 
   implicit none

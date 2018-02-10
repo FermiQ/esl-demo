@@ -3,7 +3,7 @@ module esl_smear_m
   use elsi_wrapper_esl, only: elsi_calc_fermi_and_occ
   use fdf, only  : fdf_get, leqi
 
-  use states_esl
+  use esl_states_m
 
   implicit none
   private

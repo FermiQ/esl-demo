@@ -1,165 +1,166 @@
-module states_esl
+module esl_states_m
+
   use prec, only : dp,ip
 
   use basis_esl
   use yaml_output
 
- implicit none
- private
+  implicit none
+  private
 
- public ::                   &
-           states_t,         &
-           states_randomize
+  public ::                   &
+       states_t,         &
+       states_randomize
 
- type wfn_t
-   real(kind=dp),    allocatable :: dcoef(:) !<Coefficients of the wavefunction in the basis
-   complex(kind=dp), allocatable :: zcoef(:)
- end type wfn_t
+  type wfn_t
+     real(dp),    allocatable :: dcoef(:) !<Coefficients of the wavefunction in the basis
+     complex(dp), allocatable :: zcoef(:)
+  end type wfn_t
 
-          
- !Data structure for the states
- type states_t
-   integer :: nstates
-   integer :: nkpt
-   integer :: nspin
-   integer :: ncoef
-   integer :: nel  !< Number of electrons
 
-   logical :: complex_states
+  !Data structure for the states
+  type states_t
+     integer :: nstates
+     integer :: nkpt
+     integer :: nspin
+     integer :: ncoef
+     integer :: nel  !< Number of electrons
 
-   type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
-   real(kind=dp), allocatable :: occ_numbers(:,:,:)
-   real(kind=dp), allocatable :: k_weights(:)
+     logical :: complex_states
+
+     type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
+     real(dp), allocatable :: occ_numbers(:,:,:)
+     real(dp), allocatable :: k_weights(:)
    contains
      private
      procedure, public :: init
      procedure, public :: summary
      final :: cleanup
- end type states_t
+  end type states_t
 
- contains
+contains
 
-   !Initialize the states
-   !----------------------------------------------------
-   subroutine init(this, basis, nstates, nspin, nkpt, nel)
-     class(states_t)  :: this
-     type(basis_t),  intent(in)    :: basis
-     integer,        intent(in)    :: nstates
-     integer,        intent(in)    :: nspin
-     integer,        intent(in)    :: nkpt
-     integer,        intent(in)    :: nel
+  !Initialize the states
+  !----------------------------------------------------
+  subroutine init(this, basis, nstates, nspin, nkpt, nel)
+    class(states_t)  :: this
+    type(basis_t),  intent(in)    :: basis
+    integer,        intent(in)    :: nstates
+    integer,        intent(in)    :: nspin
+    integer,        intent(in)    :: nkpt
+    integer,        intent(in)    :: nel
 
-     integer :: ist, isp, ik
+    integer :: ist, isp, ik
 
-     this%nstates = nstates
-     this%nspin = nspin
-     this%nkpt = nkpt
-     this%ncoef = basis%size
-     this%nel = nel
+    this%nstates = nstates
+    this%nspin = nspin
+    this%nkpt = nkpt
+    this%ncoef = basis%size
+    this%nel = nel
 
-     allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
-     allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
-     this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
+    allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
+    allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
+    this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
 
-     allocate(this%k_weights(1:nkpt))
-     this%k_weights(:) = 1.d0/this%nkpt
+    allocate(this%k_weights(1:nkpt))
+    this%k_weights(:) = 1.d0/this%nkpt
 
-     select case(basis%type)
-       case(PLANEWAVES)
-         this%complex_states = .true.
-         do ik = 1, nkpt
-           do isp = 1, nspin
+    select case(basis%type)
+    case(PLANEWAVES)
+       this%complex_states = .true.
+       do ik = 1, nkpt
+          do isp = 1, nspin
              do ist = 1, nstates
-               allocate(this%states(ist, isp, ik)%zcoef(1:basis%size))
-             end do 
-           end do
-         end do
-       case(ATOMICORBS)
-         this%complex_states = .false.
-         do ik = 1, nkpt
-           do isp = 1, nspin
-             do ist = 1, nstates
-               allocate(this%states(ist, isp, ik)%dcoef(1:basis%size))
+                allocate(this%states(ist, isp, ik)%zcoef(1:basis%size))
              end do
-           end do
-         end do
-     end select
+          end do
+       end do
+    case(ATOMICORBS)
+       this%complex_states = .false.
+       do ik = 1, nkpt
+          do isp = 1, nspin
+             do ist = 1, nstates
+                allocate(this%states(ist, isp, ik)%dcoef(1:basis%size))
+             end do
+          end do
+       end do
+    end select
 
-   end subroutine init
-
-
-   !Release the states
-   !----------------------------------------------------
-   subroutine cleanup(this)
-     type(states_t):: this
-
-     integer :: ist, isp, ik
-
-     if(allocated(this%states)) then
-        do ik = 1, this%nkpt
-           do isp = 1, this%nspin
-              do ist = 1, this%nstates
-                 if(allocated(this%states(ist, isp, ik)%dcoef)) &
-                      deallocate(this%states(ist, isp, ik)%dcoef)
-                 if(allocated(this%states(ist, isp, ik)%zcoef)) &
-                      deallocate(this%states(ist, isp, ik)%zcoef)
-              end do
-           end do
-        end do
-        deallocate(this%states)
-     end if
-     if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
-     if(allocated(this%k_weights)) deallocate(this%k_weights)
-
-   end subroutine cleanup
+  end subroutine init
 
 
-   !Randomize the states
-   !----------------------------------------------------
-   subroutine states_randomize(this)
-     type(states_t):: this
+  !Release the states
+  !----------------------------------------------------
+  subroutine cleanup(this)
+    type(states_t):: this
 
-     integer :: ist, isp, ik
-     real(kind=dp), allocatable :: tmp_re(:), tmp_im(:)
+    integer :: ist, isp, ik
 
-     call init_random()
+    if(allocated(this%states)) then
+       do ik = 1, this%nkpt
+          do isp = 1, this%nspin
+             do ist = 1, this%nstates
+                if(allocated(this%states(ist, isp, ik)%dcoef)) &
+                     deallocate(this%states(ist, isp, ik)%dcoef)
+                if(allocated(this%states(ist, isp, ik)%zcoef)) &
+                     deallocate(this%states(ist, isp, ik)%zcoef)
+             end do
+          end do
+       end do
+       deallocate(this%states)
+    end if
+    if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
+    if(allocated(this%k_weights)) deallocate(this%k_weights)
 
-     if(this%complex_states) then
+  end subroutine cleanup
+
+
+  !Randomize the states
+  !----------------------------------------------------
+  subroutine states_randomize(this)
+    type(states_t):: this
+
+    integer :: ist, isp, ik
+    real(dp), allocatable :: tmp_re(:), tmp_im(:)
+
+    call init_random()
+
+    if(this%complex_states) then
        allocate(tmp_re(1:this%ncoef))
        allocate(tmp_im(1:this%ncoef))
        do ik = 1, this%nkpt
-         do isp = 1, this%nspin
-           do ist = 1, this%nstates
-             call random_number(tmp_re(1:this%ncoef))
-             call random_number(tmp_im(1:this%ncoef))
-             this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) + cmplx(0.d0,1.d0)*tmp_im(1:this%ncoef) 
-           end do
-         end do
+          do isp = 1, this%nspin
+             do ist = 1, this%nstates
+                call random_number(tmp_re(1:this%ncoef))
+                call random_number(tmp_im(1:this%ncoef))
+                this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) + cmplx(0.d0,1.d0)*tmp_im(1:this%ncoef) 
+             end do
+          end do
        end do
        deallocate(tmp_re, tmp_im)
-     else 
+    else 
        do ik = 1, this%nkpt
-         do isp = 1, this%nspin
-           do ist = 1, this%nstates
-             call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
-           end do
-         end do
+          do isp = 1, this%nspin
+             do ist = 1, this%nstates
+                call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
+             end do
+          end do
        end do
-     end if
+    end if
 
-   end subroutine states_randomize
+  end subroutine states_randomize
 
-   !Summary
-   !----------------------------------------------------
-   subroutine summary(this)
-     class(states_t) :: this
+  !Summary
+  !----------------------------------------------------
+  subroutine summary(this)
+    class(states_t) :: this
 
-     call yaml_mapping_open("States")
-     call yaml_map("Number of states", this%nstates)
-     call yaml_map("Spin components", this%nspin)
-     call yaml_map("Number of k-points", this%nkpt)
-     call yaml_mapping_close()
+    call yaml_mapping_open("States")
+    call yaml_map("Number of states", this%nstates)
+    call yaml_map("Spin components", this%nspin)
+    call yaml_map("Number of k-points", this%nkpt)
+    call yaml_mapping_close()
 
-   end subroutine summary
+  end subroutine summary
 
-end module states_esl
+end module esl_states_m

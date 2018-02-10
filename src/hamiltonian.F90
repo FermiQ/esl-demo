@@ -6,7 +6,7 @@ module esl_hamiltonian_m
   use esl_force_t
   use esl_ion_interaction_t
   use esl_potential_m
-  use states_esl
+  use esl_states_m
   use system_esl
 
   implicit none

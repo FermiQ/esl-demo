@@ -58,8 +58,8 @@ contains
   !----------------------------------------------------
   subroutine scf_loop(this, elsi, hamiltonian, system, states, smear)
     use yaml_output
-    use smear_esl
-    use states_esl
+    use esl_smear_m
+    use esl_states_m
     use elsi_wrapper_esl
 
     type(scf_t),         intent(inout) :: this
