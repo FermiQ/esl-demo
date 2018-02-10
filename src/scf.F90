@@ -3,8 +3,8 @@ module scf_esl
   use fdf, only : fdf_get
 
   use basis_esl
-  use density_esl
-  use grid_esl
+  use esl_density_t
+  use esl_grid_m
   use hamiltonian_esl
   use mixing_esl
   use potential_esl

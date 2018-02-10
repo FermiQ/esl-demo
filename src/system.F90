@@ -11,7 +11,7 @@ module system_esl
   use sparse_matrix, only: sparse_matrix_t
 
   use esl_basis_m
-  use grid_esl
+  use esl_grid_m
   use smear_esl
   use states_esl
   use species_esl

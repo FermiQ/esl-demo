@@ -4,7 +4,7 @@ module potential_esl
   use basis_esl
   use esl_density_t
   use esl_energy_t
-  use grid_esl
+  use esl_grid_m
   use psolver_esl
   use states_esl
   use xc_esl

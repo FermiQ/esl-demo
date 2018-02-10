@@ -3,7 +3,7 @@ module esl_density_t
   use prec, only : dp
 
   use basis_esl
-  use grid_esl
+  use esl_grid_m
   use system_esl
 
   implicit none
