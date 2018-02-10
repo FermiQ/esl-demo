@@ -1,62 +1,62 @@
-module energy_esl
-  use prec, only : dp,ip
+module esl_energy_t
+  use prec, only : dp
 
   implicit none
   private
 
   public ::                          &
-            energy_t
-  
+       energy_t
+
   !Data structure for the energy
   type energy_t
-    real(kind=dp) :: total
-    real(kind=dp) :: eigenvalues
-    real(kind=dp) :: hartree
-    real(kind=dp) :: ionion
-    real(kind=dp) :: extern
-    real(kind=dp) :: exchange
-    real(kind=dp) :: correlation
-    real(kind=dp) :: int_nvxc
-    real(kind=dp) :: kinetic
-    real(kind=dp) :: entropy
-    contains
-    private
-    procedure, public :: init
-    procedure, public :: calculate
-    procedure, public :: display
+     real(kind=dp) :: total
+     real(kind=dp) :: eigenvalues
+     real(kind=dp) :: hartree
+     real(kind=dp) :: ionion
+     real(kind=dp) :: extern
+     real(kind=dp) :: exchange
+     real(kind=dp) :: correlation
+     real(kind=dp) :: int_nvxc
+     real(kind=dp) :: kinetic
+     real(kind=dp) :: entropy
+   contains
+     private
+     procedure, public :: init
+     procedure, public :: calculate
+     procedure, public :: display
   end type energy_t
 
 
-  contains
+contains
 
-   !Initialize the energies
-   !----------------------------------------------------
-   subroutine init(this)
-     class(energy_t) :: this
+  !Initialize the energies
+  !----------------------------------------------------
+  subroutine init(this)
+    class(energy_t) :: this
 
-     this%total = 0.d0
-     this%eigenvalues = 0.d0
-     this%hartree = 0.d0
-     this%ionion = 0.d0
-     this%extern = 0.d0
-     this%exchange = 0.d0   
-     this%correlation = 0.d0
-     this%int_nvxc = 0.d0
-     this%kinetic = 0.d0
-     this%entropy = 0.d0
+    this%total = 0._dp
+    this%eigenvalues = 0._dp
+    this%hartree = 0._dp
+    this%ionion = 0._dp
+    this%extern = 0._dp
+    this%exchange = 0._dp   
+    this%correlation = 0._dp
+    this%int_nvxc = 0._dp
+    this%kinetic = 0._dp
+    this%entropy = 0._dp
 
-   end subroutine init
+  end subroutine init
 
 
-   !Compute the total energy
-   !----------------------------------------------------
-   subroutine calculate(this)
-     class(energy_t) :: this
+  !Compute the total energy
+  !----------------------------------------------------
+  subroutine calculate(this)
+    class(energy_t) :: this
 
-     this%total = this%ionion + this%correlation 
-     this%total = this%total + 0.5d0*(this%eigenvalues + this%kinetic + this%extern + this%int_nvxc)
+    this%total = this%ionion + this%correlation 
+    this%total = this%total + 0.5_dp*(this%eigenvalues + this%kinetic + this%extern + this%int_nvxc)
 
-   end subroutine calculate
+  end subroutine calculate
 
 
   !Display de different components of the total energy
@@ -79,5 +79,5 @@ module energy_esl
 
   end subroutine display
 
- 
-end module energy_esl
+
+end module esl_energy_t
