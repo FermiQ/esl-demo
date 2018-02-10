@@ -30,7 +30,7 @@ contains
 
   subroutine main(input_file)
     use fdf, only : fdf_init, fdf_shutdown, fdf_get
-    use hamiltonian_esl, only : hamiltonian_t
+    use esl_hamiltonian_m, only : hamiltonian_t
     use scf_esl, only : scf_t, scf_loop
     use states_esl, only : states_t
     use system_esl, only : system_t

@@ -1,4 +1,4 @@
-module hamiltonian_esl
+module esl_hamiltonian_m
   use prec, only : dp,ip
 
   use esl_density_t
@@ -65,8 +65,8 @@ contains
   !----------------------------------------------------
   subroutine hamiltonian_dapply(this, psi, hpsi)
     type(hamiltonian_t), intent(in)    :: this
-    real(kind=dp),       intent(in)    :: psi(:)
-    real(kind=dp),       intent(inout) :: hpsi(:)
+    real(dp),       intent(in)    :: psi(:)
+    real(dp),       intent(inout) :: hpsi(:)
 
     !TODO: Here perform FFT-1
     call hamiltonian_dapply_local(this, psi,hpsi)
@@ -78,8 +78,8 @@ contains
   !----------------------------------------------------
   subroutine hamiltonian_zapply(this, psi, hpsi)
     type(hamiltonian_t),   intent(in)    :: this
-    complex(kind=dp),      intent(in)    :: psi(:)
-    complex(kind=dp),      intent(inout) :: hpsi(:)
+    complex(dp),      intent(in)    :: psi(:)
+    complex(dp),      intent(inout) :: hpsi(:)
 
     !TODO: Here perform FFT-1
     call hamiltonian_zapply_local(this, psi, hpsi)
@@ -91,8 +91,8 @@ contains
   !----------------------------------------------------
   subroutine hamiltonian_dapply_local(this, psi, hpsi)
     type(hamiltonian_t),  intent(in)    :: this
-    real(kind=dp),        intent(in)    :: psi(:)
-    real(kind=dp),        intent(inout) :: hpsi(:)
+    real(dp),        intent(in)    :: psi(:)
+    real(dp),        intent(inout) :: hpsi(:)
 
     integer :: ip
 
@@ -108,8 +108,8 @@ contains
   !----------------------------------------------------
   subroutine hamiltonian_zapply_local(this, psi, hpsi)
     type(hamiltonian_t),   intent(in)    :: this
-    complex(kind=dp),      intent(in)    :: psi(:)
-    complex(kind=dp),      intent(inout) :: hpsi(:)
+    complex(dp),      intent(in)    :: psi(:)
+    complex(dp),      intent(inout) :: hpsi(:)
 
     integer :: ip
 
@@ -120,5 +120,4 @@ contains
 
   end subroutine hamiltonian_zapply_local
 
-
-end module hamiltonian_esl
+end module esl_hamiltonian_m

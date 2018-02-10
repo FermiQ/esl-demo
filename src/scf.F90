@@ -5,7 +5,7 @@ module scf_esl
   use basis_esl
   use esl_density_t
   use esl_grid_m
-  use hamiltonian_esl
+  use esl_hamiltonian_m
   use mixing_esl
   use potential_esl
   use system_esl
