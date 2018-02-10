@@ -62,7 +62,7 @@ contains
 
     !We start with the short range part of the Ewald summation
     do iatom = 1, sys%natoms
-      is = sys%ispecie(ia)
+      is = sys%basis%ac%species_idx(ia)
       zi = sys%pseudo(is)%zval
 
       !We need to find the periodic copies with a range of rcut
@@ -71,7 +71,7 @@ contains
         !get the position of the copy inside rcopy
 
         do jatom = 1, sys%natoms
-          js = sys%ispecie(ja)
+          js = sys%basis%ac%species_idx(ja)
           zj = sys%pseudo(is)%zval
 
           ! Calculate the distance between the two atoms
@@ -92,7 +92,7 @@ contains
 
     !Self interaction part
     do iatom = 1, sys%natoms
-      is = sys%ispecie(ia)
+      is = sys%basis%ac%species_idx(ia)
       zi = sys%pseudo(is)%zval
       charge = charge + zi
       eii = eii - this%alpha/sqrt(PI)*zi**2
@@ -126,7 +126,7 @@ contains
 
           sumat = cmplx(0.d0,0.d0, kind=dp)
           do iatom = 1, sys%natoms
-            is = sys%ispecie(ia)
+            is = sys%basis%ac%species_idx(ia)
             gx = sum(gg(1:3)*sys%xyz(1:3,iatom))
             aa = sys%pseudo(is)%zval*cmplx(cos(gx),sin(gx))
             phase(iatom) = aa
@@ -162,11 +162,11 @@ contains
     forces(1:3, 1:sys%natoms) = 0.d0     
 
     do iatom = 1, sys%natoms      
-      is = sys%ispecie(ia)
+      is = sys%basis%ac%species_idx(ia)
       zi = sys%pseudo(is)%zval
-
-      do jatom = iatom+1, sys%natoms 
-        js = sys%ispecie(ja)
+      
+      do jatom = iatom + 1, sys%natoms 
+        js = sys%basis%ac%species_idx(ja)
         zj = sys%pseudo(is)%zval
 
         ! Calculate the distance between the two atoms
