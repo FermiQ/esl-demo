@@ -77,6 +77,7 @@ add_executable(${target_name}
   ${src_dir}/AC/density_matrix.F90
   ${src_dir}/energy.F90
   ${src_dir}/force.F90
+  ${src_dir}/geometry.F90
   ${src_dir}/grid.F90
   ${src_dir}/flook_if.F90
   ${src_dir}/esl_dict.F90

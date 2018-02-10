@@ -16,7 +16,8 @@ module esl_system_m
   use esl_smear_m
   use esl_states_m
   use esl_species_m
-
+  use esl_geometry_m
+  
   implicit none
   private
 
@@ -25,38 +26,27 @@ module esl_system_m
 
   !Data structure for the system
   type system_t
-     integer(ip) :: nAtoms
-     integer(ip), allocatable :: species_index(:) ! (1:natoms)
-     real(dp),allocatable :: xyz(:,:) ! (1:3,1:natoms)
-     integer(ip) :: nSpecies
-     type(species_t), allocatable :: species(:)
-     real(dp) :: cell(3,3) = 0.0_dp
-     real(dp) :: icell(3,3) = 0.0_dp
-     character(len=10), dimension(:), allocatable :: el,sp
-     character(len=100), dimension(:), allocatable :: potName
-     real(dp) :: vol
+    type(basis_t)    :: basis
+    type(grid_t)     :: grid
+    type(geometry_t) :: geo
+    
+    ! TODO decide whether the system should be inherited for the LO/PW
+    ! case. It may make the system a lot easier to figure out.
+    ! However, it will prohibit switching from PW/LO -> LO/PW within the same
+    ! calculation.
 
-     type(basis_t) :: basis
-     type(grid_t)  :: grid
+    ! LO dependent variables
+    type(sparse_pattern_t):: sparse_pattern
+    type(sparse_matrix_t) :: overlap ! always 1D
+    type(sparse_matrix_t), allocatable :: H(:) ! one per spin
+    type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
 
-     ! TODO decide whether the system should be inherited for the LO/PW
-     ! case. It may make the system a lot easier to figure out.
-     ! However, it will prohibit switching from PW/LO -> LO/PW within the same
-     ! calculation.
-
-     ! LO dependent variables
-     type(sparse_pattern_t):: sparse_pattern
-     type(sparse_matrix_t) :: overlap ! always 1D
-     type(sparse_matrix_t), allocatable :: H(:) ! one per spin
-     type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
-
-     real(dp) :: nElectrons
-   contains
-     private
-     procedure, public :: init
-     procedure, public :: summary
-     procedure, public :: volume
-     final  :: cleanup
+    real(dp) :: nElectrons
+  contains
+    private
+    procedure, public :: init
+    procedure, public :: summary
+    final  :: cleanup
   end type system_t
 
 contains
@@ -66,67 +56,15 @@ contains
   subroutine init(sys)
     class(system_t) :: sys
 
-    logical :: isdef
-    integer :: j,i
-    type(block_fdf)            :: blk
-    type(parsed_line), pointer :: pline
-
     integer :: nstates, nspin
 
+    call sys%geo%init()
+    
     call sys%basis%init()
 
-    isdef = fdf_defined('cubic')
-    sys%cell=0.0_dp
-    if (isDef) then
-       sys%cell(1,1) = fdf_get('cubic', 0.0_dp, 'Bohr')
-       sys%cell(2,2) = sys%cell(1,1)
-       sys%cell(3,3) = sys%cell(1,1)
-    endif
-    sys%icell=matr3inv(sys%cell)
+    call sys%grid%init(sys%basis, sys%geo%cell, sys%geo%icell)
 
-    !Init the grid
-    call sys%grid%init(sys%basis, sys%cell, sys%icell)
-
-    isdef = .false.
-    sys%nAtoms = fdf_get('NumberOfAtoms', 0)
-    allocate(sys%xyz(1:3,sys%nAtoms))
-    allocate(sys%el(sys%nAtoms))
-
-    isdef = fdf_defined('coordinates')
-    if (isDef) then
-       if (fdf_block('coordinates', blk)) then
-          j = 1
-          do while((fdf_bline(blk, pline)) .and. (j <= sys%nAtoms))
-             sys%xyz(1:3,j) = [(fdf_breals(pline, i),i=1,3)]
-             sys%el(j) = fdf_bnames(pline, 1)
-             j = j + 1
-          enddo
-       endif
-    else
-
-    endif
-
-    isDef = fdf_defined('species')
-    if (isDef) then
-       if (fdf_block('species', blk)) then
-          sys%nSpecies=0
-          do while((fdf_bline(blk, pline)))
-             sys%nSpecies=sys%nSpecies+1
-          enddo
-       endif
-       allocate(sys%sp(sys%nSpecies),sys%species(sys%nSpecies))
-       if (fdf_block('species', blk)) then
-          j = 1
-          do while((fdf_bline(blk, pline)) .and. (j <= sys%nSpecies))
-             sys%sp(j) = fdf_bnames(pline, 1)
-             call sys%species(j)%init(fdf_bnames(pline, 2))
-             j = j + 1
-          enddo
-       endif
-    else
-    endif
-
-    call sys%basis%init_basis(sys%grid%ndims, sys%icell)
+!    call sys%basis%init_basis(sys%grid%ndims, sys%icell)
 
     call sys%summary()
 
@@ -137,11 +75,6 @@ contains
   subroutine cleanup(sys)
     type(system_t) :: sys
 
-    if (allocated(sys%xyz)) deallocate(sys%xyz)
-    if (allocated(sys%el)) deallocate(sys%el)
-    if (allocated(sys%sp)) deallocate(sys%sp)
-    if (allocated(sys%potName)) deallocate(sys%potName)
-
   end subroutine cleanup
 
   !Summary
@@ -150,34 +83,12 @@ contains
     use yaml_output
     class(system_t) :: sys
 
-    integer :: i
-
     call yaml_mapping_open("System")
-    call yaml_map("Cell", sys%cell)
-    call yaml_sequence_open("Atom Coordinates", advance = "no")
-    call yaml_comment("Element | X| Y| Z|", hfill = "-")
-    do i =1, sys%nAtoms
-       call yaml_sequence(advance="no")
-       call yaml_map(trim(sys%el(i)), sys%xyz(:,i))
-    enddo
-    call yaml_sequence_close()
-    call yaml_map("Volume (Bohr^3)", sys%volume())
-    call yaml_mapping_close()
-
+    call sys%geo%summary()
     call sys%grid%summary()
     call sys%basis%summary()
+    call yaml_mapping_close()
+
   end subroutine summary
-
-  !----------------------------------------------------
-  function volume(sys) result(vol)
-    class(system_t), intent(inout) :: sys
-    real(dp) :: vol
-
-    vol = sys%cell(1,1)*(sys%cell(2,2)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,2)) - &
-         sys%cell(1,2)*(sys%cell(2,1)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,1)) + &
-         sys%cell(1,3)*(sys%cell(2,1)*sys%cell(3,2)-sys%cell(2,2)*sys%cell(3,1))
-    sys%Vol = vol
-
-  end function volume
 
 end module esl_system_m
