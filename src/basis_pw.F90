@@ -1,25 +1,22 @@
 module esl_basis_pw_m
 
   use prec
-  use fdf, only : fdf_get, leqi
-  use message_esl
-  
-  implicit none
+  use yaml_output
 
   private
 
   public :: basis_pw_t
 
   type basis_pw_t
-     real(dp) :: ecut !< Plane wave cut-off in Hartree
-     integer  :: npw  !< Number of plane waves
-   contains
-     private
-     procedure, public :: init
-     procedure, public :: summary
-     final :: cleanup
+    real(dp) :: ecut !< Plane wave cut-off in Hartree
+    integer  :: npw  !< Number of plane waves
+  contains
+    private
+    procedure, public :: init
+    procedure, public :: summary
+    final :: cleanup
   end type basis_pw_t
-
+  
 contains
 
   !Initialize the basis
@@ -44,7 +41,6 @@ contains
   !Summary
   !----------------------------------------------------
   subroutine summary(basis)
-    use yaml_output
     class(basis_pw_t), intent(in) :: basis
 
     call yaml_mapping_open("basis_pw")
