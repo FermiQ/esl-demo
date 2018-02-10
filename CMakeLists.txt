@@ -31,6 +31,14 @@ else()
   message(STATUS "Build without MPI support!")
 endif()
 
+if(WITH_LUA)
+  find_package(FLOOK REQUIRED)
+  include_directories(${FLOOK_Fortran_INCLUDE_PATH})
+  message(STATUS "Build with Lua-interface support (flook)!")
+else()
+  message(STATUS "Build without Lua-interface support (flook)!")
+endif()
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
 pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
@@ -58,6 +66,10 @@ if(WITH_MPI)
     )
 endif()
 
+if(WITH_LUA)
+   ### How do I add a pre-processor flag?
+endif()
+
 
 add_executable(${target_name}
   ${src_dir}/main.F90
@@ -68,6 +80,8 @@ add_executable(${target_name}
   ${src_dir}/energy.F90
   ${src_dir}/force.F90
   ${src_dir}/grid.F90
+  ${src_dir}/flook_if.F90
+  ${src_dir}/esl_dict.F90
   ${src_dir}/hamiltonian.F90
   ${src_dir}/AC/create_sparse_pattern.F90
   ${src_dir}/ion_interaction.F90
