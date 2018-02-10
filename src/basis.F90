@@ -1,10 +1,11 @@
 module esl_basis_m
-  implicit none
 
   use prec
   use fdf, only : fdf_get, leqi
   use message_esl
   use esl_basis_pw_m
+
+  implicit none
 
   private
 
@@ -13,7 +14,7 @@ module esl_basis_m
   !Data structure for the basis
   type basis_t
      integer :: type
-     type(pw_basis_t) :: pw
+     type(basis_pw_t) :: pw
    contains
      private
      procedure, public :: init
@@ -42,7 +43,7 @@ contains
        this%type = PLANEWAVES
 
        ecut = fdf_get('cut-off', 10._dp, 'Ha')
-       this%pw_basis%init(ecut, ndims, gcell)
+       call this%pw%init(ecut, ndims, gcell)
 
     else if ( leqi(str, 'AtomicOrbitals') ) then
        this%type = ATOMCENTERED
@@ -68,10 +69,10 @@ contains
 
     call yaml_mapping_open("basis")
     select case (basis%type)
-    case (PLANEWAVES)
+    case ( PLANEWAVES )
        call yaml_map("Type", "Plane waves")
        call basis%pw%summary()
-    case (ATOMICENTERED)
+    case ( ATOMCENTERED )
        call yaml_map("Type", "Atomic orbitals")
     end select
     call yaml_mapping_close()

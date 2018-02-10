@@ -65,8 +65,8 @@ contains
     allocate(this%k_weights(1:nkpt))
     this%k_weights(:) = 1.d0/this%nkpt
 
-    select case(basis%type)
-    case(PLANEWAVES)
+    select case ( basis%type )
+    case ( PLANEWAVES )
        this%complex_states = .true.
        do ik = 1, nkpt
           do isp = 1, nspin
@@ -75,7 +75,7 @@ contains
              end do
           end do
        end do
-    case(ATOMICORBS)
+    case ( ATOMCENTERED )
        this%complex_states = .false.
        do ik = 1, nkpt
           do isp = 1, nspin

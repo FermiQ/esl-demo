@@ -45,8 +45,8 @@ contains
 
     select case (basis%type)
     case (PLANEWAVES)
-       call nDimsFromEcut(this%ndims, basis%pw_basis%ecut, gcell, [0._dp, 0._dp, 0._dp])
-    case (ATOMICORBS)
+       call nDimsFromEcut(this%ndims, basis%pw%ecut, gcell, [0._dp, 0._dp, 0._dp])
+    case (ATOMCENTERED)
        !For the moment the spacing in real space is hardcoded
        !For planewave, this must come from the number of G vectors
        this%hgrid(1:3) = .25
