@@ -1,14 +1,14 @@
 module esl_hamiltonian_m
   use prec, only : dp,ip
-
   use esl_basis_m
   use esl_density_m
   use esl_energy_m
   use esl_force_m
+  use esl_geometry_m
+  use esl_grid_m
   use esl_ion_interaction_m
   use esl_potential_m
   use esl_states_m
-  use esl_system_m
 
   implicit none
   private
@@ -42,23 +42,24 @@ contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-  subroutine init(this, sys, states)
+  subroutine init(this, grid, geo, states, periodic)
     class(hamiltonian_t) :: this
-    type(system_t), intent(in) :: sys
-    type(states_t), intent(in) :: states
+    type(grid_t),     intent(in) :: grid
+    type(geometry_t), intent(in) :: geo
+    type(states_t),   intent(in) :: states
+    logical,          intent(in) :: periodic
 
-    call this%density%init(sys%basis, sys%grid)
+    call this%density%init(grid)
     call this%energy%init()
-    call this%potentials%init(sys%basis, sys%grid, states)
-    call this%force%init(sys%geo%n_atoms)
+    call this%potentials%init(grid, states, periodic)
+    call this%force%init(geo%n_atoms)
     call this%ion_inter%init()
 
-    select case ( sys%basis%type )
-    case ( PLANEWAVES )
-      call this%ion_inter%calculate_periodic(sys, this%force%ionion, this%energy%ionion)
-    case ( ATOMCENTERED )
-      call this%ion_inter%calculate_isolated(sys, this%force%ionion, this%energy%ionion)
-    end select
+    if (periodic) then
+      call this%ion_inter%calculate_periodic(geo, this%force%ionion, this%energy%ionion)
+    else
+      call this%ion_inter%calculate_isolated(geo, this%force%ionion, this%energy%ionion)
+    end if
 
   end subroutine init
 
