@@ -7,7 +7,7 @@ module scf_esl
   use esl_grid_m
   use esl_hamiltonian_m
   use mixing_esl
-  use potential_esl
+  use esl_potential_m
   use system_esl
 
   implicit none

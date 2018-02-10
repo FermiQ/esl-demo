@@ -5,7 +5,7 @@ module esl_hamiltonian_m
   use esl_energy_t
   use esl_force_t
   use esl_ion_interaction_t
-  use potential_esl
+  use esl_potential_m
   use states_esl
   use system_esl
 

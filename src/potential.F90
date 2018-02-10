@@ -1,4 +1,5 @@
-module potential_esl
+module esl_potential_m
+  
   use prec, only : dp,ip
 
   use basis_esl
@@ -93,4 +94,4 @@ contains
 
   end subroutine calculate
 
-end module potential_esl
+end module esl_potential_m

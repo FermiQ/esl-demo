@@ -1,7 +1,7 @@
 module xc_esl
   use prec, only : dp
 
-  use density_esl
+  use esl_density_t
 
 
   implicit none
