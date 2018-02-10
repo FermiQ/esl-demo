@@ -11,23 +11,27 @@ module esl_species_m
 
   !Data structure for the pseudos
   type species_t
-     type(pspiof_pspdata_t) :: psp
-   contains
-     private
-     procedure, public :: init
-     final :: cleanup
+    character(len=3) :: label
+    type(pspiof_pspdata_t) :: psp
+  contains
+    private
+    procedure, public :: init
+    final :: cleanup
   end type species_t
 
 contains
 
   !Initialize the species data
   !----------------------------------------------------
-  subroutine init(this, filename)
+  subroutine init(this, label, filename)
     class(species_t) :: this
+    character(len=3), intent(in) :: label
     character(len=*), intent(in) :: filename
 
     integer :: ierr
 
+    this%label = label
+    
     ! Make sure pseudopotential data can be allocated
     ierr = check_error_pspio(pspiof_pspdata_alloc(this%psp))
     if ( ierr /= PSPIO_SUCCESS ) return
