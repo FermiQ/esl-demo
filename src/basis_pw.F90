@@ -2,7 +2,8 @@ module esl_basis_pw_m
 
   use prec
   use yaml_output
-
+  use esl_geometry_m
+  
   private
 
   public :: basis_pw_t

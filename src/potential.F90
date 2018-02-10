@@ -37,12 +37,12 @@ contains
 
   !Initialize the potentials
   !----------------------------------------------------
-  subroutine init(pot, basis, grid, states)
+  subroutine init(pot, grid, states, periodic)
     class(potential_t) :: pot
-    type(basis_t), intent(in) :: basis
-    type(grid_t),  intent(in) :: grid
-    type(states_t), intent(in):: states
-
+    type(grid_t),   intent(in) :: grid
+    type(states_t), intent(in) :: states
+    logical,        intent(in) :: periodic
+    
     character(len = 1) :: geocode
 
     pot%np = grid%np
@@ -51,12 +51,11 @@ contains
     allocate(pot%external(1:pot%np))
     allocate(pot%vxc(1:pot%np, 1:states%nspin))
 
-    select case ( basis%type )
-    case ( PLANEWAVES )
+    if (periodic) then
       geocode = 'P'
-    case ( ATOMCENTERED )
+    else
       geocode = 'F'
-    end select
+    end if
 
     pot%ionicOffset = 0._dp
     call pot%psolver%init(0, 1, geocode, grid%ndims, grid%hgrid)

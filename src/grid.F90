@@ -1,89 +1,74 @@
 module esl_grid_m
   use prec, only : dp,ip
-
-  use esl_basis_m
-
+  use module_fft_sg
   implicit none
 
   private
 
-  public :: grid_t
-  public :: integrate
+  public :: grid_t,   &
+            integrate
 
   !Data structure for the real space grid
   type grid_t
-     real(dp) :: hgrid(3) !< Real space spacing
-     integer :: ndims(3)  !< Number of points in each directions
-     integer :: np !< Total number of points in the real space grid
-     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
-     real(dp) :: volelem !<Volume element
-   contains
-     private
-     procedure, public :: init
-     procedure, public :: get_atomic_orbital
-     procedure, public :: summary
-     final  :: cleanup
+    real(dp) :: hgrid(3) !< Real space spacing
+    integer  :: ndims(3)  !< Number of points in each directions
+    integer  :: np !< Total number of points in the real space grid
+    real(dp), allocatable :: r(:,:) !<Grid point coordinates 
+    real(dp) :: volelem !<Volume element
+  contains
+    private
+    procedure, public :: init
+    procedure, public :: get_atomic_orbital
+    procedure, public :: summary
+    final  :: cleanup
   end type grid_t
 
   interface integrate
-     module procedure dintegrate, zintegrate
+    module procedure dintegrate, zintegrate
   end interface integrate
 
 contains
 
   !Initialize the grid
   !----------------------------------------------------
-  subroutine init(this, basis, cell, gcell)
-    use module_fft_sg
+  subroutine init(this, ndims, cell)
     class(grid_t) :: this
-    type(basis_t), intent(in) :: basis
-    real(dp), dimension(3,3), intent(in) :: cell
-    real(dp), dimension(3,3), intent(in) :: gcell
+    integer,  intent(inout) :: ndims(3)
+    real(dp), intent(in) :: cell(3,3)
 
     integer :: idim, ix, iy, iz, ip
     integer :: n, twice
 
-    select case (basis%type)
-    case (PLANEWAVES)
-       call nDimsFromEcut(this%ndims, basis%pw%ecut, gcell, [0._dp, 0._dp, 0._dp])
-    case (ATOMCENTERED)
-       !For the moment the spacing in real space is hardcoded
-       !For planewave, this must come from the number of G vectors
-       this%hgrid(1:3) = .25
-       do idim = 1,3
-          n = ceiling(cell(idim, idim) / this%hgrid(idim)) - 1
-          call fourier_dim(n, this%ndims(idim))
-       end do
-    end select
+    this%ndims = ndims
 
     do idim = 1, 3
-       do ! Ensure that Poisson Solver double grid will work.
-          call fourier_dim(2 * this%ndims(idim), twice)
-          if (2 * this%ndims(idim) == twice) exit
-          call fourier_dim(this%ndims(idim) + 1, this%ndims(idim))
-       end do
-       this%hgrid(idim) = cell(idim, idim) / real(this%ndims(idim) + 1, dp)
+      do ! Ensure that Poisson Solver double grid will work.
+        call fourier_dim(2 * this%ndims(idim), twice)
+        if (2 * this%ndims(idim) == twice) exit
+        call fourier_dim(this%ndims(idim) + 1, this%ndims(idim))
+      end do
+      this%hgrid(idim) = cell(idim, idim) / real(this%ndims(idim) + 1, dp)
     end do
     this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
 
     !Generation of the grid points
-    allocate(this%r(3,this%np))
+    allocate(this%r(3, this%np))
     ip = 0
     do ix = 1, this%ndims(1)
-       do iy = 1, this%ndims(2)
-          do iz = 1, this%ndims(3)
-             ip = ip + 1
-             this%r(1, ip) = ix*this%hgrid(1) - 0.5d0*cell(1,1)
-             this%r(2, ip) = iy*this%hgrid(2) - 0.5d0*cell(2,2)
-             this%r(3, ip) = iz*this%hgrid(3) - 0.5d0*cell(3,3)
-          end do
-       end do
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          this%r(1, ip) = ix*this%hgrid(1) - 0.5d0*cell(1,1)
+          this%r(2, ip) = iy*this%hgrid(2) - 0.5d0*cell(2,2)
+          this%r(3, ip) = iz*this%hgrid(3) - 0.5d0*cell(3,3)
+        end do
+      end do
     end do
     !We have a cubic cell
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
 
+    ndims = this%ndims
   end subroutine init
-
 
   !Release the grid
   !----------------------------------------------------
@@ -195,84 +180,5 @@ contains
     end if
 
   end function overlap
-
-  subroutine nDimsFromEcut(ndims, ecut, gcell, kpt)
-    use esl_constants_m, only: PI
-    use yaml_output
-    integer, dimension(3), intent(out) :: ndims
-    real(dp), intent(in) :: ecut
-    real(dp), dimension(3,3), intent(in) :: gcell
-    real(dp), dimension(3), intent(in) :: kpt
-
-    real(dp) :: threshold
-    integer :: dir, n, i
-    real(dp), dimension(3,3) :: gmet
-    real(dp), parameter :: boxcutmin = 2.0_dp
-
-    do i = 1, 3
-       gmet(i, :) = gcell(1, i) * gcell(1, :) + &
-            gcell(2, i) * gcell(2, :) + &
-            gcell(3, i) * gcell(3, :)
-    end do
-
-    threshold = 0.5_dp * boxcutmin**2 * ecut / PI**2
-    !@todo: Don't take into account symmetries or k points.
-    ndims = 16
-    do
-       if (smallest(ndims, gmet, dir) >= threshold) exit
-       call fourier_dim(ndims(dir) + 1, ndims(dir))
-    end do
-
-  contains
-
-    function smallest(ndims, gmet, dir)
-      integer, dimension(3), intent(in) :: ndims
-      real(dp), dimension(3,3), intent(in) :: gmet
-      integer, intent(out) :: dir
-      real(dp) :: smallest
-
-      integer :: i1, i2, i3, s1, s2, s3, idir
-      real(dp) :: prev
-
-      smallest = dsq(ndims(1) / 2, -ndims(2) / 2, -ndims(3) / 2) + 0.01_dp
-      do idir = 1, 3
-         s1 = 0
-         if (idir == 1) s1 = ndims(1)/2
-         s2 = 0
-         if (idir == 2) s2 = ndims(2)/2
-         s3 = 0
-         if (idir == 3) s3 = ndims(3)/2
-         do i1 = s1, ndims(1)/2
-            do i2 = s2, ndims(2)/2
-               do i3 = s3, ndims(3)/2
-                  prev = smallest
-                  smallest = min(smallest, dsq( i1,  i2,  i3))
-                  smallest = min(smallest, dsq(-i1,  i2,  i3))
-                  smallest = min(smallest, dsq( i1, -i2,  i3))
-                  smallest = min(smallest, dsq(-i1, -i2,  i3))
-                  smallest = min(smallest, dsq( i1,  i2, -i3))
-                  smallest = min(smallest, dsq(-i1,  i2, -i3))
-                  smallest = min(smallest, dsq( i1, -i2, -i3))
-                  smallest = min(smallest, dsq(-i1, -i2, -i3))
-                  if (prev /= smallest) dir = idir
-               end do
-            end do
-         end do
-      end do
-    end function smallest
-
-    function dsq(i1, i2, i3)
-      integer, intent(in) :: i1, i2, i3
-      real(dp) :: dsq
-
-      dsq=gmet(1,1)*(kpt(1)+dble(i1))**2&
-           & +gmet(2,2)*(kpt(2)+dble(i2))**2&
-           & +gmet(3,3)*(kpt(3)+dble(i3))**2&
-           & +2._dp*(gmet(1,2)*(kpt(1)+dble(i1))*(kpt(2)+dble(i2))&
-           & +gmet(2,3)*(kpt(2)+dble(i2))*(kpt(3)+dble(i3))&
-           & +gmet(3,1)*(kpt(3)+dble(i3))*(kpt(1)+dble(i1)))
-
-    end function dsq
-  end subroutine nDimsFromEcut
 
 end module esl_grid_m

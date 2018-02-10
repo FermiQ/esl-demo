@@ -12,7 +12,6 @@ module esl_system_m
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
   use esl_basis_m
-  use esl_grid_m
   use esl_smear_m
   use esl_states_m
   use esl_species_m
@@ -27,7 +26,6 @@ module esl_system_m
   !Data structure for the system
   type system_t
     type(basis_t)    :: basis
-    type(grid_t)     :: grid
     type(geometry_t) :: geo
     
     ! TODO decide whether the system should be inherited for the LO/PW
@@ -60,11 +58,7 @@ contains
 
     call sys%geo%init()
     
-    call sys%basis%init()
-
-    call sys%grid%init(sys%basis, sys%geo%cell, sys%geo%icell)
-
-!    call sys%basis%init_basis(sys%grid%ndims, sys%icell)
+    call sys%basis%init(sys%geo)
 
     call sys%summary()
 
@@ -85,7 +79,6 @@ contains
 
     call yaml_mapping_open("System")
     call sys%geo%summary()
-    call sys%grid%summary()
     call sys%basis%summary()
     call yaml_mapping_close()
 

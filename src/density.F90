@@ -1,12 +1,11 @@
 module esl_density_m
 
   use prec, only : dp
-
-  use esl_basis_m
+  use esl_geometry_m
   use esl_grid_m
-  use esl_system_m
 
   implicit none
+
   private
 
   public :: density_t
@@ -16,39 +15,26 @@ module esl_density_m
     integer :: np !< Copied from grid
 
     real(dp), allocatable :: density(:)
-    real(dp), allocatable :: density_matrix(:,:)
   contains
-
+    private
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
     procedure, public :: get_den
     procedure, public :: set_den
     final  :: cleanup
-
   end type density_t
 
 contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, basis, grid)
+  subroutine init(this, grid)
     class(density_t), intent(inout) :: this
-    type(basis_t), intent(in) :: basis
     type(grid_t), intent(in) :: grid
 
-    !Parse the informations from the input file
-    select case ( basis%type )
-    case ( PLANEWAVES )
-      !Initialization structures for the PW case
-      allocate(this%density(1:grid%np))
-      this%density(1:grid%np) = 0.d0
-    case ( ATOMCENTERED )
-      !Initialization structures for the LO case
-      !TEMP
-      allocate(this%density(1:grid%np))
-      this%density(1:grid%np) = 0.d0
-    end select
+    allocate(this%density(1:grid%np))
+    this%density(1:grid%np) = 0.d0
 
     this%np = grid%np
 
@@ -56,21 +42,22 @@ contains
 
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
-  subroutine guess(this, system)
+  subroutine guess(this, geo, grid)
     class(density_t), intent(inout) :: this
-    type(system_t), intent(in) :: system
-
+    type(geometry_t), intent(in) :: geo
+    type(grid_t),     intent(in) :: grid
+    
     real(dp), allocatable :: radial(:)
     real(dp), allocatable :: atomicden(:)
     integer :: iat, np_radial, ip
 
-    this%density(1:system%grid%np) = 0.d0
+    this%density(1:grid%np) = 0.d0
 
-    allocate(atomicden(1:system%grid%np))
-    atomicden(1:system%grid%np) = 0.d0
+    allocate(atomicden(1:grid%np))
+    atomicden(1:grid%np) = 0.d0
 
     ! We expect only atoms to contain initial density
-    do iat = 1, system%geo%n_atoms
+    do iat = 1, geo%n_atoms
       
       !Get the number of points in the radial grid
       np_radial = 1
@@ -83,7 +70,7 @@ contains
       deallocate(radial)
 
       !Summing up to the total density
-      forall(ip=1:system%grid%np)
+      forall (ip = 1:grid%np)
         this%density(ip) = this%density(ip) + atomicden(ip)
       end forall
     end do
@@ -97,23 +84,16 @@ contains
   subroutine cleanup(this)
     type(density_t), intent(inout) :: this
 
-    if(allocated(this%density_matrix)) deallocate(this%density_matrix)
     if(allocated(this%density)) deallocate(this%density)
 
   end subroutine cleanup
 
   !Calc density
   !----------------------------------------------------
-  subroutine calculate(this, basis)
+  subroutine calculate(this)
     class(density_t), intent(inout) :: this
-    type(basis_t), intent(in) :: basis
 
-    select case ( basis%type )
-    case ( PLANEWAVES )
-
-    case ( ATOMCENTERED )
-
-    end select
+    ! Density should be calculated from states
 
   end subroutine calculate
 
@@ -126,7 +106,7 @@ contains
 
     integer :: ip
 
-    forall(ip=1:this%np)
+    forall(ip = 1:this%np)
       rho(ip) = this%density(ip)
     end forall
 
@@ -140,7 +120,7 @@ contains
 
     integer :: ip
 
-    forall(ip=1:this%np)
+    forall (ip = 1:this%np)
       this%density(ip) = rho(ip)
     end forall
 
