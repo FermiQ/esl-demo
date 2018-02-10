@@ -3,8 +3,8 @@ module esl_potential_m
   use prec, only : dp,ip
 
   use esl_basis_m
-  use esl_density_t
-  use esl_energy_t
+  use esl_density_m
+  use esl_energy_m
   use esl_grid_m
   use esl_psolver_m
   use esl_states_m
@@ -17,20 +17,20 @@ module esl_potential_m
 
   !Data structure for the potentials
   type potential_t
-     integer :: np !< Number of points in real space
+    integer :: np !< Number of points in real space
 
-     real(dp), allocatable :: hartree(:)  !Hartree potential
-     real(dp), allocatable :: external(:) !External local potential
-     real(dp), allocatable :: vxc(:,:)  !xc potential
+    real(dp), allocatable :: hartree(:)  !Hartree potential
+    real(dp), allocatable :: external(:) !External local potential
+    real(dp), allocatable :: vxc(:,:)  !xc potential
 
-     real(dp) :: ionicOffset !< Offset of the external potential
+    real(dp) :: ionicOffset !< Offset of the external potential
 
-     type(psolver_t) :: psolver
-     type(xc_t) :: xc
-   contains
-     procedure, public :: init
-     procedure, public :: calculate
-     final  :: cleanup
+    type(psolver_t) :: psolver
+    type(xc_t) :: xc
+  contains
+    procedure, public :: init
+    procedure, public :: calculate
+    final  :: cleanup
   end type potential_t
 
 contains
@@ -53,9 +53,9 @@ contains
 
     select case(basis%type)
     case(PLANEWAVES)
-       geocode = 'P'
+      geocode = 'P'
     case(ATOMICORBS)
-       geocode = 'F'
+      geocode = 'F'
     end select
 
     pot%ionicOffset = 0._dp
@@ -87,7 +87,7 @@ contains
     type(energy_t),    intent(inout) :: energy
 
     call pot%psolver%h_potential(density, pot%hartree, pot%np, &
-         & pot%external, pot%ionicOffset, energy%hartree)
+        & pot%external, pot%ionicOffset, energy%hartree)
 
     !Here we need to compute the xc potential
     call pot%xc%calculate(density, pot%vxc)

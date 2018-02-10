@@ -4,7 +4,7 @@ module esl_scf_m
   use fdf, only : fdf_get
 
   use esl_basis_m
-  use esl_density_t
+  use esl_density_m
   use esl_grid_m
   use esl_hamiltonian_m
   use esl_mixing_m
@@ -15,19 +15,19 @@ module esl_scf_m
   private
 
   public ::                       &
-       scf_t,                &
-       scf_loop
+      scf_t,                &
+      scf_loop
 
   !Data structure containing the data for the SCF
   type scf_t 
-     real(dp) :: tol_reldens 
-     integer(ip) :: max_iter !< Maximum number of iterations
+    real(dp) :: tol_reldens 
+    integer(ip) :: max_iter !< Maximum number of iterations
 
-     type(mixing_t)   :: mixer
-   contains
-     private
-     procedure, public :: init
-     final :: cleanup
+    type(mixing_t)   :: mixer
+  contains
+    private
+    procedure, public :: init
+    final :: cleanup
   end type scf_t
 
 contains
@@ -84,43 +84,43 @@ contains
     call yaml_mapping_open("SCF cycle")
 
     do iter = 1, this%max_iter
-       call yaml_map("Iteration", iter)
+      call yaml_map("Iteration", iter)
 
-       !Diagonalization (ELSI/KSsolver)
+      !Diagonalization (ELSI/KSsolver)
 
-       !Update occupations
-       call smear_calc_fermi_and_occ(smear, elsi, states)
+      !Update occupations
+      call smear_calc_fermi_and_occ(smear, elsi, states)
 
-       !Saving the in density for the mixing
-       call hamiltonian%density%get_den(rhoin)
-       !Calc. density
-       call hamiltonian%density%calculate(system%basis)
-       !Saving the out density for the mixing
-       call hamiltonian%density%get_den(rhoout)
-       !Calc. potentials
-       call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
+      !Saving the in density for the mixing
+      call hamiltonian%density%get_den(rhoin)
+      !Calc. density
+      call hamiltonian%density%calculate(system%basis)
+      !Saving the out density for the mixing
+      call hamiltonian%density%get_den(rhoout)
+      !Calc. potentials
+      call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
 
-       !Calc. energies
-       call hamiltonian%energy%calculate()  
+      !Calc. energies
+      call hamiltonian%energy%calculate()  
 
-       !Test tolerance and print status
-       !We use rhonew to compute the relative density
-       do ip = 1, system%grid%np
-          rhonew(ip) = abs(rhoout(ip) - rhoin(ip))
-       end do
-       call integrate(system%grid, rhonew, reldens)
-       reldens = reldens/real(states%nel)
-       call yaml_map("Rel. Density", reldens)
-       if(reldens <= this%tol_reldens) then
-          call yaml_comment("SCF cycle converged.")
-          exit
-       end if
+      !Test tolerance and print status
+      !We use rhonew to compute the relative density
+      do ip = 1, system%grid%np
+        rhonew(ip) = abs(rhoout(ip) - rhoin(ip))
+      end do
+      call integrate(system%grid, rhonew, reldens)
+      reldens = reldens/real(states%nel)
+      call yaml_map("Rel. Density", reldens)
+      if(reldens <= this%tol_reldens) then
+        call yaml_comment("SCF cycle converged.")
+        exit
+      end if
 
-       !Mixing (BLAS/LAPACK)
-       call mixing_linear(this%mixer, system%grid%np, rhoin, rhoout,rhonew)  
-       call hamiltonian%density%set_den(rhonew)
+      !Mixing (BLAS/LAPACK)
+      call mixing_linear(this%mixer, system%grid%np, rhoin, rhoout,rhonew)  
+      call hamiltonian%density%set_den(rhonew)
 
-       !Update Hamiltonian matrix
+      !Update Hamiltonian matrix
 
     end do
     call yaml_mapping_close()

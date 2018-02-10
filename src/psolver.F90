@@ -11,20 +11,20 @@ module esl_psolver_m
   character(len=1), parameter :: PSOLVER_ISOLATED = 'F'
 
   public :: &
-       & PSOLVER_3D_PERIOD, &
-       & PSOLVER_XZ_SURFACE, &
-       & PSOLVER_Y_WIRE, &
-       & PSOLVER_ISOLATED
+      & PSOLVER_3D_PERIOD, &
+      & PSOLVER_XZ_SURFACE, &
+      & PSOLVER_Y_WIRE, &
+      & PSOLVER_ISOLATED
 
   public :: psolver_t
 
   type psolver_t
-     private
-     type(coulomb_operator) :: pkernel
-   contains
-     procedure, public :: init
-     procedure, public :: h_potential
-     final  :: cleanup
+    private
+    type(coulomb_operator) :: pkernel
+  contains
+    procedure, public :: init
+    procedure, public :: h_potential
+    final  :: cleanup
   end type psolver_t
 
 contains
@@ -59,7 +59,7 @@ contains
   end subroutine cleanup
 
   subroutine h_potential(ps, rho, hartree, np, ionicPot, ionicOffset, ehartree)
-    use esl_density_t, only: density_t
+    use esl_density_m, only: density_t
     use Poisson_Solver, only: PS_H_potential => H_potential
 
     class(psolver_t), intent(inout) :: ps
@@ -75,7 +75,7 @@ contains
     !Computing the hartree potential
     !We first copy the density into the potential array
     forall(ip = 1:np)
-       hartree(ip) = rho%density(ip)
+      hartree(ip) = rho%density(ip)
     end forall
     call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true., quiet = "YES")
   end subroutine h_potential

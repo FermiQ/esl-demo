@@ -14,20 +14,20 @@ module esl_basis_m
 
   !Data structure for the basis
   type basis_t
-     integer :: type
-     type(basis_pw_t) :: pw
-     type(basis_ac_t) :: ac
-     integer :: size
-   contains
-     private
-     procedure, public :: init
-     procedure, public :: summary
-     final :: cleanup
+    integer :: type
+    type(basis_pw_t) :: pw
+    type(basis_ac_t) :: ac
+    integer :: size
+  contains
+    private
+    procedure, public :: init
+    procedure, public :: summary
+    final :: cleanup
   end type basis_t
 
   integer, public, parameter :: &
-       PLANEWAVES   = 1, &
-       ATOMCENTERED = 2
+      PLANEWAVES   = 1, &
+      ATOMCENTERED = 2
 
 contains
 
@@ -43,22 +43,26 @@ contains
 
     str = fdf_get('BasisSet', 'Planewaves')
     if ( leqi(str, 'Planewaves') ) then
+      
       this%type = PLANEWAVES
 
       ecut = fdf_get('cut-off', 10._dp, 'Ha')
       call this%pw%init(ecut, ndims, gcell)
 
       this%size = this%pw%npw
+      
     else if ( leqi(str, 'AtomicOrbitals') ) then
+      
       this%type = ATOMCENTERED
 
       call this%ac%init()
       this%size = this%ac%n_functions
+      
     else
       call message_error("Unknown basis set: "//trim(str))
     end if
 
-    
+
   end subroutine init
 
   !Release

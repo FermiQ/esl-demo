@@ -1,7 +1,7 @@
 module esl_xc_m
   use prec, only : dp
 
-  use esl_density_t
+  use esl_density_m
 
   implicit none
   private
@@ -10,12 +10,12 @@ module esl_xc_m
 
   !Data structure for the xc potential
   type xc_t
-     integer :: exchange
-     integer :: correlation
-   contains
-     procedure, public :: init
-     procedure, public :: calculate
-     final  :: cleanup
+    integer :: exchange
+    integer :: correlation
+  contains
+    procedure, public :: init
+    procedure, public :: calculate
+    final  :: cleanup
   end type xc_t
 
 contains

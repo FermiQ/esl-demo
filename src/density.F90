@@ -1,4 +1,4 @@
-module esl_density_t
+module esl_density_m
 
   use prec, only : dp
 
@@ -13,18 +13,18 @@ module esl_density_t
 
   !Data structure for the density
   type density_t
-     integer :: np !< Copied from grid
+    integer :: np !< Copied from grid
 
-     real(dp), allocatable :: density(:)
-     real(dp), allocatable :: density_matrix(:,:)
-   contains
+    real(dp), allocatable :: density(:)
+    real(dp), allocatable :: density_matrix(:,:)
+  contains
 
-     procedure, public :: init
-     procedure, public :: guess
-     procedure, public :: calculate
-     procedure, public :: get_den
-     procedure, public :: set_den
-     final  :: cleanup
+    procedure, public :: init
+    procedure, public :: guess
+    procedure, public :: calculate
+    procedure, public :: get_den
+    procedure, public :: set_den
+    final  :: cleanup
 
   end type density_t
 
@@ -40,14 +40,14 @@ contains
     !Parse the informations from the input file
     select case(basis%type)
     case(PLANEWAVES)
-       !Initialization structures for the PW case
-       allocate(this%density(1:grid%np))
-       this%density(1:grid%np) = 0.d0
+      !Initialization structures for the PW case
+      allocate(this%density(1:grid%np))
+      this%density(1:grid%np) = 0.d0
     case(ATOMICORBS)
-       !Initialization structures for the LO case
-       !TEMP
-       allocate(this%density(1:grid%np))
-       this%density(1:grid%np) = 0.d0
+      !Initialization structures for the LO case
+      !TEMP
+      allocate(this%density(1:grid%np))
+      this%density(1:grid%np) = 0.d0
     end select
 
     this%np = grid%np
@@ -70,20 +70,20 @@ contains
     atomicden(1:system%grid%np) = 0.d0
 
     do iat = 1, system%natoms
-       !Get the number of points in the radial grid
-       np_radial = 1
-       allocate(radial(1:np_radial))
-       !Get atomic density on the radial grid
+      !Get the number of points in the radial grid
+      np_radial = 1
+      allocate(radial(1:np_radial))
+      !Get atomic density on the radial grid
 
-       !Convert the radial density to the cartesian grid
+      !Convert the radial density to the cartesian grid
 
-       !We do not need the radial density anymore
-       deallocate(radial)
+      !We do not need the radial density anymore
+      deallocate(radial)
 
-       !Summing up to the total density
-       forall(ip=1:system%grid%np)
-          this%density(ip) = this%density(ip) + atomicden(ip)
-       end forall
+      !Summing up to the total density
+      forall(ip=1:system%grid%np)
+        this%density(ip) = this%density(ip) + atomicden(ip)
+      end forall
     end do
 
     deallocate(atomicden)
@@ -125,7 +125,7 @@ contains
     integer :: ip
 
     forall(ip=1:this%np)
-       rho(ip) = this%density(ip)
+      rho(ip) = this%density(ip)
     end forall
 
   end subroutine get_den
@@ -139,9 +139,9 @@ contains
     integer :: ip
 
     forall(ip=1:this%np)
-       this%density(ip) = rho(ip)
+      this%density(ip) = rho(ip)
     end forall
 
   end subroutine set_den
 
-end module esl_density_t
+end module esl_density_m

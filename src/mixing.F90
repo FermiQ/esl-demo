@@ -5,16 +5,16 @@ module esl_mixing_m
   private
 
   public :: &
-       mixing_t,    &
-       mixing_linear
+      mixing_t,    &
+      mixing_linear
 
   !Data structure for the mixer
   type mixing_t
-     real(dp) :: alpha !< Mixing parameter
-   contains
-     private
-     procedure, public :: init
-     final  :: cleanup
+    real(dp) :: alpha !< Mixing parameter
+  contains
+    private
+    procedure, public :: init
+    final  :: cleanup
   end type mixing_t
 
 contains
@@ -49,7 +49,7 @@ contains
     integer :: ip
 
     do ip=1, np
-       rhonew(ip) = rhoin(ip)*(1.0d0-this%alpha) + rhoout(ip)*this%alpha
+      rhonew(ip) = rhoin(ip)*(1.0d0-this%alpha) + rhoout(ip)*this%alpha
     end do
 
   end subroutine mixing_linear
