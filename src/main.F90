@@ -34,7 +34,7 @@ contains
     use scf_esl, only : scf_t, scf_loop
     use states_esl, only : states_t
     use system_esl, only : system_t
-    use numeric_esl, only : init_random
+    use esl_numeric_m, only : init_random
     use smear_esl, only : smear_t
     use elsi_wrapper_esl, only : elsi_t
     use yaml_output

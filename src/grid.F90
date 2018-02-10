@@ -2,9 +2,9 @@ module esl_grid_m
   use prec, only : dp,ip
 
   use basis_esl
-  use numeric_esl
 
   implicit none
+  
   private
 
   public :: grid_t
@@ -196,9 +196,8 @@ contains
   end function overlap
 
   subroutine nDimsFromEcut(ndims, ecut, gcell, kpt)
-    use numerics, only: pi
+    use esl_constants_m, only: PI
     use yaml_output
-    implicit none
     integer, dimension(3), intent(out) :: ndims
     real(dp), intent(in) :: ecut
     real(dp), dimension(3,3), intent(in) :: gcell
@@ -211,11 +210,11 @@ contains
 
     do i = 1, 3
        gmet(i, :) = gcell(1, i) * gcell(1, :) + &
-            &   gcell(2, i) * gcell(2, :) + &
-            &   gcell(3, i) * gcell(3, :)
+            gcell(2, i) * gcell(2, :) + &
+            gcell(3, i) * gcell(3, :)
     end do
 
-    threshold = 0.5_dp * boxcutmin**2 * ecut / pi**2
+    threshold = 0.5_dp * boxcutmin**2 * ecut / PI**2
     !@todo: Don't take into account symmetries or k points.
     ndims = 16
     do
@@ -226,7 +225,6 @@ contains
   contains
 
     function smallest(ndims, gmet, dir)
-      implicit none
       integer, dimension(3), intent(in) :: ndims
       real(dp), dimension(3,3), intent(in) :: gmet
       integer, intent(out) :: dir
@@ -263,7 +261,6 @@ contains
     end function smallest
 
     function dsq(i1, i2, i3)
-      implicit none
       integer, intent(in) :: i1, i2, i3
       real(dp) :: dsq
 

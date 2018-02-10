@@ -1,6 +1,6 @@
 module esl_basis_m
   implicit none
-  
+
   use prec
   use fdf, only : fdf_get, leqi
   use message_esl
@@ -12,18 +12,18 @@ module esl_basis_m
 
   !Data structure for the basis
   type basis_t
-    integer :: type
-    type(pw_basis_t) :: pw
-  contains
-    private
-    procedure, public :: init
-    procedure, public :: summary
-    final :: cleanup
+     integer :: type
+     type(pw_basis_t) :: pw
+   contains
+     private
+     procedure, public :: init
+     procedure, public :: summary
+     final :: cleanup
   end type basis_t
 
   integer, public, parameter :: &
-    PLANEWAVES   = 1, &
-    ATOMCENTERED = 2
+       PLANEWAVES   = 1, &
+       ATOMCENTERED = 2
 
 contains
 
@@ -36,28 +36,28 @@ contains
     real(dp) :: ecut
     integer  :: ndims(3)
     real(dp) :: gcell(3,3)
-    
+
     str = fdf_get('BasisSet', 'Planewaves')
     if ( leqi(str, 'Planewaves') ) then
-      this%type = PLANEWAVES
+       this%type = PLANEWAVES
 
-      ecut = fdf_get('cut-off', 10._dp, 'Ha')
-      this%pw_basis%init(ecut, ndims, gcell)
-      
+       ecut = fdf_get('cut-off', 10._dp, 'Ha')
+       this%pw_basis%init(ecut, ndims, gcell)
+
     else if ( leqi(str, 'AtomicOrbitals') ) then
-      this%type = ATOMCENTERED
+       this%type = ATOMCENTERED
 
     else
-      call message_error("Unknown basis set: "//trim(str))
+       call message_error("Unknown basis set: "//trim(str))
     end if
 
   end subroutine init
- 
+
   !Release
   !----------------------------------------------------
   subroutine cleanup(this)
     type(basis_t) :: this
-    
+
   end subroutine cleanup
 
   !Summary
@@ -69,10 +69,10 @@ contains
     call yaml_mapping_open("basis")
     select case (basis%type)
     case (PLANEWAVES)
-      call yaml_map("Type", "Plane waves")
-      call basis%pw%summary()
+       call yaml_map("Type", "Plane waves")
+       call basis%pw%summary()
     case (ATOMICENTERED)
-      call yaml_map("Type", "Atomic orbitals")
+       call yaml_map("Type", "Atomic orbitals")
     end select
     call yaml_mapping_close()
 

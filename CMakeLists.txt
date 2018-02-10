@@ -74,6 +74,7 @@ add_executable(${target_name}
   ${src_dir}/message.F90
   ${src_dir}/mixing.F90
   ${src_dir}/next_step.F90
+  ${src_dir}/constants.F90
   ${src_dir}/numeric.F90
   ${src_dir}/AC/overlap_matrix.F90
   ${src_dir}/psolver.F90

@@ -1,6 +1,8 @@
 module system_esl
+  
   use prec, only : dp,ip
-  use numeric_esl, only : matr3inv
+  use esl_numeric_m, only : matr3inv
+  
   use fdf, only : block_fdf, fdf_integer, fdf_block,fdf_defined, &
                    parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
                    fdf_physical

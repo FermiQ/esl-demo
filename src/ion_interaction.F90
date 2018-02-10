@@ -40,7 +40,7 @@ contains
   !Calc the ion-ion interaction for periodic systems
   !----------------------------------------------------
   subroutine calculate_periodic(this, sys, forces, eii)
-    use numerics, only : pi
+    use esl_constants_m, only : PI
 
     class(ion_interaction_t), intent(in) :: this
     type(system_t),           intent(in) :: sys

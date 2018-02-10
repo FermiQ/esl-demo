@@ -2,7 +2,6 @@ module states_esl
   use prec, only : dp,ip
 
   use basis_esl
-  use numeric_esl
   use yaml_output
 
  implicit none

@@ -1,6 +1,7 @@
-module numeric_esl
+module esl_numeric_m
+  
   use prec, only : dp,ip
-  use fdf, only : fdf_integer
+  use fdf, only : fdf_get
 
   implicit none
   private
@@ -14,22 +15,24 @@ module numeric_esl
 contains
 
   !----------------------------------------------------
-  pure real(kind=dp) function determinant(a)
-    real(kind=dp), intent(in)  :: a(3,3)
+  pure function determinant(a) result(d)
+    real(dp), intent(in)  :: a(3,3)
+    real(dp) :: d
 
-    determinant = a(1,1)*(a(3,3)*a(2,2)-a(3,2)*a(2,3)) &
-      - a(2,1)*(a(3,3)*a(1,2)-a(3,2)*a(1,3)) &
-      + a(3,1)*(a(2,3)*a(1,2)-a(2,2)*a(1,3))
+    d = a(1,1)*(a(3,3)*a(2,2)-a(3,2)*a(2,3)) &
+         - a(2,1)*(a(3,3)*a(1,2)-a(3,2)*a(1,3)) &
+         + a(3,1)*(a(2,3)*a(1,2)-a(2,2)*a(1,3))
+    
   end function determinant
 
   !----------------------------------------------------
   pure function matr3inv(a) result(b)
-    real(kind=dp), intent(in)  :: a(3,3)
-    real(kind=dp)  :: b(3,3)
+    real(dp), intent(in)  :: a(3,3)
+    real(dp)  :: b(3,3)
+    
+    real(dp) :: idet
 
-    real(kind=dp) :: idet
-
-    idet=1.0_dp/determinant(a)
+    idet = 1.0_dp / determinant(a)
     b(1,1)= idet*(a(3,3)*a(2,2)-a(3,2)*a(2,3))
     b(1,2)= idet*(a(3,1)*a(2,3)-a(3,3)*a(2,1))
     b(1,3)= idet*(a(3,2)*a(2,1)-a(3,1)*a(2,2))
@@ -41,6 +44,7 @@ contains
     b(3,1)= idet*(a(2,3)*a(1,2)-a(2,2)*a(1,3))
     b(3,2)= idet*(a(2,1)*a(1,3)-a(2,3)*a(1,1))
     b(3,3)= idet*(a(2,2)*a(1,1)-a(2,1)*a(1,2))
+    
   end function matr3inv
 
   ! init random numbers, optionally with a seed
@@ -48,15 +52,16 @@ contains
   ! with d scalar or array
   subroutine init_random()
 
-    integer(kind=ip), allocatable :: seed(:)
-    integer(kind=ip) :: p,is,i
+    integer(ip), allocatable :: seed(:)
+    integer(ip) :: p,is,i
 
-    is=fdf_integer('seed', 13)
+    is = fdf_get('seed', 13)
     call random_seed(size=p)
     allocate(seed(p))
-    seed=17*[(i-is,i=1,p)]
+    seed = 17*[(i-is,i=1,p)]
     call random_seed(put=seed)
     deallocate(seed)
+    
   end subroutine init_random
 
 
@@ -68,21 +73,21 @@ contains
   !!    ylm = c * plm( cos(theta) ) * cos(m*phi)   for   m >= 0
   !! with (theta,phi) the polar angles of r, c a positive normalization
   subroutine grylmr(x, y, z, li, mi, ylm, grylm)
-    use numerics, only : pi
-    real(kind=dp),           intent(in)  :: x, y, z
+    use esl_constants_m, only : PI
+    real(dp),           intent(in)  :: x, y, z
     integer,                 intent(in)  :: li, mi
-    real(kind=dp),           intent(out) :: ylm
-    real(kind=dp), optional, intent(out) :: grylm(3)
+    real(dp),           intent(out) :: ylm
+    real(dp), optional, intent(out) :: grylm(3)
 
     integer, parameter :: lmaxd = 20
-    real(kind=dp),   parameter :: tiny = 1.e-30
+    real(dp),   parameter :: tiny = 1.e-30
     integer :: i, ilm0, l, m, mabs
     integer, save :: lmax = -1
 
-    real(kind=dp) :: cmi, cosm, cosmm1, cosphi, dphase, dplg, fac, &
+    real(dp) :: cmi, cosm, cosmm1, cosphi, dphase, dplg, fac, &
       fourpi, plgndr, phase, pll, pmm, pmmp1, sinm, &
       sinmm1, sinphi, r2, rsize, Rx, Ry, Rz, xysize
-    real(kind=dp), save :: c(0:(lmaxd+1)*(lmaxd+1))
+    real(dp), save :: c(0:(lmaxd+1)*(lmaxd+1))
 
     ! evaluate normalization constants once and for all
     if (li > lmax) then
@@ -255,15 +260,15 @@ contains
       grylm(3)= cmi*dplg*(1.d0 - Rz*Rz)*phase/rsize
     end if
 
-    return
   end subroutine grylmr
 
-  real(kind=dp) function distance(r1, r2)
-    real(kind=dp), intent(in) :: r1(3)
-    real(kind=dp), intent(in) :: r2(3)
-
-    distance = sqrt(sum((r1(1:3)-r2(1:3))**2))
-
+  pure function distance(r1, r2) result(d)
+    real(dp), intent(in) :: r1(3)
+    real(dp), intent(in) :: r2(3)
+    real(dp) :: d
+    
+    d = sqrt( sum( (r1 - r2)**2 ) )
+    
   end function distance
 
-end module numeric_esl
+end module esl_numeric_m
