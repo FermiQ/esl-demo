@@ -1,7 +1,7 @@
 module esl_species_m
 
   use prec, only: dp
-  use message_esl
+  use esl_message_m
   use pspiof_m
 
   implicit none

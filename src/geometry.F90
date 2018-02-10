@@ -1,8 +1,10 @@
 module esl_geometry_m
   use prec
-  use esl_numeric_m, only : matr3inv
   use fdf
+
+  use esl_numeric_m, only : matr3inv
   use esl_species_m
+  use esl_message_m
 
   implicit none
   private

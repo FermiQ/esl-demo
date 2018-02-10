@@ -2,6 +2,7 @@ module esl_basis_m
 
   use prec
   use fdf, only : fdf_get, leqi
+  use esl_message_m
   use esl_basis_ac_m
   use esl_basis_pw_m
   use yaml_output
