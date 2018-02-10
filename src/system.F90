@@ -16,7 +16,7 @@ module system_esl
   use esl_grid_m
   use esl_smear_m
   use states_esl
-  use species_esl
+  use esl_species_m
   
   implicit none
   private
