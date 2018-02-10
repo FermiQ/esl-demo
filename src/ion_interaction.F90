@@ -72,7 +72,7 @@ module ion_interaction_esl
            zj = sys%pseudo(is)%zval
 
            ! Calculate the distance between the two atoms
-           r(1:3) = rcopy(1:3) - sys%coords(1:3,jatom)
+           r(1:3) = rcopy(1:3) - sys%xyz(1:3,jatom)
            dist = sum(r(1:3) ** 2) ** 0.5_dp
 
            erfc = 1.d0 - erf(this%alpha*dist)
@@ -124,7 +124,7 @@ module ion_interaction_esl
            sumat = cmplx(0.d0,0.d0, kind=dp)
            do iatom = 1, sys%natoms
              is = sys%ispecie(ia)
-             gx = sum(gg(1:3)*sys%coords(1:3,iatom))
+             gx = sum(gg(1:3)*sys%xyz(1:3,iatom))
              aa = sys%pseudo(is)%zval*cmplx(cos(gx),sin(gx))
              phase(iatom) = aa
              sumat = sumat + aa
@@ -167,7 +167,7 @@ module ion_interaction_esl
          zj = sys%pseudo(is)%zval
 
          ! Calculate the distance between the two atoms
-         r(1:3) = sys%coords(1:3,iatom) - sys%coords(1:3,jatom)
+         r(1:3) = sys%xyz(1:3,iatom) - sys%xyz(1:3,jatom)
          dist = sum(r(1:3) ** 2) ** 0.5_dp
  
          !the force
