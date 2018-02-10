@@ -13,6 +13,9 @@ module esl_species_m
   type species_t
     character(len=3) :: label
     type(pspiof_pspdata_t) :: psp
+
+    ! TODO fix this argument
+    real(dp) :: Z = 0._dp !< Ionic charge, real because of mixed species
   contains
     private
     procedure, public :: init

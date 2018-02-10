@@ -38,12 +38,12 @@ contains
     type(grid_t), intent(in) :: grid
 
     !Parse the informations from the input file
-    select case(basis%type)
-    case(PLANEWAVES)
+    select case ( basis%type )
+    case ( PLANEWAVES )
       !Initialization structures for the PW case
       allocate(this%density(1:grid%np))
       this%density(1:grid%np) = 0.d0
-    case(ATOMICORBS)
+    case ( ATOMCENTERED )
       !Initialization structures for the LO case
       !TEMP
       allocate(this%density(1:grid%np))
@@ -69,7 +69,9 @@ contains
     allocate(atomicden(1:system%grid%np))
     atomicden(1:system%grid%np) = 0.d0
 
-    do iat = 1, system%natoms
+    ! We expect only atoms to contain initial density
+    do iat = 1, system%geo%n_atoms
+      
       !Get the number of points in the radial grid
       np_radial = 1
       allocate(radial(1:np_radial))
@@ -106,10 +108,10 @@ contains
     class(density_t), intent(inout) :: this
     type(basis_t), intent(in) :: basis
 
-    select case(basis%type)
-    case(PLANEWAVES)
+    select case ( basis%type )
+    case ( PLANEWAVES )
 
-    case(ATOMICORBS)
+    case ( ATOMCENTERED )
 
     end select
 

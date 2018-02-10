@@ -37,7 +37,7 @@ module esl_system_m
 
     ! LO dependent variables
     type(sparse_pattern_t):: sparse_pattern
-    type(sparse_matrix_t) :: overlap ! always 1D
+    type(sparse_matrix_t) :: S ! always 1D
     type(sparse_matrix_t), allocatable :: H(:) ! one per spin
     type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
 

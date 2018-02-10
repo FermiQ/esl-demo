@@ -111,7 +111,7 @@ contains
     use fdf, only : fdf_init, fdf_get
     use esl_numeric_m, only : init_random
 
-    character(len=256) :: echo_file
+    character(len=256) :: echo_file, output_file
 
     !Init MPI
 

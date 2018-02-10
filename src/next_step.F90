@@ -14,7 +14,7 @@ contains
   subroutine next_step_setup(system)
 
     use esl_system_m, only: system_t
-    use esl_basis_m, only: PLANEWAVES, ATOMICORBS
+    use esl_basis_m
 
     !< System that we wish to process as a new step
     class(system_t), intent(inout) :: system
@@ -24,7 +24,7 @@ contains
     select case ( system%basis%type )
     case ( PLANEWAVES )
        call next_planewave()
-    case ( ATOMICORBS )
+    case ( ATOMCENTERED )
        call next_atomicorbs()
     end select
 
@@ -42,7 +42,8 @@ contains
 
       ! Preserve the old sparse pattern such that the
       ! sparse matrices still points to the pattern.
-      call move_alloc(system%sparse_pattern_t, old_sp)
+      ! TODO copy a sparse pattern to keep the old one
+!      call move_alloc(system%sparse_pattern, old_sp)
 
       ! copy old sparse pattern
       ! Initialize the sparse pattern
