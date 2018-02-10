@@ -14,7 +14,7 @@ contains
   subroutine next_step_setup(system)
 
     use esl_system_m, only: system_t
-    use esl_basis_m
+    use esl_basis_m, only: PLANEWAVES, ATOMCENTERED
 
     !< System that we wish to process as a new step
     class(system_t), intent(inout) :: system
@@ -23,9 +23,9 @@ contains
 
     select case ( system%basis%type )
     case ( PLANEWAVES )
-       call next_planewave()
+      call next_planewave()
     case ( ATOMCENTERED )
-       call next_atomicorbs()
+      call next_atomicorbs()
     end select
 
   contains
@@ -43,11 +43,12 @@ contains
       ! Preserve the old sparse pattern such that the
       ! sparse matrices still points to the pattern.
       ! TODO copy a sparse pattern to keep the old one
-!      call move_alloc(system%sparse_pattern, old_sp)
+      !      call move_alloc(system%sparse_pattern, old_sp)
 
       ! copy old sparse pattern
       ! Initialize the sparse pattern
-      call create_sparse_pattern_ac_create(system, system%sparse_pattern)
+      call create_sparse_pattern_ac_create(system%geo, system%basis%ac, &
+          system%sparse_pattern)
 
       ! Essentially we have to figure out whether the previous
       ! sparse patterns and quantities needs mangling (i.e.
@@ -57,14 +58,14 @@ contains
 
       ! Calculate the overlap matrix
       ! This requires that the grid information is present
-      call overlap_matrix_ac_calculate(system, &
-           system%sparse_pattern, system%S)
+      call overlap_matrix_ac_calculate(system%geo, system%basis%ac, &
+          system%sparse_pattern, system%S)
 
       ! Figure out the next density matrix
       ! This routine will initially fill it with the
       ! atomic fillings.
-      call density_matrix_ac_next(system, old_sp, &
-           system%sparse_pattern, system%DM)
+      call density_matrix_ac_next(system%geo, system%basis%ac, &
+          old_sp, system%sparse_pattern, system%DM)
 
       ! Clean-up the old sparse-matrix
       call old_sp%delete()

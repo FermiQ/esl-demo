@@ -17,13 +17,15 @@ contains
   !< The arguments of this routine are
   !< @param system the system with containing atomic coordinates and their basis functions
   !< @param sp the sparse pattern which we need to create, it will be deleted.
-  subroutine create_sparse_pattern_ac_create(sys, sp)
+  subroutine create_sparse_pattern_ac_create(geo, basis, sp)
 
     use prec, only: dp
-    use esl_system_m, only: system_t
+    use esl_geometry_m, only: geometry_t
+    use esl_basis_ac_m, only: basis_ac_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
 
-    class(system_t), intent(in) :: sys
+    class(geometry_t), intent(in) :: geo
+    class(basis_ac_t), intent(in) :: basis
     type(sparse_pattern_t), intent(inout) :: sp
     integer :: no, max_no, io, jo
     integer :: ia, ja, is, js
@@ -35,7 +37,7 @@ contains
     ! Figure out the number of orbitals
     no = 0
     max_no = 0
-    do ia = 1, sys%geo%n_atoms
+    do ia = 1, geo%n_atoms
       max_no = max(max_no, 1) ! 1 should be replaced by number of orbitals per atom
       no = no + 1 ! to be filled
     end do
@@ -45,23 +47,23 @@ contains
     call sp%init(no, no, np=max_no * 20)
 
     ! Loop over all atoms
-    do ia = 1, sys%geo%n_atoms
-      is = sys%basis%ac%species_idx(ia)
+    do ia = 1, geo%n_atoms
+      is = basis%species_idx(ia)
 
       ! Add the connections to it-self
       call add_elements(ia, ia, 0._dp)
 
       ! Only loop the remaining atoms (no need to double process)
-      do ja = ia + 1, sys%geo%n_atoms
-        js = sys%basis%ac%species_idx(ja)
+      do ja = ia + 1, geo%n_atoms
+        js = basis%species_idx(ja)
 
         ! Calculate whether the distance between the two
         ! atoms is within their basis range.
 ! TODO FIX RMAX         
-!          r2 = sys%pseudo(is)%rmax + sys%pseudo(js)%rmax
+!          r2 = pseudo(is)%rmax + pseudo(js)%rmax
 
         ! Calculate the distance between the two atomic centers
-        dist = sqrt(sum((sys%geo%xyz(:,ia) - sys%geo%xyz(:,ja)) ** 2))
+        dist = sqrt(sum((geo%xyz(:,ia) - geo%xyz(:,ja)) ** 2))
 
         ! Only process if the maximum distance is within range.
         if ( dist <= r2 ) then
@@ -88,8 +90,8 @@ contains
       ! TODO do orbital dependent distances
 
       ! Loop orbitals on both atoms
-      do io = sys%basis%ac%site_function_start(ia) , sys%basis%ac%site_function_start(ia+1) - 1
-        do jo = sys%basis%ac%site_function_start(ja) , sys%basis%ac%site_function_start(ja+1) - 1
+      do io = basis%site_function_start(ia) , basis%site_function_start(ia+1) - 1
+        do jo = basis%site_function_start(ja) , basis%site_function_start(ja+1) - 1
           call sp%add(io, jo)
         end do
       end do
