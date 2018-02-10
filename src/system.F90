@@ -10,7 +10,7 @@ module system_esl
   ! Sparse pattern for LO
   use sparse_pattern, only: sparse_pattern_t
   ! Sparse matrix for LO (only real(dp))
-  use sparse_matrix, only: sparse_matrix_t
+  use esl_sparse_matrix_m, only: sparse_matrix_t
 
   use esl_basis_m
   use esl_grid_m
