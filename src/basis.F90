@@ -65,7 +65,7 @@ contains
 
       ! Initialize auxiliary grid
       ! For the moment the spacing in real space is hardcoded
-      call n_dims_from_spacing(ndims, geo%cell, 0.25_dp)
+      call ndims_from_spacing(ndims, 0.25_dp, geo%cell)
       call this%grid%init(ndims, geo%cell)
 
       ! Initialize AC basis
