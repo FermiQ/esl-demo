@@ -1,30 +1,30 @@
 program esl_demo
- implicit none
+  implicit none
 
- character(len=100) :: input_file
+  character(len=100) :: input_file
 
- !Init MPI
+  !Init MPI
 
- !Init data basis strucutes 
+  !Init data basis strucutes 
 
- !Read Input variables and init corresponding data structures
- input_file="sample.inp"
- if (command_argument_count() == 1 ) Then
-   call get_command_argument(1, input_file)
- end if
+  !Read Input variables and init corresponding data structures
+  input_file="sample.inp"
+  if (command_argument_count() == 1 ) Then
+     call get_command_argument(1, input_file)
+  end if
 
- ! To be able to use YAML
- call f_lib_initialize()
- 
- call main(trim(input_file))
- 
- !Outputs
+  ! To be able to use YAML
+  call f_lib_initialize()
 
- !Release memory
- ! which is not released in final procedure for different types
- call f_lib_finalize()
+  call main(trim(input_file))
 
- !End of the calculation
+  !Outputs
+
+  !Release memory
+  ! which is not released in final procedure for different types
+  call f_lib_finalize()
+
+  !End of the calculation
 
 contains
 
@@ -39,7 +39,7 @@ contains
     use elsi_wrapper_esl, only : elsi_t
     use yaml_output
     use esl_next_step_m, only: next_step_setup
-    
+
     character(len = *), intent(in) :: input_file
     type(hamiltonian_t) :: hamiltonian
     type(system_t)      :: system
@@ -69,7 +69,7 @@ contains
     open(newunit=of,file=trim(output_file),action="write")
     call init_random()
     call system%init()
-    
+
     !--------------TEMP --------------------
     nstates = 1
     nspin = 1
@@ -84,11 +84,11 @@ contains
     do istep = 1, nstep ! steps to run through for the SCF
        ! this step is not adhearing to anything, it could be
        ! md-steps, or whatever.
-       
+
        ! Initialize a new step
        ! This initializes all variables that
        call next_step_setup(system)
-       
+
        call hamiltonian%init(system, states)
        call scf%init()
        call smear%init()
@@ -105,5 +105,5 @@ contains
     close(of)
 
   end subroutine main
-  
+
 end program esl_demo

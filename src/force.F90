@@ -9,18 +9,18 @@ module esl_force_t
 
   !Data structure for the energy
   type force_t
-     
+
      real(dp), allocatable :: total(:,:)
      real(dp), allocatable :: loc(:,:)
      real(dp), allocatable :: nl(:,:)
      real(dp), allocatable :: ionion(:,:)
-     
+
    contains
      private
-     
+
      procedure, public :: init
      final :: cleanup
-     
+
   end type force_t
 
 contains
@@ -51,7 +51,7 @@ contains
     if(allocated(this%loc)) deallocate(this%loc)
     if(allocated(this%nl)) deallocate(this%nl)
     if(allocated(this%ionion)) deallocate(this%ionion)
-    
+
   end subroutine cleanup
 
 end module esl_force_t

@@ -10,12 +10,12 @@ module esl_density_matrix_ac_m
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
   implicit none
-  
+
   public :: density_matrix_ac_next
   public :: density_matrix_ac_init_atomic
-  
+
 contains
-  
+
   !< Prepare the next density matrix
   !<
   !< This routine gets passed an old sparse pattern and a
@@ -77,7 +77,7 @@ contains
     ! set the diagonal density matrix
     do ia = 1, sys%nAtoms
        is = sys%ispecie(ia)
-       
+
        ! Loop on orbitals
        do io = sys%first_orb(ia), sys%first_orb(ia+1) - 1
           ! Orbital index on atom
@@ -94,7 +94,7 @@ contains
           end do
 
        end do
-       
+
     end do
 
   end subroutine density_matrix_ac_init_atomic

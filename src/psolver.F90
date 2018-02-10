@@ -1,7 +1,7 @@
 module esl_psolver_m
-  
+
   use Poisson_Solver, only: coulomb_operator, gp
-  
+
   implicit none
   private
 
@@ -17,7 +17,7 @@ module esl_psolver_m
        & PSOLVER_ISOLATED
 
   public :: psolver_t
-  
+
   type psolver_t
      private
      type(coulomb_operator) :: pkernel
@@ -79,5 +79,5 @@ contains
     end forall
     call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true., quiet = "YES")
   end subroutine h_potential
-  
+
 end module esl_psolver_m

@@ -43,10 +43,10 @@ module mpi_dist
      ! Note that rank and size are kept in the same precision
      ! as global_N because it allows "faster" arithmetic due to
      ! less casting. Or at least ideally...
-     
+
      !< The MPI rank (MPI_Comm_rank(rank)) (i.e. 0-based)
      integer(ii_) :: rank = 0
-     
+
      !< The MPI communicator size (MPI_Comm_size(size))
      integer(ii_) :: size = 1
 
@@ -63,7 +63,7 @@ module mpi_dist
      ! This may propagate further by introducing problems when
      ! inheriting sub-classed distributions where the interface
      ! may be required to change.
-     
+
      !< Initialize a new MPI distribution
      procedure, public, non_overridable :: init_
 
@@ -93,7 +93,7 @@ contains
     this%size = 1
 #endif
     this%global_N = global_N
-    
+
   end subroutine init_
 
   subroutine delete_(this)

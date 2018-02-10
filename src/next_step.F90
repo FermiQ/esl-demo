@@ -4,9 +4,9 @@
 !<  2. change of cutoff values
 !<  3. change of XXX
 module esl_next_step_m
-  
+
   implicit none
-  
+
   public :: next_step_setup
 
 contains
@@ -43,7 +43,7 @@ contains
       ! Preserve the old sparse pattern such that the
       ! sparse matrices still points to the pattern.
       call move_alloc(system%sparse_pattern_t, old_sp)
-      
+
       ! copy old sparse pattern
       ! Initialize the sparse pattern
       call create_sparse_pattern_ac_create(system, system%sparse_pattern)
@@ -73,10 +73,10 @@ contains
     subroutine next_planewave()
 
       ! add content for the initialization for a new plane-wave step
-      
+
     end subroutine next_planewave
-    
+
   end subroutine next_step_setup
-  
+
 end module esl_next_step_m
 

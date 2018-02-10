@@ -4,7 +4,7 @@ module esl_grid_m
   use basis_esl
 
   implicit none
-  
+
   private
 
   public :: grid_t
@@ -273,5 +273,5 @@ contains
 
     end function dsq
   end subroutine nDimsFromEcut
-  
+
 end module esl_grid_m

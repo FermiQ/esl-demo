@@ -1,21 +1,21 @@
 module message_esl
 
- implicit none
- private
+  implicit none
+  private
 
- public ::                   &
-           message_error
-          
- contains
+  public ::                   &
+       message_error
 
-   !Print an error message and leave the code
-   !----------------------------------------------------
-   subroutine message_error(str)
-     character(len=*)  :: str
+contains
 
-     print *, str
-     stop
+  !Print an error message and leave the code
+  !----------------------------------------------------
+  subroutine message_error(str)
+    character(len=*)  :: str
 
-   end subroutine message_error
+    print *, str
+    stop
+
+  end subroutine message_error
 
 end module message_esl

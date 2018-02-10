@@ -172,12 +172,12 @@ contains
   function volume(sys) result(vol)
     class(system_t), intent(inout) :: sys
     real(dp) :: vol
-    
+
     vol = sys%cell(1,1)*(sys%cell(2,2)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,2)) - &
          sys%cell(1,2)*(sys%cell(2,1)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,1)) + &
          sys%cell(1,3)*(sys%cell(2,1)*sys%cell(3,2)-sys%cell(2,2)*sys%cell(3,1))
     sys%Vol = vol
-    
+
   end function volume
 
 end module esl_system_m

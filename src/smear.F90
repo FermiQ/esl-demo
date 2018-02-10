@@ -13,20 +13,20 @@ module esl_smear_m
 
   !Data structure for the system
   type smear_t
-     
+
      integer(ip)           :: smearing           !< which smearing do we use
      real(dp), pointer     :: eigenvalues(:,:,:) => null() !< n_state,n_spin,n_kpt
      real(dp)              :: fermi_level
      real(dp)              :: eTemp
      real(dp)              :: eBroad
      real(dp)              :: occ_tol
-     
+
    contains
-     
+
      private
      procedure, public :: init
      final :: cleanup
-     
+
   end type smear_t
 
   integer, public, parameter :: &
@@ -42,9 +42,9 @@ contains
     class(smear_t) :: this
 
     character(len=100) :: sm
-    
+
     sm = fdf_get('Smearing','Gaussian')
-    
+
     if ( leqi(sm, 'Gaussian') )  Then
        this%smearing = GAUSSIAN
     else if ( leqi(sm, 'FD') ) then
@@ -61,7 +61,7 @@ contains
     ! 0.00095 Ha ~ 300 K
     this%eTemp = fdf_get('Smearing.Temp', 0.00095_dp, 'Ha')
     this%eBroad = fdf_get('eBroad', 0.1_dp, 'Ha')
-    
+
   end subroutine init
 
   subroutine cleanup(this)
