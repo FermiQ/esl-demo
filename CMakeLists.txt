@@ -66,7 +66,7 @@ add_executable(${target_name}
   ${src_dir}/density.F90
   ${src_dir}/AC/density_matrix.F90
   ${src_dir}/energy.F90
-  ${src_dir}/forces.F90
+  ${src_dir}/force.F90
   ${src_dir}/grid.F90
   ${src_dir}/hamiltonian.F90
   ${src_dir}/AC/create_sparse_pattern.F90
