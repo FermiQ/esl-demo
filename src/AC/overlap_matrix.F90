@@ -30,35 +30,35 @@ contains
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
     do ia = 1, sys%nAtoms
-       is = sys%ispecie(ia)
+      is = sys%basis%ac%species_idx(ia)
 
-       ! Loop on orbitals
-       do io = sys%first_orb(ia), sys%first_orb(ia+1) - 1
-          ! Orbital index on atom
-          iio = io - sys%first_orb(ia) + 1
+      ! Loop on orbitals
+      do io = sys%basis%ac%site_function_start(ia), sys%basis%ac%site_function_start(ia + 1) - 1
+        ! Orbital index on atom
+        iio = io - sys%basis%ac%site_function_start(ia) + 1
 
-          ! Loop entries in the sparse pattern
-          do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+        ! Loop entries in the sparse pattern
+        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
 
-             ! Figure out which atom this orbital belongs too
-             jo = sp%column(ind)
-             ! Figure out the atomic index of the orbital
-             ja = sys%orb_2_atom(jo)
-             js = sys%ispecie(ja)
-             jjo = jo - sys%first_orb(ja) + 1
+          ! Figure out which atom this orbital belongs too
+          jo = sp%column(ind)
+          ! Figure out the atomic index of the orbital
+          ja = sys%basis%ac%function_site(jo)
+          js = sys%basis%ac%species_idx(ja)
+          jjo = jo - sys%basis%ac%site_function_start(ja) + 1
 
-             ! We are now in a position to calculate the
-             ! overlap matrix. I.e. we know the atom, the
-             ! orbital indices and their positions
+          ! We are now in a position to calculate the
+          ! overlap matrix. I.e. we know the atom, the
+          ! orbital indices and their positions
 
-             ! TODO fix calls here
-             S%M(ind) = &
-                  sys%grid%overlap(sys%xyz(:,ia), TODO-AO, sys%pseudo(is)%rmax, &
-                  sys%xyz(:,ja), TODO-AO, sys%pseudo(js)%rmax)
+          ! TODO fix calls here
+!          S%M(ind) = &
+!              sys%grid%overlap(sys%xyz(:,ia), TODO-AO, sys%pseudo(is)%rmax, &
+!              sys%xyz(:,ja), TODO-AO, sys%pseudo(js)%rmax)
 
-          end do
+        end do
 
-       end do
+      end do
 
     end do
 

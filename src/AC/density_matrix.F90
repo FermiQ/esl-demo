@@ -5,7 +5,7 @@
 !< read-in/extrapolate a DM to a different structure.
 module esl_density_matrix_ac_m
 
-  use system_esl, only: system_t
+  use esl_system_m, only: system_t
   use esl_sparse_pattern_m, only: sparse_pattern_t
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
@@ -32,12 +32,12 @@ contains
 
     if ( old_sp%initialized() ) then
 
-       ! For now we still do the atomic fillings...
-       call density_matrix_ac_init_atomic(sys, new_sp, DM)
+      ! For now we still do the atomic fillings...
+      call density_matrix_ac_init_atomic(sys, new_sp, DM)
 
     else
 
-       call density_matrix_ac_init_atomic(sys, new_sp, DM)
+      call density_matrix_ac_init_atomic(sys, new_sp, DM)
 
     end if
 
@@ -58,16 +58,16 @@ contains
 
     ! Initialize the density matrix
     if ( allocated(DM) ) then
-       ! We assume it is allocated correctly (nspin is correct)
+      ! We assume it is allocated correctly (nspin is correct)
     else
-       allocate(DM(sys%nspin))
+      allocate(DM(sys%nspin))
     end if
 
     do is = 1, sys%nspin
-       call DM(is)%init(sp)
+      call DM(is)%init(sp)
 
-       ! Initialize all elements to zero
-       DM(is)%M = 0._dp
+      ! Initialize all elements to zero
+      DM(is)%M = 0._dp
     end do
 
     ! Define the fraction of filling per spin channel
@@ -76,24 +76,25 @@ contains
     ! Loop over all orbital connections in the sparse pattern and
     ! set the diagonal density matrix
     do ia = 1, sys%nAtoms
-       is = sys%ispecie(ia)
+      is = sys%basis%ac%species_idx(ia)
 
-       ! Loop on orbitals
-       do io = sys%first_orb(ia), sys%first_orb(ia+1) - 1
-          ! Orbital index on atom
-          iio = io - sys%first_orb(ia) + 1
+      ! Loop on orbitals
+      do io = sys%basis%ac%site_function_start(ia), sys%basis%ac%site_function_start(ia + 1) - 1
+        ! Orbital index on atom
+        iio = io - sys%basis%ac%site_function_start(ia) + 1
 
-          ! Loop entries in the sparse pattern
-          do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
-             ! Skip if it does not correspond to the diagonal element
-             if ( sp%column(ind) /= io ) cycle
+        ! Loop entries in the sparse pattern
+        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+          ! Skip if it does not correspond to the diagonal element
+          if ( sp%column(ind) /= io ) cycle
 
-             ! Set diagonal component
-             DM(:)%M(ind) = sys%basis% TODO basis %info(is)%q0(iio) * frac_s
+          ! Set diagonal component
+! TODO add atomic charge specification
+!          DM(:)%M(ind) = sys%basis% TODO basis %info(is)%q0(iio) * frac_s
 
-          end do
+        end do
 
-       end do
+      end do
 
     end do
 

@@ -36,8 +36,8 @@ contains
     no = 0
     max_no = 0
     do ia = 1, sys%nAtoms
-       max_no = max(max_no, 1) ! 1 should be replaced by number of orbitals per atom
-       no = no + 1 ! to be filled
+      max_no = max(max_no, 1) ! 1 should be replaced by number of orbitals per atom
+      no = no + 1 ! to be filled
     end do
 
     ! Now re-initialize the sparse matrix.
@@ -46,32 +46,33 @@ contains
 
     ! Loop over all atoms
     do ia = 1, sys%nAtoms - 1
-       is = sys%ispecie(ia)
+      is = sys%basis%ac%species_idx(ia)
 
-       ! Add the connections to it-self
-       call add_elements(ia, ia, 0._dp)
+      ! Add the connections to it-self
+      call add_elements(ia, ia, 0._dp)
 
-       ! Only loop the remaining atoms (no need to double process)
-       do ja = ia + 1, sys%nAtoms
-          js = sys%ispecie(ja)
+      ! Only loop the remaining atoms (no need to double process)
+      do ja = ia + 1, sys%nAtoms
+        js = sys%basis%ac%species_idx(ja)
 
-          ! Calculate whether the distance between the two
-          ! atoms is within their basis range.
-          r2 = sys%pseudo(is)%rmax + sys%pseudo(js)%rmax
+        ! Calculate whether the distance between the two
+        ! atoms is within their basis range.
+! TODO FIX RMAX         
+!          r2 = sys%pseudo(is)%rmax + sys%pseudo(js)%rmax
 
-          ! Calculate the distance between the two atomic centers
-          dist = sqrt(sum((sys%xyz(:,ia) - sys%xyz(:,ja)) ** 2))
+        ! Calculate the distance between the two atomic centers
+        dist = sqrt(sum((sys%xyz(:,ia) - sys%xyz(:,ja)) ** 2))
 
-          ! Only process if the maximum distance is within range.
-          if ( dist <= r2 ) then
+        ! Only process if the maximum distance is within range.
+        if ( dist <= r2 ) then
 
-             ! Add all orbitals to the sparse pattern
-             call add_elements(ia, ja, dist)
-             call add_elements(ja, ia, dist)
+          ! Add all orbitals to the sparse pattern
+          call add_elements(ia, ja, dist)
+          call add_elements(ja, ia, dist)
 
-          end if
+        end if
 
-       end do
+      end do
     end do
 
     ! Reduce sparse pattern to contained elements
@@ -87,10 +88,10 @@ contains
       ! TODO do orbital dependent distances
 
       ! Loop orbitals on both atoms
-      do io = sys%first_orb(ia) , sys%first_orb(ia + 1) - 1
-         do jo = sys%first_orb(ja) , sys%first_orb(ja + 1) - 1
-            call sp%add(io, jo)
-         end do
+      do io = sys%basis%ac%site_function_start(ia) , sys%basis%ac%site_function_start(ia+1) - 1
+        do jo = sys%basis%ac%site_function_start(ja) , sys%basis%ac%site_function_start(ja+1) - 1
+          call sp%add(io, jo)
+        end do
       end do
 
     end subroutine add_elements
