@@ -1,6 +1,7 @@
 module esl_hamiltonian_m
   use prec, only : dp,ip
 
+  use esl_basis_m
   use esl_density_m
   use esl_energy_m
   use esl_force_m
@@ -49,14 +50,14 @@ contains
     call this%density%init(sys%basis, sys%grid)
     call this%energy%init()
     call this%potentials%init(sys%basis, sys%grid, states)
-    call this%force%init(sys%natoms)
+    call this%force%init(sys%geo%n_atoms)
     call this%ion_inter%init()
 
-    select case(basis%type)
-    case(PLANEWAVES)
-      call this%ion_inter%calculate_periodic(sys, this%force%ionion, this%energy%ionion
-    case(ATOMICORBS)
-      call this%ion_inter%calculate_isolated(sys, this%force%ionion, this%energy%ionion
+    select case ( sys%basis%type )
+    case ( PLANEWAVES )
+      call this%ion_inter%calculate_periodic(sys, this%force%ionion, this%energy%ionion)
+    case ( ATOMCENTERED )
+      call this%ion_inter%calculate_isolated(sys, this%force%ionion, this%energy%ionion)
     end select
 
   end subroutine init

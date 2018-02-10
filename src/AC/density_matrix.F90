@@ -25,10 +25,10 @@ contains
   subroutine density_matrix_ac_next(sys, old_sp, new_sp, DM)
 
     class(system_t), intent(in) :: sys
-    class(sparse_pattern_t), intent(in) :: old_sp
-    class(sparse_pattern_t), intent(in), target :: new_sp
+    type(sparse_pattern_t), intent(in) :: old_sp
+    type(sparse_pattern_t), intent(in), target :: new_sp
     ! One element per spin component.
-    class(sparse_matrix_t), intent(inout), allocatable :: DM(:)
+    type(sparse_matrix_t), intent(inout), allocatable :: DM(:)
 
     if ( old_sp%initialized() ) then
 
@@ -49,21 +49,24 @@ contains
     use prec, only: dp
 
     class(system_t), intent(in) :: sys
-    class(sparse_pattern_t), intent(in), target :: sp
+    type(sparse_pattern_t), intent(in), target :: sp
     ! One element per spin component.
-    class(sparse_matrix_t), intent(inout), allocatable :: DM(:)
+    type(sparse_matrix_t), intent(inout), allocatable :: DM(:)
 
     real(dp) :: frac_s
+    integer :: nspin
     integer :: ia, is, io, iio, ind
 
+    nspin = 1
     ! Initialize the density matrix
     if ( allocated(DM) ) then
       ! We assume it is allocated correctly (nspin is correct)
     else
-      allocate(DM(sys%nspin))
+      ! TODO insert correct size  (number of spin-components)
+      allocate(DM(nspin))
     end if
 
-    do is = 1, sys%nspin
+    do is = 1, nspin
       call DM(is)%init(sp)
 
       ! Initialize all elements to zero
@@ -71,12 +74,12 @@ contains
     end do
 
     ! Define the fraction of filling per spin channel
-    frac_s = 1._dp / sys%nspin
+    frac_s = 1._dp / nspin
 
     ! Loop over all orbital connections in the sparse pattern and
     ! set the diagonal density matrix
-    do ia = 1, sys%nAtoms
-      is = sys%basis%ac%species_idx(ia)
+    do ia = 1, sys%geo%n_atoms
+      is = sys%geo%species_idx(ia)
 
       ! Loop on orbitals
       do io = sys%basis%ac%site_function_start(ia), sys%basis%ac%site_function_start(ia + 1) - 1

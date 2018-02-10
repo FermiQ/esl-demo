@@ -9,6 +9,7 @@ module esl_flook_if_m
 #ifdef WITH_FLOOK
   use flook
 #endif
+  use esl_message_m
 
   implicit none
 

@@ -123,8 +123,6 @@ contains
     integer :: ist, isp, ik
     real(dp), allocatable :: tmp_re(:), tmp_im(:)
 
-    call init_random()
-
     if(this%complex_states) then
        allocate(tmp_re(1:this%ncoef))
        allocate(tmp_im(1:this%ncoef))

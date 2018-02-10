@@ -111,6 +111,7 @@ contains
   !Evaluate an atomic orbital on the real-space grid
   !----------------------------------------------------
   subroutine get_atomic_orbital(this, ll, mm, r_at, ao, grad_ao)
+    use esl_numeric_m, only: grylmr
     class(grid_t) :: this
     integer,        intent(in) :: ll
     integer,        intent(in) :: mm

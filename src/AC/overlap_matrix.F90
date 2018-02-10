@@ -29,8 +29,8 @@ contains
 
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
-    do ia = 1, sys%nAtoms
-      is = sys%basis%ac%species_idx(ia)
+    do ia = 1, sys%geo%n_atoms
+      is = sys%geo%species_idx(ia)
 
       ! Loop on orbitals
       do io = sys%basis%ac%site_function_start(ia), sys%basis%ac%site_function_start(ia + 1) - 1
@@ -44,7 +44,7 @@ contains
           jo = sp%column(ind)
           ! Figure out the atomic index of the orbital
           ja = sys%basis%ac%function_site(jo)
-          js = sys%basis%ac%species_idx(ja)
+          js = sys%geo%species_idx(ja)
           jjo = jo - sys%basis%ac%site_function_start(ja) + 1
 
           ! We are now in a position to calculate the

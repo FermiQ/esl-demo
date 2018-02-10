@@ -1,10 +1,9 @@
-module message_esl
+module esl_message_m
 
   implicit none
   private
 
-  public ::                   &
-       message_error
+  public :: message_error
 
 contains
 
@@ -18,4 +17,4 @@ contains
 
   end subroutine message_error
 
-end module message_esl
+end module esl_message_m

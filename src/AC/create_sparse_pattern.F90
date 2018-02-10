@@ -20,13 +20,13 @@ contains
   subroutine create_sparse_pattern_ac_create(sys, sp)
 
     use prec, only: dp
-    use system_esl, only: system_t
+    use esl_system_m, only: system_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
 
     class(system_t), intent(in) :: sys
     type(sparse_pattern_t), intent(inout) :: sp
     integer :: no, max_no, io, jo
-    integer :: ia, ja
+    integer :: ia, ja, is, js
     real(dp) :: r2, dist
 
     ! Start by deallocation of the sparse pattern
@@ -35,7 +35,7 @@ contains
     ! Figure out the number of orbitals
     no = 0
     max_no = 0
-    do ia = 1, sys%nAtoms
+    do ia = 1, sys%geo%n_atoms
       max_no = max(max_no, 1) ! 1 should be replaced by number of orbitals per atom
       no = no + 1 ! to be filled
     end do
@@ -45,14 +45,14 @@ contains
     call sp%init(no, no, np=max_no * 20)
 
     ! Loop over all atoms
-    do ia = 1, sys%nAtoms
+    do ia = 1, sys%geo%n_atoms
       is = sys%basis%ac%species_idx(ia)
 
       ! Add the connections to it-self
       call add_elements(ia, ia, 0._dp)
 
       ! Only loop the remaining atoms (no need to double process)
-      do ja = ia + 1, sys%nAtoms
+      do ja = ia + 1, sys%geo%n_atoms
         js = sys%basis%ac%species_idx(ja)
 
         ! Calculate whether the distance between the two
@@ -61,7 +61,7 @@ contains
 !          r2 = sys%pseudo(is)%rmax + sys%pseudo(js)%rmax
 
         ! Calculate the distance between the two atomic centers
-        dist = sqrt(sum((sys%xyz(:,ia) - sys%xyz(:,ja)) ** 2))
+        dist = sqrt(sum((sys%geo%xyz(:,ia) - sys%geo%xyz(:,ja)) ** 2))
 
         ! Only process if the maximum distance is within range.
         if ( dist <= r2 ) then
