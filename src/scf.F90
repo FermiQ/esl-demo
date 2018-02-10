@@ -75,11 +75,11 @@ contains
     real(dp), allocatable :: rhonew(:)
     real(dp) :: reldens
 
-    allocate(rhoin(1:system%grid%np))
-    allocate(rhoout(1:system%grid%np))
-    allocate(rhonew(1:system%grid%np))
+    allocate(rhoin(1:system%basis%grid%np))
+    allocate(rhoout(1:system%basis%grid%np))
+    allocate(rhonew(1:system%basis%grid%np))
 
-    call hamiltonian%density%guess(system)
+    call hamiltonian%density%guess(system%geo, system%basis%grid)
 
     call yaml_mapping_open("SCF cycle")
 
@@ -94,7 +94,7 @@ contains
       !Saving the in density for the mixing
       call hamiltonian%density%get_den(rhoin)
       !Calc. density
-      call hamiltonian%density%calculate(system%basis)
+      call hamiltonian%density%calculate()
       !Saving the out density for the mixing
       call hamiltonian%density%get_den(rhoout)
       !Calc. potentials
@@ -105,10 +105,10 @@ contains
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density
-      do ip = 1, system%grid%np
+      do ip = 1, system%basis%grid%np
         rhonew(ip) = abs(rhoout(ip) - rhoin(ip))
       end do
-      call integrate(system%grid, rhonew, reldens)
+      call integrate(system%basis%grid, rhonew, reldens)
       reldens = reldens/real(states%nel)
       call yaml_map("Rel. Density", reldens)
       if(reldens <= this%tol_reldens) then
@@ -117,7 +117,7 @@ contains
       end if
 
       !Mixing (BLAS/LAPACK)
-      call mixing_linear(this%mixer, system%grid%np, rhoin, rhoout,rhonew)  
+      call mixing_linear(this%mixer, system%basis%grid%np, rhoin, rhoout,rhonew)  
       call hamiltonian%density%set_den(rhonew)
 
       !Update Hamiltonian matrix

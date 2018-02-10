@@ -83,7 +83,7 @@ contains
       ! This initializes all variables that
       call next_step_setup(system)
 
-      call hamiltonian%init(system, states)
+      call hamiltonian%init(system%basis%grid, system%geo, states, periodic=.false.)
       call scf%init()
       call smear%init()
 
