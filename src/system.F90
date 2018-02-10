@@ -10,7 +10,7 @@ module system_esl
   ! Sparse matrix for LO (only real(dp))
   use sparse_matrix, only: sparse_matrix_t
 
-  use basis_esl
+  use esl_basis_m
   use grid_esl
   use smear_esl
   use states_esl
