@@ -2,7 +2,8 @@ module esl_basis_ac_m
   use prec
   use yaml_output
   use esl_species_m
-
+  use esl_geometry_m
+  
   implicit none
 
   private
@@ -30,8 +31,9 @@ contains
 
   !Initialize the basis
   !----------------------------------------------------
-  subroutine init(this)
+  subroutine init(this, geo)
     class(basis_ac_t) :: this
+    type(geometry_t), intent(in) :: geo
 
   end subroutine init
 
