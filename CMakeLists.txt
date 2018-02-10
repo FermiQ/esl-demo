@@ -62,6 +62,7 @@ endif()
 add_executable(${target_name}
   ${src_dir}/main.F90
   ${src_dir}/basis.F90
+  ${src_dir}/basis_ac.F90
   ${src_dir}/basis_pw.F90
   ${src_dir}/density.F90
   ${src_dir}/AC/density_matrix.F90

@@ -2,6 +2,7 @@ module esl_basis_m
 
   use prec
   use fdf, only : fdf_get, leqi
+  use esl_basis_ac_m
   use esl_basis_pw_m
   use yaml_output
 
@@ -15,6 +16,7 @@ module esl_basis_m
   type basis_t
      integer :: type
      type(basis_pw_t) :: pw
+     type(basis_ac_t) :: ac
      integer :: size
    contains
      private
@@ -50,6 +52,8 @@ contains
     else if ( leqi(str, 'AtomicOrbitals') ) then
       this%type = ATOMCENTERED
 
+      call this%ac%init()
+      this%size = this%ac%n_functions
     else
       call message_error("Unknown basis set: "//trim(str))
     end if
