@@ -6,7 +6,7 @@ module esl_potential_m
   use esl_density_t
   use esl_energy_t
   use esl_grid_m
-  use psolver_esl
+  use esl_psolver_m
   use states_esl
   use xc_esl
 

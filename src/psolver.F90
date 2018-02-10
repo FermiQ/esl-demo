@@ -1,12 +1,14 @@
-module psolver_esl
+module esl_psolver_m
+  
   use Poisson_Solver, only: coulomb_operator, gp
+  
   implicit none
   private
 
-  character(len = 1), parameter :: PSOLVER_3D_PERIOD = 'P'
-  character(len = 1), parameter :: PSOLVER_XZ_SURFACE = 'S'
-  character(len = 1), parameter :: PSOLVER_Y_WIRE = 'W'
-  character(len = 1), parameter :: PSOLVER_ISOLATED = 'F'
+  character(len=1), parameter :: PSOLVER_3D_PERIOD = 'P'
+  character(len=1), parameter :: PSOLVER_XZ_SURFACE = 'S'
+  character(len=1), parameter :: PSOLVER_Y_WIRE = 'W'
+  character(len=1), parameter :: PSOLVER_ISOLATED = 'F'
 
   public :: &
        & PSOLVER_3D_PERIOD, &
@@ -30,7 +32,7 @@ contains
   subroutine init(ps, iproc, nproc, geocode, ndims, hgrids)
     use Poisson_Solver, only: pkernel_init, pkernel_set
     use dictionaries, only: dictionary, dict_init, dict_free
-    implicit none
+
     class(psolver_t), intent(inout) :: ps
     integer, intent(in) :: iproc, nproc
     character(len = 1), intent(in) :: geocode
@@ -51,7 +53,6 @@ contains
 
   subroutine cleanup(ps)
     use Poisson_Solver, only: pkernel_free
-    implicit none
     type(psolver_t), intent(inout) :: ps
 
     call pkernel_free(ps%pkernel)
@@ -60,7 +61,7 @@ contains
   subroutine h_potential(ps, rho, hartree, np, ionicPot, ionicOffset, ehartree)
     use esl_density_t, only: density_t
     use Poisson_Solver, only: PS_H_potential => H_potential
-    implicit none
+
     class(psolver_t), intent(inout) :: ps
     type(density_t), intent(in) :: rho
     real(gp), dimension(*), intent(out) :: hartree
@@ -78,4 +79,5 @@ contains
     end forall
     call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true., quiet = "YES")
   end subroutine h_potential
-end module psolver_esl
+  
+end module esl_psolver_m
