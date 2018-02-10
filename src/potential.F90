@@ -19,9 +19,9 @@ module esl_potential_m
   type potential_t
      integer :: np !< Number of points in real space
 
-     real(kind=dp), allocatable :: hartree(:)  !Hartree potential
-     real(kind=dp), allocatable :: external(:) !External local potential
-     real(kind=dp), allocatable :: vxc(:,:)  !xc potential
+     real(dp), allocatable :: hartree(:)  !Hartree potential
+     real(dp), allocatable :: external(:) !External local potential
+     real(dp), allocatable :: vxc(:,:)  !xc potential
 
      real(dp) :: ionicOffset !< Offset of the external potential
 
