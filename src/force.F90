@@ -1,4 +1,4 @@
-module esl_force_t
+module esl_force_m
 
   use prec, only : dp
 
@@ -10,16 +10,16 @@ module esl_force_t
   !Data structure for the energy
   type force_t
 
-     real(dp), allocatable :: total(:,:)
-     real(dp), allocatable :: loc(:,:)
-     real(dp), allocatable :: nl(:,:)
-     real(dp), allocatable :: ionion(:,:)
+    real(dp), allocatable :: total(:,:)
+    real(dp), allocatable :: loc(:,:)
+    real(dp), allocatable :: nl(:,:)
+    real(dp), allocatable :: ionion(:,:)
 
-   contains
-     private
+  contains
+    private
 
-     procedure, public :: init
-     final :: cleanup
+    procedure, public :: init
+    final :: cleanup
 
   end type force_t
 
@@ -54,4 +54,4 @@ contains
 
   end subroutine cleanup
 
-end module esl_force_t
+end module esl_force_m

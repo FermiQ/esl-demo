@@ -45,7 +45,7 @@ contains
     call sp%init(no, no, np=max_no * 20)
 
     ! Loop over all atoms
-    do ia = 1, sys%nAtoms - 1
+    do ia = 1, sys%nAtoms
       is = sys%basis%ac%species_idx(ia)
 
       ! Add the connections to it-self

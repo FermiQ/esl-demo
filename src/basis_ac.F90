@@ -4,7 +4,7 @@ module esl_basis_ac_m
   use esl_species_m
 
   implicit none
-    
+
   private
 
   public :: basis_ac_t
@@ -25,7 +25,7 @@ module esl_basis_ac_m
     procedure, public :: summary
     final :: cleanup
   end type basis_ac_t
-  
+
 contains
 
   !Initialize the basis

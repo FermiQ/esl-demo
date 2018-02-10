@@ -1,29 +1,29 @@
-module esl_energy_t
+module esl_energy_m
   use prec, only : dp
 
   implicit none
   private
 
   public ::                          &
-       energy_t
+      energy_t
 
   !Data structure for the energy
   type energy_t
-     real(dp) :: total
-     real(dp) :: eigenvalues
-     real(dp) :: hartree
-     real(dp) :: ionion
-     real(dp) :: extern
-     real(dp) :: exchange
-     real(dp) :: correlation
-     real(dp) :: int_nvxc
-     real(dp) :: kinetic
-     real(dp) :: entropy
-   contains
-     private
-     procedure, public :: init
-     procedure, public :: calculate
-     procedure, public :: display
+    real(dp) :: total
+    real(dp) :: eigenvalues
+    real(dp) :: hartree
+    real(dp) :: ionion
+    real(dp) :: extern
+    real(dp) :: exchange
+    real(dp) :: correlation
+    real(dp) :: int_nvxc
+    real(dp) :: kinetic
+    real(dp) :: entropy
+  contains
+    private
+    procedure, public :: init
+    procedure, public :: calculate
+    procedure, public :: display
   end type energy_t
 
 
@@ -79,5 +79,4 @@ contains
 
   end subroutine display
 
-
-end module esl_energy_t
+end module esl_energy_m

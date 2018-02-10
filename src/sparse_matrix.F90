@@ -19,20 +19,20 @@ module esl_sparse_matrix_m
   !< has knowledge of the other one changing. Hence, we MUST keep them fixed.
   type sparse_matrix_t
 
-     !< A pointer to the sparse pattern that defines this matrix
-     type(sparse_pattern_t), pointer :: sp => null()
-     real(dp), allocatable :: M(:)
+    !< A pointer to the sparse pattern that defines this matrix
+    type(sparse_pattern_t), pointer :: sp => null()
+    real(dp), allocatable :: M(:)
 
-   contains
+  contains
 
-     !< Initialize a sparse matrix
-     procedure, public :: init => init_
+    !< Initialize a sparse matrix
+    procedure, public :: init => init_
 
-     !< Print, to std-out information regarding this sparse pattern
-     procedure, public :: print => print_
+    !< Print, to std-out information regarding this sparse pattern
+    procedure, public :: print => print_
 
-     !< Delete the sparse data (but not the sparse pattern)
-     procedure, public :: delete => delete_
+    !< Delete the sparse data (but not the sparse pattern)
+    procedure, public :: delete => delete_
 
   end type sparse_matrix_t
 
@@ -44,11 +44,11 @@ contains
 
     this%sp => sparse_pattern
     if ( .not. sparse_pattern%finalized ) then
-       stop 'The sparse pattern has not been finalized before creating a sparse matrix'
+      stop 'The sparse pattern has not been finalized before creating a sparse matrix'
     end if
 
     if ( allocated(this%M) ) then
-       deallocate(this%M)
+      deallocate(this%M)
     end if
     allocate(this%M(this%sp%nt))
 

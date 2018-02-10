@@ -1,10 +1,10 @@
 module esl_hamiltonian_m
   use prec, only : dp,ip
 
-  use esl_density_t
-  use esl_energy_t
-  use esl_force_t
-  use esl_ion_interaction_t
+  use esl_density_m
+  use esl_energy_m
+  use esl_force_m
+  use esl_ion_interaction_m
   use esl_potential_m
   use esl_states_m
   use esl_system_m
@@ -13,28 +13,28 @@ module esl_hamiltonian_m
   private
 
   public ::                          &
-       hamiltonian_t,                &
-       hamiltonian_apply,            &
-       hamiltonian_apply_local
+      hamiltonian_t,                &
+      hamiltonian_apply,            &
+      hamiltonian_apply_local
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
-     type(density_t)         :: density
-     type(energy_t)          :: energy
-     type(force_t)           :: force
-     type(ion_interaction_t) :: ion_inter
-     type(potential_t)       :: potentials
-   contains
-     private
-     procedure, public :: init
+    type(density_t)         :: density
+    type(energy_t)          :: energy
+    type(force_t)           :: force
+    type(ion_interaction_t) :: ion_inter
+    type(potential_t)       :: potentials
+  contains
+    private
+    procedure, public :: init
   end type hamiltonian_t
 
   interface hamiltonian_apply
-     module procedure hamiltonian_dapply, hamiltonian_zapply
+    module procedure hamiltonian_dapply, hamiltonian_zapply
   end interface hamiltonian_apply
 
   interface hamiltonian_apply_local
-     module procedure hamiltonian_dapply_local, hamiltonian_zapply_local
+    module procedure hamiltonian_dapply_local, hamiltonian_zapply_local
   end interface hamiltonian_apply_local
 
 contains
@@ -54,9 +54,9 @@ contains
 
     select case(basis%type)
     case(PLANEWAVES)
-       call this%ion_inter%calculate_periodic(sys, this%force%ionion, this%energy%ionion
+      call this%ion_inter%calculate_periodic(sys, this%force%ionion, this%energy%ionion
     case(ATOMICORBS)
-       call this%ion_inter%calculate_isolated(sys, this%force%ionion, this%energy%ionion
+      call this%ion_inter%calculate_isolated(sys, this%force%ionion, this%energy%ionion
     end select
 
   end subroutine init
@@ -98,7 +98,7 @@ contains
 
     !TODO: Here there is no spin
     forall(ip = 1:this%potentials%np)
-       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
+      hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
     end forall
 
   end subroutine hamiltonian_dapply_local
@@ -115,7 +115,7 @@ contains
 
     !TODO: Here there is no spin
     forall(ip = 1:this%potentials%np)
-       hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
+      hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip,1))*psi(ip)
     end forall
 
   end subroutine hamiltonian_zapply_local
