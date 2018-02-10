@@ -1,7 +1,7 @@
 module hamiltonian_esl
   use prec, only : dp,ip
 
-  use density_esl
+  use esl_density_t
   use energy_esl
   use force_esl
   use ion_interaction_esl

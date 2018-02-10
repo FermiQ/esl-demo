@@ -58,7 +58,7 @@ contains
   end subroutine cleanup
 
   subroutine h_potential(ps, rho, hartree, np, ionicPot, ionicOffset, ehartree)
-    use density_esl, only: density_t
+    use esl_density_t, only: density_t
     use Poisson_Solver, only: PS_H_potential => H_potential
     implicit none
     class(psolver_t), intent(inout) :: ps
