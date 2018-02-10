@@ -1,5 +1,6 @@
 module esl_density_t
-  use prec, only : ip, dp
+
+  use prec, only : dp
 
   use basis_esl
   use grid_esl
@@ -14,15 +15,17 @@ module esl_density_t
   type density_t
      integer :: np !< Copied from grid
 
-     real(kind=dp), allocatable :: density(:)
-     real(kind=dp), allocatable :: density_matrix(:,:)
+     real(dp), allocatable :: density(:)
+     real(dp), allocatable :: density_matrix(:,:)
    contains
+
      procedure, public :: init
      procedure, public :: guess
      procedure, public :: calculate
      procedure, public :: get_den
      procedure, public :: set_den
      final  :: cleanup
+
   end type density_t
 
 contains
@@ -31,8 +34,8 @@ contains
   !----------------------------------------------------
   subroutine init(this, basis, grid)
     class(density_t), intent(inout) :: this
-    type(basis_t),   intent(in)    :: basis
-    type(grid_t),    intent(in)    :: grid
+    type(basis_t), intent(in) :: basis
+    type(grid_t), intent(in) :: grid
 
     !Parse the informations from the input file
     select case(basis%type)
@@ -55,10 +58,10 @@ contains
   !----------------------------------------------------
   subroutine guess(this, system)
     class(density_t), intent(inout) :: this
-    type(system_t),   intent(in)    :: system
+    type(system_t), intent(in) :: system
 
-    real(kind=dp), allocatable :: radial(:)
-    real(kind=dp), allocatable :: atomicden(:)
+    real(dp), allocatable :: radial(:)
+    real(dp), allocatable :: atomicden(:)
     integer :: iat, np_radial, ip
 
     this%density(1:system%grid%np) = 0.d0
@@ -101,7 +104,7 @@ contains
   !----------------------------------------------------
   subroutine calculate(this, basis)
     class(density_t), intent(inout) :: this
-    type(basis_t),   intent(in)    :: basis
+    type(basis_t), intent(in) :: basis
 
     select case(basis%type)
     case(PLANEWAVES)
@@ -117,7 +120,7 @@ contains
   !----------------------------------------------------
   subroutine get_den(this, rho)
     class(density_t) :: this
-    real(kind=dp),    intent(out) :: rho(:)
+    real(dp), intent(out) :: rho(:)
 
     integer :: ip
 
@@ -131,7 +134,7 @@ contains
   !----------------------------------------------------
   subroutine set_den(this, rho)
     class(density_t) :: this
-    real(kind=dp),    intent(in) :: rho(:)
+    real(dp), intent(in) :: rho(:)
 
     integer :: ip
 
