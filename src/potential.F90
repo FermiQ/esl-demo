@@ -2,7 +2,7 @@ module esl_potential_m
 
   use prec, only : dp,ip
 
-  use basis_esl
+  use esl_basis_m
   use esl_density_t
   use esl_energy_t
   use esl_grid_m

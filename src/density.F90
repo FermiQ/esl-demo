@@ -2,7 +2,7 @@ module esl_density_t
 
   use prec, only : dp
 
-  use basis_esl
+  use esl_basis_m
   use esl_grid_m
   use esl_system_m
 

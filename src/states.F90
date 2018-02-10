@@ -2,7 +2,7 @@ module esl_states_m
 
   use prec, only : dp,ip
 
-  use basis_esl
+  use esl_basis_m
   use yaml_output
 
   implicit none

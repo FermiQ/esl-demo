@@ -3,7 +3,7 @@ module esl_scf_m
   use prec, only : dp,ip
   use fdf, only : fdf_get
 
-  use basis_esl
+  use esl_basis_m
   use esl_density_t
   use esl_grid_m
   use esl_hamiltonian_m

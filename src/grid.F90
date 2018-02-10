@@ -1,7 +1,7 @@
 module esl_grid_m
   use prec, only : dp,ip
 
-  use basis_esl
+  use esl_basis_m
 
   implicit none
 
