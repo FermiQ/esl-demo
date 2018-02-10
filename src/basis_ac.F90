@@ -10,14 +10,15 @@ module esl_basis_ac_m
   public :: basis_ac_t
 
   type basis_ac_t
-    integer  :: n_sites
-    integer  :: n_species
-    integer  :: n_functions  !< Number of functions in basis
-    real(dp),        allocatable :: sites_xyz(:,:)
-    type(species_t), allocatable :: species(:)
-    integer,         allocatable :: species_idx(:)
-    integer,         allocatable :: site_function_start(:)
-    integer,         allocatable :: function_g2l(:)
+    integer :: n_sites !< Number of different atomic centered sites
+    integer :: n_species !< Number of different atomic centered species used on the sites
+    integer :: n_functions !< Number of functions in basis (sum of number of functions per site)
+    real(dp),        allocatable :: sites_xyz(:,:) !< Cartesian coordinates of the atomic centered sites
+    type(species_t), allocatable :: species(:) !< The unique species used on the sites
+    integer,         allocatable :: species_idx(:) !< A list of specie indices for each site
+    integer,         allocatable :: site_function_start(:) !< Look-up table to convert a site index to the first global function index
+    integer,         allocatable :: function_g2l(:) !< Look-up table to convert a global function index to the local function index on the specie
+    integer,         allocatable :: function_site(:) !< Look-up table to convert a global function index to a site index.
   contains
     private
     procedure, public :: init
