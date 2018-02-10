@@ -8,7 +8,7 @@ module esl_potential_m
   use esl_grid_m
   use esl_psolver_m
   use esl_states_m
-  use xc_esl
+  use esl_xc_m
 
   implicit none
   private
