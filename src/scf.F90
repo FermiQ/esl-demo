@@ -20,8 +20,8 @@ module esl_scf_m
 
   !Data structure containing the data for the SCF
   type scf_t 
-     real(kind=dp) :: tol_reldens 
-     integer(kind=ip) :: max_iter !< Maximum number of iterations
+     real(dp) :: tol_reldens 
+     integer(ip) :: max_iter !< Maximum number of iterations
 
      type(mixing_t)   :: mixer
    contains
@@ -70,10 +70,10 @@ contains
     type(smear_t), intent(inout) :: smear
 
     integer :: iter, ip !< Interation
-    real(kind=dp), allocatable :: rhoin(:)
-    real(kind=dp), allocatable :: rhoout(:)
-    real(kind=dp), allocatable :: rhonew(:)
-    real(kind=dp) :: reldens
+    real(dp), allocatable :: rhoin(:)
+    real(dp), allocatable :: rhoout(:)
+    real(dp), allocatable :: rhonew(:)
+    real(dp) :: reldens
 
     allocate(rhoin(1:system%grid%np))
     allocate(rhoout(1:system%grid%np))

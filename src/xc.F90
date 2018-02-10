@@ -43,7 +43,7 @@ module xc_esl
    subroutine calculate(this, density, vxc)
      class(xc_t),           intent(in) :: this
      type(density_t),       intent(in) :: density 
-     real(kind=dp),        intent(out) :: vxc(:,:)
+     real(dp),        intent(out) :: vxc(:,:)
 
      !Here add the libxc business
 

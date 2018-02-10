@@ -9,16 +9,16 @@ module esl_energy_t
 
   !Data structure for the energy
   type energy_t
-     real(kind=dp) :: total
-     real(kind=dp) :: eigenvalues
-     real(kind=dp) :: hartree
-     real(kind=dp) :: ionion
-     real(kind=dp) :: extern
-     real(kind=dp) :: exchange
-     real(kind=dp) :: correlation
-     real(kind=dp) :: int_nvxc
-     real(kind=dp) :: kinetic
-     real(kind=dp) :: entropy
+     real(dp) :: total
+     real(dp) :: eigenvalues
+     real(dp) :: hartree
+     real(dp) :: ionion
+     real(dp) :: extern
+     real(dp) :: exchange
+     real(dp) :: correlation
+     real(dp) :: int_nvxc
+     real(dp) :: kinetic
+     real(dp) :: entropy
    contains
      private
      procedure, public :: init
