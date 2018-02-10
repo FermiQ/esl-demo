@@ -3,15 +3,15 @@
 !<  1. MD step
 !<  2. change of cutoff values
 !<  3. change of XXX
-module new_step_esl
-
+module esl_next_step_m
+  
   implicit none
-
-  public :: new_step
+  
+  public :: next_step_setup
 
 contains
 
-  subroutine new_step(system)
+  subroutine next_step_setup(system)
 
     use system_esl, only: system_t
     use basis_esl, only: PLANEWAVES, ATOMICORBS
@@ -23,18 +23,18 @@ contains
 
     select case ( system%basis%type )
     case ( PLANEWAVES )
-       call new_planewave()
+       call next_planewave()
     case ( ATOMICORBS )
-       call new_atomicorbs()
+       call next_atomicorbs()
     end select
 
   contains
 
-    subroutine new_atomicorbs()
+    subroutine next_atomicorbs()
       
-      use init_sparse_pattern_esl, only: init_sparse_pattern
-      use overlap_matrix_esl, only: calc_overlap_matrix
-      use density_matrix_esl, only: next_density_matrix
+      use esl_create_sparse_pattern_ac_m, only: create_sparse_pattern_ac_create
+      use esl_overlap_matrix_ac_m, only: overlap_matrix_ac_calculate
+      use esl_density_matrix_ac_m, only: density_matrix_ac_next
 
       ! Target is necessary to preserve old pointers
       type(sparse_pattern_t), target :: old_sp
@@ -45,7 +45,7 @@ contains
       
       ! copy old sparse pattern
       ! Initialize the sparse pattern
-      call init_sparse_pattern(system, system%sparse_pattern)
+      call create_sparse_pattern_ac_create(system, system%sparse_pattern)
 
       ! Essentially we have to figure out whether the previous
       ! sparse patterns and quantities needs mangling (i.e.
@@ -55,27 +55,27 @@ contains
 
       ! Calculate the overlap matrix
       ! This requires that the grid information is present
-      call calc_overlap_matrix(system, &
+      call overlap_matrix_ac_calculate(system, &
            system%sparse_pattern, system%S)
 
       ! Figure out the next density matrix
       ! This routine will initially fill it with the
       ! atomic fillings.
-      call next_density_matrix(system, old_sp, &
+      call density_matrix_ac_next(system, old_sp, &
            system%sparse_pattern, system%DM)
 
       ! Clean-up the old sparse-matrix
       call old_sp%delete()
 
-    end subroutine new_atomicorbs
+    end subroutine next_atomicorbs
 
-    subroutine new_planewave()
+    subroutine next_planewave()
 
       ! add content for the initialization for a new plane-wave step
       
-    end subroutine new_planewave
-
-  end subroutine new_step
-
-end module new_step_esl
+    end subroutine next_planewave
+    
+  end subroutine next_step_setup
   
+end module esl_next_step_m
+

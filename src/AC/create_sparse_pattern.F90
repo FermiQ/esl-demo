@@ -6,24 +6,23 @@
 !<
 !< Note that this will *only* create the initial sparse pattern and will finish
 !< by finalizing the sparse_pattern_t
-module init_sparse_pattern_esl
-
-  use prec, only: dp
+module esl_create_sparse_pattern_ac_m
 
   implicit none
 
-  public :: init_sparse_pattern
+  public :: create_sparse_pattern_ac_create
 
 contains
 
   !< The arguments of this routine are
   !< @param system the system with containing atomic coordinates and their basis functions
   !< @param sp the sparse pattern which we need to create, it will be deleted.
-  subroutine init_sparse_pattern(sys, sp)
+  subroutine create_sparse_pattern_ac_create(sys, sp)
     
+    use prec, only: dp
     use system_esl, only: system_t
     use sparse_pattern, only: sparse_pattern_t
-
+    
     class(system_t), intent(in) :: sys
     type(sparse_pattern_t), intent(inout) :: sp
     integer :: no, max_no, io, jo
@@ -96,8 +95,8 @@ contains
       
     end subroutine add_elements
 
-  end subroutine init_sparse_pattern
-
-end module init_sparse_pattern_esl
+  end subroutine create_sparse_pattern_ac_create
+  
+end module esl_create_sparse_pattern_ac_m
     
 

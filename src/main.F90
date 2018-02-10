@@ -38,7 +38,7 @@ contains
     use smear_esl, only : smear_t
     use elsi_wrapper_esl, only : elsi_t
     use yaml_output
-    use new_step_esl, only: new_step
+    use esl_next_step_m, only: next_step_setup
     
     character(len = *), intent(in) :: input_file
     type(hamiltonian_t) :: hamiltonian
@@ -87,7 +87,7 @@ contains
        
        ! Initialize a new step
        ! This initializes all variables that
-       call new_step(system)
+       call next_step_setup(system)
        
        call hamiltonian%init(system, states)
        call scf%init()

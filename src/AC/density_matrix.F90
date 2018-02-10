@@ -3,22 +3,22 @@
 !< This module should implement the basics of creating
 !< an initial (valence filled) density matrix and/or
 !< read-in/extrapolate a DM to a different structure.
-module density_matrix_esl
-
+module esl_density_matrix_ac_m
+  
   implicit none
-
-  public :: next_density_matrix
-  public :: init_atomic_density_matrix
-
+  
+  public :: density_matrix_ac_next
+  public :: density_matrix_ac_init_atomic
+  
 contains
-
+  
   !< Prepare the next density matrix
   !<
   !< This routine gets passed an old sparse pattern and a
   !< new sparse pattern.
   !< When the old sparse pattern is not allocated (created)
   !< we automatically initialize the DM with the atomic fillings.
-  subroutine next_density_matrix(sys, old_sp, new_sp, DM)
+  subroutine density_matrix_ac_next(sys, old_sp, new_sp, DM)
 
     use prec, only: dp
     use system_esl, only: system_t
@@ -34,18 +34,18 @@ contains
     if ( old_sp%initialized() ) then
 
        ! For now we still do the atomic fillings...
-       call init_atomic_density_matrix(sys, new_sp, DM)
+       call density_matrix_ac_init_atomic(sys, new_sp, DM)
 
     else
-       
-       call init_atomic_density_matrix(sys, new_sp, DM)
+
+       call density_matrix_ac_init_atomic(sys, new_sp, DM)
 
     end if
 
-  end subroutine next_density_matrix
+  end subroutine density_matrix_ac_next
 
   !< Initialize the diagonal density matrix with atomic fillings
-  subroutine init_atomic_density_matrix(sys, sp, DM)
+  subroutine density_matrix_ac_init_atomic(sys, sp, DM)
 
     use prec, only: dp
     use system_esl, only: system_t
@@ -101,6 +101,6 @@ contains
        
     end do
 
-  end subroutine init_atomic_density_matrix
+  end subroutine density_matrix_ac_init_atomic
 
-end module density_matrix_esl
+end module esl_density_matrix_ac_m
