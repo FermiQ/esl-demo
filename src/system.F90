@@ -1,11 +1,10 @@
-module system_esl
-  
+module esl_system_m
+
   use prec, only : dp,ip
   use esl_numeric_m, only : matr3inv
-  
-  use fdf, only : block_fdf, fdf_integer, fdf_block,fdf_defined, &
-                   parsed_line, fdf_breals, fdf_bline, fdf_bnames, &
-                   fdf_physical
+
+  use fdf, only : block_fdf, fdf_get, fdf_block,fdf_defined, &
+       parsed_line, fdf_breals, fdf_bline, fdf_bnames
 
   ! Sparse pattern for LO
   use esl_sparse_pattern_m, only: sparse_pattern_t
@@ -17,126 +16,126 @@ module system_esl
   use esl_smear_m
   use esl_states_m
   use esl_species_m
-  
+
   implicit none
   private
 
   public ::                &
-            system_t
-  
+       system_t
+
   !Data structure for the system
   type system_t
-    integer(kind=ip) :: nAtoms
-    integer(ip), allocatable :: species_index(:) ! (1:natoms)
-    real(kind=dp),allocatable :: xyz(:,:) ! (1:3,1:natoms)
-    integer(kind=ip) :: nSpecies
-    type(species_t), allocatable :: species(:)
-    real(kind=dp) :: cell(3,3)=0.0_dp
-    real(kind=dp) :: icell(3,3)=0.0_dp
-    character(len=10), dimension(:), allocatable :: el,sp
-    character(len=100), dimension(:), allocatable :: potName
-    real(dp) :: vol
-    
-    type(basis_t) :: basis
-    type(grid_t)  :: grid
+     integer(ip) :: nAtoms
+     integer(ip), allocatable :: species_index(:) ! (1:natoms)
+     real(dp),allocatable :: xyz(:,:) ! (1:3,1:natoms)
+     integer(ip) :: nSpecies
+     type(species_t), allocatable :: species(:)
+     real(dp) :: cell(3,3) = 0.0_dp
+     real(dp) :: icell(3,3) = 0.0_dp
+     character(len=10), dimension(:), allocatable :: el,sp
+     character(len=100), dimension(:), allocatable :: potName
+     real(dp) :: vol
 
-    ! TODO decide whether the system should be inherited for the LO/PW
-    ! case. It may make the system a lot easier to figure out.
-    ! However, it will prohibit switching from PW/LO -> LO/PW within the same
-    ! calculation.
+     type(basis_t) :: basis
+     type(grid_t)  :: grid
 
-    ! LO dependent variables
-    type(sparse_pattern_t):: sparse_pattern
-    type(sparse_matrix_t) :: overlap ! always 1D
-    type(sparse_matrix_t), allocatable :: H(:) ! one per spin
-    type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
+     ! TODO decide whether the system should be inherited for the LO/PW
+     ! case. It may make the system a lot easier to figure out.
+     ! However, it will prohibit switching from PW/LO -> LO/PW within the same
+     ! calculation.
 
-    real(dp) :: nElectrons
-  contains
-    private
-    procedure, public :: init
-    procedure, public :: summary
-    procedure, public :: volume
-    final  :: cleanup
+     ! LO dependent variables
+     type(sparse_pattern_t):: sparse_pattern
+     type(sparse_matrix_t) :: overlap ! always 1D
+     type(sparse_matrix_t), allocatable :: H(:) ! one per spin
+     type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
+
+     real(dp) :: nElectrons
+   contains
+     private
+     procedure, public :: init
+     procedure, public :: summary
+     procedure, public :: volume
+     final  :: cleanup
   end type system_t
 
-  contains
+contains
 
-   !Initialize the physical system
-   !----------------------------------------------------
-    subroutine init(sys)
-     class(system_t) :: sys
+  !Initialize the physical system
+  !----------------------------------------------------
+  subroutine init(sys)
+    class(system_t) :: sys
 
-     logical :: isdef
-     integer :: j,i
-     type(block_fdf)            :: blk
-     type(parsed_line), pointer :: pline
+    logical :: isdef
+    integer :: j,i
+    type(block_fdf)            :: blk
+    type(parsed_line), pointer :: pline
 
-     integer :: nstates, nspin
+    integer :: nstates, nspin
 
-     call sys%basis%init()
+    call sys%basis%init()
 
-     isdef = fdf_defined('cubic')
-     sys%cell=0.0_dp
-     if (isDef) then
-       sys%cell(1,1)=fdf_physical('cubic', 0.0_dp, 'Bohr')
-       sys%cell(2,2)=sys%cell(1,1)
-       sys%cell(3,3)=sys%cell(1,1)
-     endif
-     sys%icell=matr3inv(sys%cell)
+    isdef = fdf_defined('cubic')
+    sys%cell=0.0_dp
+    if (isDef) then
+       sys%cell(1,1) = fdf_get('cubic', 0.0_dp, 'Bohr')
+       sys%cell(2,2) = sys%cell(1,1)
+       sys%cell(3,3) = sys%cell(1,1)
+    endif
+    sys%icell=matr3inv(sys%cell)
 
-     !Init the grid
-     call sys%grid%init(sys%basis, sys%cell, sys%icell)
+    !Init the grid
+    call sys%grid%init(sys%basis, sys%cell, sys%icell)
 
-     isdef = .false.
-     sys%nAtoms = fdf_integer('NumberOfAtoms', 0)
-     allocate(sys%xyz(1:3,sys%nAtoms))
-     allocate(sys%el(sys%nAtoms))
+    isdef = .false.
+    sys%nAtoms = fdf_get('NumberOfAtoms', 0)
+    allocate(sys%xyz(1:3,sys%nAtoms))
+    allocate(sys%el(sys%nAtoms))
 
-     isdef = fdf_defined('coordinates')
-     if (isDef) then
+    isdef = fdf_defined('coordinates')
+    if (isDef) then
        if (fdf_block('coordinates', blk)) then
-         j = 1
-         do while((fdf_bline(blk, pline)) .and. (j <= sys%nAtoms))
-           sys%xyz(1:3,j) = [(fdf_breals(pline, i),i=1,3)]
-           sys%el(j) = fdf_bnames(pline, 1)
-           j = j + 1
-         enddo
+          j = 1
+          do while((fdf_bline(blk, pline)) .and. (j <= sys%nAtoms))
+             sys%xyz(1:3,j) = [(fdf_breals(pline, i),i=1,3)]
+             sys%el(j) = fdf_bnames(pline, 1)
+             j = j + 1
+          enddo
        endif
-     else
+    else
 
-     endif
+    endif
 
-     isDef = fdf_defined('species')
-     if (isDef) then
+    isDef = fdf_defined('species')
+    if (isDef) then
        if (fdf_block('species', blk)) then
-         sys%nSpecies=0
-         do while((fdf_bline(blk, pline)))
-           sys%nSpecies=sys%nSpecies+1
-         enddo
+          sys%nSpecies=0
+          do while((fdf_bline(blk, pline)))
+             sys%nSpecies=sys%nSpecies+1
+          enddo
        endif
        allocate(sys%sp(sys%nSpecies),sys%species(sys%nSpecies))
        if (fdf_block('species', blk)) then
-         j = 1
-         do while((fdf_bline(blk, pline)) .and. (j <= sys%nSpecies))
-           sys%sp(j) = fdf_bnames(pline, 1)
-           call sys%species(j)%init(fdf_bnames(pline, 2))
-           j = j + 1
-         enddo
+          j = 1
+          do while((fdf_bline(blk, pline)) .and. (j <= sys%nSpecies))
+             sys%sp(j) = fdf_bnames(pline, 1)
+             call sys%species(j)%init(fdf_bnames(pline, 2))
+             j = j + 1
+          enddo
        endif
-     else
-     endif
+    else
+    endif
 
-     call sys%basis%init_basis(sys%grid%ndims, sys%icell)
+    call sys%basis%init_basis(sys%grid%ndims, sys%icell)
 
-     call sys%summary()
+    call sys%summary()
 
-   end subroutine init
- 
-   !Release
-   !----------------------------------------------------
-   subroutine cleanup(sys)
-     type(system_t) :: sys
+  end subroutine init
+
+  !Release
+  !----------------------------------------------------
+  subroutine cleanup(sys)
+    type(system_t) :: sys
 
     if (allocated(sys%xyz)) deallocate(sys%xyz)
     if (allocated(sys%el)) deallocate(sys%el)
@@ -170,15 +169,15 @@ module system_esl
   end subroutine summary
 
   !----------------------------------------------------
-  real(dp) function volume(sys)
-    class(system_t)               :: sys
-
-    volume = sys%cell(1,1)*(sys%cell(2,2)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,2)) - &
-      sys%cell(1,2)*(sys%cell(2,1)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,1)) + &
-      sys%cell(1,3)*(sys%cell(2,1)*sys%cell(3,2)-sys%cell(2,2)*sys%cell(3,1))
-    sys%Vol = volume
-
+  function volume(sys) result(vol)
+    class(system_t), intent(inout) :: sys
+    real(dp) :: vol
+    
+    vol = sys%cell(1,1)*(sys%cell(2,2)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,2)) - &
+         sys%cell(1,2)*(sys%cell(2,1)*sys%cell(3,3)-sys%cell(2,3)*sys%cell(3,1)) + &
+         sys%cell(1,3)*(sys%cell(2,1)*sys%cell(3,2)-sys%cell(2,2)*sys%cell(3,1))
+    sys%Vol = vol
+    
   end function volume
 
-
-end module system_esl
+end module esl_system_m

@@ -7,7 +7,7 @@ module esl_hamiltonian_m
   use esl_ion_interaction_t
   use esl_potential_m
   use esl_states_m
-  use system_esl
+  use esl_system_m
 
   implicit none
   private

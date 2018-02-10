@@ -13,7 +13,7 @@ contains
 
   subroutine next_step_setup(system)
 
-    use system_esl, only: system_t
+    use esl_system_m, only: system_t
     use basis_esl, only: PLANEWAVES, ATOMICORBS
 
     !< System that we wish to process as a new step

@@ -9,7 +9,7 @@ module esl_scf_m
   use esl_hamiltonian_m
   use esl_mixing_m
   use esl_potential_m
-  use system_esl
+  use esl_system_m
 
   implicit none
   private
@@ -79,7 +79,7 @@ contains
     allocate(rhoout(1:system%grid%np))
     allocate(rhonew(1:system%grid%np))
 
-    call  hamiltonian%density%guess(system)
+    call hamiltonian%density%guess(system)
 
     call yaml_mapping_open("SCF cycle")
 

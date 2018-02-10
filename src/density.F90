@@ -4,7 +4,7 @@ module esl_density_t
 
   use basis_esl
   use esl_grid_m
-  use system_esl
+  use esl_system_m
 
   implicit none
   private

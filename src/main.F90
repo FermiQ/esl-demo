@@ -33,9 +33,9 @@ contains
     use esl_hamiltonian_m, only : hamiltonian_t
     use esl_scf_m, only : scf_t, scf_loop
     use esl_states_m, only : states_t
-    use system_esl, only : system_t
+    use esl_system_m, only : system_t
     use esl_numeric_m, only : init_random
-    use smear_esl, only : smear_t
+    use esl_smear_m, only : smear_t
     use elsi_wrapper_esl, only : elsi_t
     use yaml_output
     use esl_next_step_m, only: next_step_setup

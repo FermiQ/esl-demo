@@ -2,7 +2,7 @@ module esl_ion_interaction_t
 
   use prec, only : dp
 
-  use system_esl
+  use esl_system_m
 
   implicit none
   private
