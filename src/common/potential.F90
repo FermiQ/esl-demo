@@ -18,7 +18,7 @@ module esl_potential_m
 
     real(dp), allocatable :: hartree(:)  !Hartree potential
     real(dp), allocatable :: external(:) !External local potential
-    real(dp), allocatable :: vxc(:,:)  !xc potential
+    real(dp), allocatable :: vxc(:)  !xc potential
 
     real(dp) :: ionicOffset !< Offset of the external potential
 
@@ -46,7 +46,7 @@ contains
 
     allocate(pot%hartree(1:pot%np))
     allocate(pot%external(1:pot%np))
-    allocate(pot%vxc(1:pot%np, 1:states%nspin))
+    allocate(pot%vxc(1:pot%np))
 
     if (periodic) then
       geocode = 'P'
@@ -79,13 +79,13 @@ contains
   !----------------------------------------------------
   subroutine calculate(pot, density, energy)
     class(potential_t), intent(inout) :: pot
-    real(dp),           intent(in)    :: density(:,:)
+    real(dp),           intent(in)    :: density(*)
     type(energy_t),     intent(inout) :: energy
 
     integer :: i
 
     forall (i = 1:pot%np)
-      pot%hartree(i) = sum(density(i,:))
+      pot%hartree(i) = density(i)
     end forall
 
     call pot%psolver%h_potential(pot%hartree, pot%external, pot%ionicOffset, energy%hartree)
