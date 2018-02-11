@@ -55,9 +55,9 @@ endif()
 
 if(WITH_MPI)
   add_library(esldmpi
-    ${src_dir}/mpi_dist_block_cyclic.F90 
-    ${src_dir}/mpi_dist_cyclic.F90
-    ${src_dir}/mpi_dist.F90
+    ${src_dir}/common/mpi_dist_block_cyclic.F90 
+    ${src_dir}/common/mpi_dist_cyclic.F90
+    ${src_dir}/common/mpi_dist.F90
     )
   set_target_properties(esldmpi PROPERTIES
     COMPILE_DEFINITIONS "WITH_MPI"
@@ -68,39 +68,40 @@ endif()
  
 
 add_executable(${target_name}
-  ${src_dir}/main.F90
-  ${src_dir}/basis.F90
-  ${src_dir}/basis_ac.F90
-  ${src_dir}/basis_pw.F90
-  ${src_dir}/density.F90
-  ${src_dir}/AC/density_matrix.F90
-  ${src_dir}/energy.F90
-  ${src_dir}/force.F90
-  ${src_dir}/geometry.F90
-  ${src_dir}/grid.F90
-  ${src_dir}/flook_if.F90
-  ${src_dir}/esl_dict.F90
-  ${src_dir}/hamiltonian.F90
+  ${src_dir}/common/constants.F90
+  ${src_dir}/common/elsi_wrapper.F90
+  ${src_dir}/common/elsi_fake.F90
+  ${src_dir}/common/energy.F90
+  ${src_dir}/common/esl_dict.F90
+  ${src_dir}/common/flook_if.F90
+  ${src_dir}/common/force.F90
+  ${src_dir}/common/geometry.F90
+  ${src_dir}/common/grid.F90
+  ${src_dir}/common/ion_interaction.F90
+  ${src_dir}/common/message.F90
+  ${src_dir}/common/mixing.F90
+  ${src_dir}/common/numeric.F90
+  ${src_dir}/common/potential.F90
+  ${src_dir}/common/prec.F90
+  ${src_dir}/common/psolver.F90
+  ${src_dir}/common/smear.F90
+  ${src_dir}/common/species.F90
+  ${src_dir}/common/states.F90
+  ${src_dir}/common/xc.F90  
+  ${src_dir}/PW/basis_pw.F90  
+  ${src_dir}/AC/basis_ac.F90
   ${src_dir}/AC/create_sparse_pattern.F90
-  ${src_dir}/ion_interaction.F90
-  ${src_dir}/message.F90
-  ${src_dir}/mixing.F90
-  ${src_dir}/next_step.F90
-  ${src_dir}/constants.F90
-  ${src_dir}/numeric.F90
+  ${src_dir}/AC/density_matrix.F90  
   ${src_dir}/AC/overlap_matrix.F90
-  ${src_dir}/psolver.F90
-  ${src_dir}/potential.F90
-  ${src_dir}/scf.F90
-  ${src_dir}/smear.F90
-  ${src_dir}/sparse_pattern.F90
-  ${src_dir}/sparse_matrix.F90
-  ${src_dir}/states.F90
-  ${src_dir}/system.F90
-  ${src_dir}/elsi_wrapper.F90
-  ${src_dir}/elsi_fake.F90
-  ${src_dir}/xc.F90
-  ${src_dir}/species.F90
+  ${src_dir}/AC/sparse_pattern.F90
+  ${src_dir}/AC/sparse_matrix.F90
+  ${src_dir}/main/basis.F90
+  ${src_dir}/main/density.F90
+  ${src_dir}/main/hamiltonian.F90
+  ${src_dir}/main/main.F90
+  ${src_dir}/main/next_step.F90
+  ${src_dir}/main/scf.F90
+  ${src_dir}/main/system.F90
   )
 target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
 if(WITH_MPI)
