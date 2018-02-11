@@ -65,29 +65,12 @@ if(WITH_MPI)
     SOVERSION ${PROJECT_VERSION_MAJOR}
     )
 endif()
- 
+
+
+add_subdirectory(${src_dir}/common)
+
 
 add_executable(${target_name}
-  ${src_dir}/common/constants.F90
-  ${src_dir}/common/elsi_wrapper.F90
-  ${src_dir}/common/elsi_fake.F90
-  ${src_dir}/common/energy.F90
-  ${src_dir}/common/esl_dict.F90
-  ${src_dir}/common/flook_if.F90
-  ${src_dir}/common/force.F90
-  ${src_dir}/common/geometry.F90
-  ${src_dir}/common/grid.F90
-  ${src_dir}/common/ion_interaction.F90
-  ${src_dir}/common/message.F90
-  ${src_dir}/common/mixing.F90
-  ${src_dir}/common/numeric.F90
-  ${src_dir}/common/potential.F90
-  ${src_dir}/common/prec.F90
-  ${src_dir}/common/psolver.F90
-  ${src_dir}/common/smear.F90
-  ${src_dir}/common/species.F90
-  ${src_dir}/common/states.F90
-  ${src_dir}/common/xc.F90  
   ${src_dir}/PW/basis_pw.F90  
   ${src_dir}/AC/basis_ac.F90
   ${src_dir}/AC/create_sparse_pattern.F90
@@ -103,7 +86,7 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
+target_link_libraries(${target_name} common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()
