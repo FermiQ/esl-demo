@@ -1,8 +1,6 @@
 module esl_xc_m
   use prec, only : dp
 
-  use esl_density_m
-
   implicit none
   private
 
@@ -40,9 +38,9 @@ contains
   !Calc the xc potential from the density
   !----------------------------------------------------
   subroutine calculate(this, density, vxc)
-    class(xc_t),           intent(in) :: this
-    type(density_t),       intent(in) :: density 
-    real(dp),        intent(out) :: vxc(:,:)
+    class(xc_t), intent(in)  :: this
+    real(dp),    intent(in)  :: density(:,:)
+    real(dp),    intent(out) :: vxc(:,:)
 
     !Here add the libxc business
 
