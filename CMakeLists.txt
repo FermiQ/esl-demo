@@ -66,18 +66,16 @@ if(WITH_MPI)
     )
 endif()
 
+include_directories(${PROJECT_BINARY_DIR}/src/common)
+include_directories(${PROJECT_BINARY_DIR}/src/AC)
+include_directories(${PROJECT_BINARY_DIR}/src/PW)
 
+add_subdirectory(${src_dir}/PW)
+add_subdirectory(${src_dir}/AC)
 add_subdirectory(${src_dir}/common)
 
 
 add_executable(${target_name}
-  ${src_dir}/PW/basis_pw.F90  
-  ${src_dir}/AC/basis_ac.F90
-  ${src_dir}/AC/create_sparse_pattern.F90
-  ${src_dir}/AC/density_matrix.F90  
-  ${src_dir}/AC/overlap_matrix.F90
-  ${src_dir}/AC/sparse_pattern.F90
-  ${src_dir}/AC/sparse_matrix.F90
   ${src_dir}/main/basis.F90
   ${src_dir}/main/density.F90
   ${src_dir}/main/hamiltonian.F90
@@ -86,7 +84,7 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
+target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()

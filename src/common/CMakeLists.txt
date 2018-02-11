@@ -1,3 +1,5 @@
+include_directories(${Library_MODDIR})
+
 add_library(common
   constants.F90
   elsi_wrapper.F90
