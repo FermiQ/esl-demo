@@ -1,7 +1,6 @@
 module esl_psolver_m
 
   use Poisson_Solver, only: coulomb_operator, gp
-
   implicit none
   private
 
@@ -33,11 +32,11 @@ contains
     use Poisson_Solver, only: pkernel_init, pkernel_set
     use dictionaries, only: dictionary, dict_init, dict_free
 
-    class(psolver_t), intent(inout) :: ps
-    integer, intent(in) :: iproc, nproc
-    character(len = 1), intent(in) :: geocode
-    integer, dimension(3), intent(in) :: ndims
-    real(gp), dimension(3), intent(in) :: hgrids
+    class(psolver_t),   intent(inout) :: ps
+    integer,            intent(in)    :: iproc, nproc
+    character(len = 1), intent(in)    :: geocode
+    integer,            intent(in)    :: ndims(3)
+    real(gp),           intent(in)    :: hgrids(3)
 
     type(dictionary), pointer :: dict_input
 
@@ -58,26 +57,17 @@ contains
     call pkernel_free(ps%pkernel)
   end subroutine cleanup
 
-  subroutine h_potential(ps, rho, hartree, np, ionicPot, ionicOffset, ehartree)
-    use esl_density_m, only: density_t
+  subroutine h_potential(ps, hartree, ionicPot, ionicOffset, ehartree)
     use Poisson_Solver, only: PS_H_potential => H_potential
 
     class(psolver_t), intent(inout) :: ps
-    type(density_t), intent(in) :: rho
-    real(gp), dimension(*), intent(out) :: hartree
-    integer, intent(in) :: np
-    real(gp), dimension(*), intent(out) :: ionicPot
-    real(gp), intent(in) :: ionicOffset
-    real(gp), intent(out) :: ehartree
+    real(gp),         intent(inout) :: hartree(*) !< On input should hold the density. On output it will contain the Hartree potential
+    real(gp),         intent(out)   :: ionicPot(*)
+    real(gp),         intent(in)    :: ionicOffset
+    real(gp),         intent(out)   :: ehartree
 
-    integer :: ip
-
-    !Computing the hartree potential
-    !We first copy the density into the potential array
-    forall(ip = 1:np)
-      hartree(ip) = rho%density(ip)
-    end forall
     call PS_H_potential('G', ps%pkernel, hartree, ionicPot, ehartree, ionicOffset, .true., quiet = "YES")
+
   end subroutine h_potential
 
 end module esl_psolver_m
