@@ -72,7 +72,12 @@ contains
 
     call fourier_sphere2cube(gmet, kpt, ndims, ecut, coef_pw, fourier_cube)    
 
-    !Here FFT-1
+    ! FFT-1
+    ! TODO include 'fftw3.f90' should be put properly
+    call dfftw_execute_dft(grid%iFFTplan, fourier_cube, fourier_cube)
+
+    ! FFT
+    call dfftw_execute_dft(grid%FFTplan, fourier_cube, fourier_cube)
 
     call rs_cube2grid(grid, rs_cube, coef_rs)
 
