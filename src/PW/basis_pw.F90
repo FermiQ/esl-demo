@@ -18,6 +18,9 @@ module esl_basis_pw_m
     real(kind=dp), allocatable :: gmod(:) !length of the G-vectors
     integer, allocatable :: gmap(:,:) !Mapping
  
+    integer(lp) fftplan !< Forward FFT plan
+    integer(lp) ifftplan !< Backward FFT (IFFT) plan
+
     type(grid_t), pointer :: grid
   contains
     private
@@ -36,6 +39,8 @@ contains
     real(dp),             intent(in) :: ecut
     integer,              intent(in) :: ndims(3)
     real(dp),             intent(in) :: gcell(3,3)
+
+    complex(dp),         allocatable :: arr(:)
 
     this%ecut = ecut
 
@@ -56,6 +61,18 @@ contains
 
     this%grid => grid
 
+    ! Initialization for FFT and IFFT
+    ! TODO include 'fftw3.f90' should be put properly
+    allocate(arr(ndims(1),ndims(2),ndims(3)))
+
+    call dfftw_plan_dft_3d(this%fftplan, ndims(1), ndims(2), ndims(3), &
+      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
+
+    call dfftw_plan_dft_3d(this%ifftplan, ndims(1), ndims(2), ndims(3), &
+      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
+
+    deallocate(arr)
+
   end subroutine init
 
   !Release
@@ -66,6 +83,9 @@ contains
     if(allocated(this%gmod)) deallocate(this%gmod)
     if(allocated(this%gmap)) deallocate(this%gmap)
 
+    ! Deconstructor for fft plan
+    call dfftw_destroy_plan(this%fftplan)
+    call dfftw_destroy_plan(this%ifftplan)
   end subroutine cleanup
 
   !Summary
