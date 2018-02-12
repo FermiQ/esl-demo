@@ -8,6 +8,7 @@ add_library(common
   force.F90
   geometry.F90
   grid.F90
+  info.F90
   ion_interaction.F90
   message.F90
   mixing.F90
@@ -31,5 +32,8 @@ if(WITH_MPI)
     COMPILE_DEFINITIONS "WITH_MPI"
     VERSION ${PROJECT_VERSION}
     SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+  set_target_properties(common PROPERTIES
+    COMPILE_DEFINITIONS "WITH_MPI"
     )
 endif()
