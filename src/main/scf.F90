@@ -117,7 +117,7 @@ contains
       end if
 
       !Mixing (BLAS/LAPACK)
-      call mixing_linear(this%mixer, system%basis%grid%np, rhoin, rhoout,rhonew)  
+!      call mixing_linear(this%mixer, system%basis%grid%np, rhoin, rhoout,rhonew)  
       call hamiltonian%density%set_den(rhonew)
 
       !Update Hamiltonian matrix
