@@ -1,8 +1,12 @@
 module esl_density_m
 
   use prec, only : dp
+  use esl_basis_m
+  use esl_density_ac_m
+  use esl_density_pw_m
   use esl_geometry_m
   use esl_grid_m
+  use esl_mixing_m
 
   implicit none
 
@@ -14,14 +18,20 @@ module esl_density_m
   type density_t
     integer :: np !< Copied from grid
 
-    real(dp), allocatable :: density(:)
+    real(dp), allocatable :: rhoin(:)
+    real(dp), allocatable :: rhoout(:)
+    real(dp), allocatable :: rhonew(:)
+
+    type(mixing_t)   :: mixer
+    type(density_ac_t) :: density_ac
+    type(density_pw_t) :: density_pw
   contains
     private
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
-    procedure, public :: get_den
-    procedure, public :: set_den
+    procedure, public :: get_relden
+    procedure, public :: mix
     final  :: cleanup
   end type density_t
 
@@ -29,53 +39,48 @@ contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, grid)
+  subroutine init(this, grid, basis)
     class(density_t), intent(inout) :: this
-    type(grid_t), intent(in) :: grid
+    type(grid_t),     intent(in) :: grid
+    type(basis_t),    intent(in) :: basis
 
-    allocate(this%density(1:grid%np))
-    this%density(1:grid%np) = 0.d0
+    allocate(this%rhoin(1:grid%np))
+    this%rhoin(1:grid%np) = 0.d0
+
+    allocate(this%rhoout(1:grid%np))
+    this%rhoin(1:grid%np) = 0.d0
+
+    allocate(this%rhonew(1:grid%np))
+    this%rhoin(1:grid%np) = 0.d0
 
     this%np = grid%np
+
+    call this%mixer%init()
+
+    select case (basis%type)
+    case ( PLANEWAVES )
+      call this%density_pw%init(grid)
+    case ( ATOMCENTERED )
+      call this%density_ac%init(grid)
+    end select
 
   end subroutine init
 
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
-  subroutine guess(this, geo, grid)
+  subroutine guess(this, basis, geo, grid)
     class(density_t), intent(inout) :: this
+    type(basis_t),    intent(in) :: basis
     type(geometry_t), intent(in) :: geo
     type(grid_t),     intent(in) :: grid
-    
-    real(dp), allocatable :: radial(:)
-    real(dp), allocatable :: atomicden(:)
-    integer :: iat, np_radial, ip
-
-    this%density(1:grid%np) = 0.d0
-
-    allocate(atomicden(1:grid%np))
-    atomicden(1:grid%np) = 0.d0
-
-    ! We expect only atoms to contain initial density
-    do iat = 1, geo%n_atoms
-      
-      !Get the number of points in the radial grid
-      np_radial = 1
-      allocate(radial(1:np_radial))
-      !Get atomic density on the radial grid
-
-      !Convert the radial density to the cartesian grid
-
-      !We do not need the radial density anymore
-      deallocate(radial)
-
-      !Summing up to the total density
-      forall (ip = 1:grid%np)
-        this%density(ip) = this%density(ip) + atomicden(ip)
-      end forall
-    end do
-
-    deallocate(atomicden)
+   
+    select case (basis%type)
+    case ( PLANEWAVES )
+      call this%density_pw%guess(geo, grid)
+    case ( ATOMCENTERED )
+      call this%density_ac%guess(geo, grid)
+    end select
+ 
 
   end subroutine guess
 
@@ -84,46 +89,73 @@ contains
   subroutine cleanup(this)
     type(density_t), intent(inout) :: this
 
-    if(allocated(this%density)) deallocate(this%density)
+    if(allocated(this%rhoin)) deallocate(this%rhoin)
+    if(allocated(this%rhoout)) deallocate(this%rhoout)
+    if(allocated(this%rhonew)) deallocate(this%rhonew)
 
   end subroutine cleanup
 
   !Calc density
   !----------------------------------------------------
-  subroutine calculate(this)
+  subroutine calculate(this, basis)
     class(density_t), intent(inout) :: this
+    type(basis_t),  intent(in) :: basis
 
-    ! Density should be calculated from states
+    select case (basis%type)
+    case ( PLANEWAVES )
+      !Saving the in density for the mixing
+      call this%density_pw%get_den(this%rhoin)
+      !Calc. density
+      call this%density_pw%calculate()
+      !Saving the out density for the mixing
+      call this%density_pw%get_den(this%rhoout)
+    case ( ATOMCENTERED )
+      !Saving the in density for the mixing
+      call this%density_ac%get_den(this%rhoin)
+      !Calc. density
+      call this%density_ac%calculate()
+      !Saving the out density for the mixing
+      call this%density_ac%get_den(this%rhoout)
+    end select
 
   end subroutine calculate
 
 
-  !Copy the density to an array
+  !Copy the relative density
   !----------------------------------------------------
-  subroutine get_den(this, rho)
+  real(kind=dp) function get_relden(this, grid, nel) result(reldens)
     class(density_t) :: this
-    real(dp), intent(out) :: rho(:)
+    type(grid_t), intent(in) :: grid
+    integer,      intent(in) :: nel
 
     integer :: ip
 
-    forall(ip = 1:this%np)
-      rho(ip) = this%density(ip)
-    end forall
+    !Test tolerance and print status
+    !We use rhonew to compute the relative density
+    do ip = 1, this%np
+      this%rhonew(ip) = abs(this%rhoout(ip) - this%rhoin(ip))
+    end do
+    call integrate(grid, this%rhonew, reldens)
+    reldens = reldens/real(nel)
 
-  end subroutine get_den
+
+  end function get_relden
 
   !Copyi the density from an array
   !----------------------------------------------------
-  subroutine set_den(this, rho)
+  subroutine mix(this, basis)
     class(density_t) :: this
-    real(dp), intent(in) :: rho(:)
+    type(basis_t),  intent(in) :: basis
 
-    integer :: ip
+    select case (basis%type)
+    case ( PLANEWAVES )  
+      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
+      call this%density_pw%set_den(this%rhonew)
+    case ( ATOMCENTERED )
+      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
+      call this%density_ac%set_den(this%rhonew)
+    end select
 
-    forall (ip = 1:this%np)
-      this%density(ip) = rho(ip)
-    end forall
-
-  end subroutine set_den
+  end subroutine mix
 
 end module esl_density_m
