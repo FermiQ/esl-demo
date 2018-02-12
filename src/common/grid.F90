@@ -23,8 +23,8 @@ module esl_grid_m
     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
     real(dp) :: volelem !<Volume element
 
-    integer(lp) fftplan !< Forward FFT plan
-    integer(lp) ifftplan !< Backward FFT (IFFT) plan
+    type(C_PTR) fftplan !< Forward FFT plan
+    type(C_PTR) ifftplan !< Backward FFT (IFFT) plan
   contains
     private
     procedure, public :: init
@@ -90,10 +90,10 @@ contains
     ! Initialization for FFT and IFFT
     allocate(arr(this%ndims(1), this%ndims(2), this%ndims(3)))
 
-    call dfftw_plan_dft_3d(this%fftplan, this%ndims(1), this%ndims(2), this%ndims(3), &
+    this%fftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
       arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
 
-    call dfftw_plan_dft_3d(this%ifftplan, this%ndims(1), this%ndims(2), this%ndims(3), &
+    this%ifftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
       arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
 
     deallocate(arr)
