@@ -93,7 +93,7 @@ contains
       call smear_calc_fermi_and_occ(smear, elsi, states)
 
       ! Calculate density
-      call this%rho_in%calculate(system%basis, out=this%rho_out)
+      call this%rho_in%calculate(system%basis, states, out=this%rho_out)
       
       !Calc. potentials
 !      call this%H_in%potentials%calculate(this%rho_out, this%H_in%energy)

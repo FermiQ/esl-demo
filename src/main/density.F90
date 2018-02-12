@@ -96,16 +96,17 @@ contains
 
   ! Calculate output density from an input density
   !----------------------------------------------------
-  subroutine calculate(this, basis, states)
-    class(density_t), intent(inout) :: this
+  subroutine calculate(this, basis, states, out)
+    class(density_t),   intent(inout) :: this
     type(basis_t),       intent(in) :: basis
     type(states_t),      intent(in) :: states
+    type(density_t),  intent(inout) ::  out
 
     ! Calculate density on the grid
     select case (basis%type)
     case ( PLANEWAVES )
 
-      !Calc. density
+      ! Calculate density
       call this%density_pw%calculate(states)
 
     case ( ATOMCENTERED )
