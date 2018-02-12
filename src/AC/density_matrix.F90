@@ -15,6 +15,7 @@ module esl_density_matrix_ac_m
 
   public :: density_matrix_ac_next
   public :: density_matrix_ac_init_atomic
+  public :: density_matrix_ac_grid_charge
 
 contains
 
