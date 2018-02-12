@@ -1,8 +1,10 @@
 module esl_density_pw_m
 
   use prec, only : dp
+  use esl_basis_pw_m
   use esl_geometry_m
   use esl_grid_m
+  use esl_message_m
 
   implicit none
 
@@ -29,9 +31,14 @@ contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, grid)
+  subroutine init(this, grid, basis_pw)
     class(density_pw_t), intent(inout) :: this
-    type(grid_t), intent(in) :: grid
+    type(grid_t),        intent(in) :: grid
+    type(basis_pw_t),    intent(in) :: basis_pw
+
+    if(grid%np /= product(basis_pw%ndims)) then
+      call message_error("Number of grid point and number of plane waves are not consistent.")
+    end if
 
     allocate(this%density(1:grid%np))
     this%density(1:grid%np) = 0.d0
