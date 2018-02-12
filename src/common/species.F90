@@ -40,7 +40,7 @@ contains
     if ( ierr /= PSPIO_SUCCESS ) return
 
     ! Parse the file and record the format
-    ierr = check_error_pspio(pspiof_pspdata_read(this%psp, PSPIO_FMT_UNKNOWN, filename))
+    !ierr = check_error_pspio(pspiof_pspdata_read(this%psp, PSPIO_FMT_UNKNOWN, filename))
     if ( ierr /= PSPIO_SUCCESS ) then
        call message_error("Could not read pseudopotential from file: "//filename)
        return
