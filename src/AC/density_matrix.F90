@@ -5,7 +5,6 @@
 !< read-in/extrapolate a DM to a different structure.
 module esl_density_matrix_ac_m
 
-  use esl_geometry_m, only: geometry_t
   use esl_basis_ac_m, only: basis_ac_t
   use esl_sparse_pattern_m, only: sparse_pattern_t
   use esl_sparse_matrix_m, only: sparse_matrix_t
@@ -23,9 +22,8 @@ contains
   !< new sparse pattern.
   !< When the old sparse pattern is not allocated (created)
   !< we automatically initialize the DM with the atomic fillings.
-  subroutine density_matrix_ac_next(geo, basis, old_sp, new_sp, DM)
+  subroutine density_matrix_ac_next(basis, old_sp, new_sp, DM)
 
-    class(geometry_t), intent(in) :: geo
     class(basis_ac_t), intent(in) :: basis
     type(sparse_pattern_t), intent(in) :: old_sp
     type(sparse_pattern_t), intent(in), target :: new_sp
@@ -35,22 +33,21 @@ contains
     if ( old_sp%initialized() ) then
 
       ! For now we still do the atomic fillings...
-      call density_matrix_ac_init_atomic(geo, basis, new_sp, DM)
+      call density_matrix_ac_init_atomic(basis, new_sp, DM)
 
     else
 
-      call density_matrix_ac_init_atomic(geo, basis, new_sp, DM)
+      call density_matrix_ac_init_atomic(basis, new_sp, DM)
 
     end if
 
   end subroutine density_matrix_ac_next
 
   !< Initialize the diagonal density matrix with atomic fillings
-  subroutine density_matrix_ac_init_atomic(geo, basis, sp, DM)
+  subroutine density_matrix_ac_init_atomic(basis, sp, DM)
 
     use prec, only: dp
 
-    class(geometry_t), intent(in) :: geo
     class(basis_ac_t), intent(in) :: basis
     type(sparse_pattern_t), intent(in), target :: sp
     ! One element per spin component.
@@ -81,8 +78,8 @@ contains
 
     ! Loop over all orbital connections in the sparse pattern and
     ! set the diagonal density matrix
-    do ia = 1, geo%n_atoms
-      is = geo%species_idx(ia)
+    do ia = 1, basis%n_sites
+      is = basis%species_idx(ia)
 
       ! Loop on orbitals
       do io = basis%site_function_start(ia), basis%site_function_start(ia + 1) - 1
