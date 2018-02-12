@@ -3,6 +3,7 @@ add_library(ac
   create_sparse_pattern.F90
   density_matrix.F90  
   mulliken.F90
+  density_ac.F90
   overlap_matrix.F90
   sparse_pattern.F90
   sparse_matrix.F90
