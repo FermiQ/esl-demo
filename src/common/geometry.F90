@@ -109,8 +109,6 @@ contains
       call message_error("No atomic coordinates defined in input file!")
     end if
 
-    call this%summary()
-
   end subroutine init
 
   !Release
