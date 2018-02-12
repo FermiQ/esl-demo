@@ -11,7 +11,7 @@ module esl_species_m
 
   !Data structure for the pseudos
   type species_t
-    character(len=3) :: label
+    character(len=10) :: label
     type(pspiof_pspdata_t) :: psp
 
     ! TODO fix this argument
@@ -28,7 +28,7 @@ contains
   !----------------------------------------------------
   subroutine init(this, label, filename)
     class(species_t) :: this
-    character(len=3), intent(in) :: label
+    character(len=*), intent(in) :: label
     character(len=*), intent(in) :: filename
 
     integer :: ierr
