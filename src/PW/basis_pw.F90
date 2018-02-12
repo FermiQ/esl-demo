@@ -11,6 +11,7 @@ module esl_basis_pw_m
   type basis_pw_t
     real(dp) :: ecut !< Plane wave cut-off in Hartree
     integer  :: npw  !< Number of plane waves
+    integer  :: ndims(3) !< Number of plane-waves in each direction
   contains
     private
     procedure, public :: init
@@ -30,6 +31,8 @@ contains
 
     this%ecut = ecut
     this%npw = get_number_of_pw(ndims, ecut, gcell, [0._dp, 0._dp, 0._dp])
+
+    this%ndims(1:3) = ndims(1:3)
 
   end subroutine init
 
