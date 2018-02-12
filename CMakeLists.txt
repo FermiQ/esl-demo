@@ -35,12 +35,16 @@ pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
 pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
 pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
 
+message(STATUS "Found FDF support!")
 include_directories(${FDF_INCLUDE_DIRS})
-message(STATUS "Found FDF support: ${FDF_INCLUDE_DIRS};")
 link_directories(${FDF_LIBRARY_DIRS})
 
+message(STATUS "Found PSOLVER support!")
+include_directories(${PSOLVER_INCLUDE_DIRS})
+link_directories(${PSOLVER_LIBRARY_DIRS})
+
+message(STATUS "Found PSPIO support!")
 include_directories(${PSPIO_INCLUDE_DIRS})
-message(STATUS "Found PSPIO support: ${PSPIO_INCLUDE_DIRS};")
 link_directories(${PSPIO_LIBRARY_DIRS})
 
 
@@ -76,7 +80,6 @@ target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIB
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()
-target_include_directories(${target_name} PUBLIC ${FDF_INCLUDE_DIRS} ${PSOLVER_INCLUDE_DIRS} ${PSPIO_INCLUDE_DIRS})
 
 if(WITH_DOC)
   message(STATUS "Build Doxygen API Documentation")
