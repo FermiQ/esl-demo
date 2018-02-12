@@ -5,6 +5,8 @@ module esl_density_pw_m
   use esl_geometry_m
   use esl_grid_m
   use esl_message_m
+  use esl_states_m
+  use esl_utils_pw_m
 
   implicit none
 
@@ -17,6 +19,7 @@ module esl_density_pw_m
     integer :: np !< Copied from grid
 
     real(dp), allocatable :: density(:)
+    type(basis_pw_t), pointer :: pw
   contains
     private
     procedure, public :: init
@@ -32,9 +35,9 @@ contains
   !Initialize the density
   !----------------------------------------------------
   subroutine init(this, grid, basis_pw)
-    class(density_pw_t), intent(inout) :: this
-    type(grid_t),        intent(in) :: grid
-    type(basis_pw_t),    intent(in) :: basis_pw
+    class(density_pw_t),     intent(inout) :: this
+    type(grid_t),               intent(in) :: grid
+    type(basis_pw_t), target,   intent(in) :: basis_pw
 
     if(grid%np /= product(basis_pw%ndims)) then
       call message_error("Number of grid point and number of plane waves are not consistent.")
@@ -44,6 +47,8 @@ contains
     this%density(1:grid%np) = 0.d0
 
     this%np = grid%np
+
+    this%pw => basis_pw
 
   end subroutine init
 
@@ -92,15 +97,44 @@ contains
     type(density_pw_t), intent(inout) :: this
 
     if(allocated(this%density)) deallocate(this%density)
+    nullify(this%pw)
 
   end subroutine cleanup
 
   !Calc density
   !----------------------------------------------------
-  subroutine calculate(this)
+  subroutine calculate(this, states)
     class(density_pw_t), intent(inout) :: this
+    type(states_t),   intent(in) :: states
+    
+    integer :: ik, isp, ist, ip
+    complex(kind=dp), allocatable :: coef_rs(:)
+ 
+    real(kind=dp) :: kpt(3)
+
+    !Coefficient in real space
+    allocate(coef_rs(1:this%np))
+
+    this%density(:) = 0.d0
 
     ! Density should be calculated from states
+    do ik = 1, states%nkpt
+     kpt(3) = 0.d0
+      do isp = 1, states%nspin
+        do ist = 1, states%nstates
+          !From the G vectors to the real space
+          call fourier2grid(this%pw%grid, this%pw%gmet, kpt, this%pw%ndims, this%pw%ecut, &
+                               states%states(ik,isp,ist)%zcoef, this%np, coef_rs)
+ 
+          !We accumulate the density
+          do ip = 1, this%np
+            this%density(ip) = this%density(ip) + real(coef_rs(ip)*conjg(coef_rs(ip)),kind=dp)
+          end do
+        end do
+      end do
+    end do
+
+    deallocate(coef_rs)
 
   end subroutine calculate
 

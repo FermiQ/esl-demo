@@ -7,6 +7,7 @@ module esl_density_m
   use esl_geometry_m
   use esl_grid_m
   use esl_mixing_m
+  use esl_states_m
 
   implicit none
 
@@ -97,16 +98,17 @@ contains
 
   !Calc density
   !----------------------------------------------------
-  subroutine calculate(this, basis)
+  subroutine calculate(this, basis, states)
     class(density_t), intent(inout) :: this
-    type(basis_t),  intent(in) :: basis
+    type(basis_t),       intent(in) :: basis
+    type(states_t),      intent(in) :: states
 
     select case (basis%type)
     case ( PLANEWAVES )
       !Saving the in density for the mixing
       call this%density_pw%get_den(this%rhoin)
       !Calc. density
-      call this%density_pw%calculate()
+      call this%density_pw%calculate(states)
       !Saving the out density for the mixing
       call this%density_pw%get_den(this%rhoout)
     case ( ATOMCENTERED )

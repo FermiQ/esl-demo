@@ -81,7 +81,7 @@ contains
       call smear_calc_fermi_and_occ(smear, elsi, states)
 
       !Calc. density
-      call hamiltonian%density%calculate(system%basis)
+      call hamiltonian%density%calculate(system%basis, states)
       !Calc. potentials
       call hamiltonian%potentials%calculate(hamiltonian%density%rhoout, hamiltonian%energy)
 
