@@ -24,6 +24,7 @@ module esl_species_m
   contains
     private
     procedure, public :: init
+    procedure, public :: get_orbital
     final :: cleanup
   end type species_t
 
@@ -79,6 +80,17 @@ contains
     end if
     
   end subroutine cleanup
+
+  subroutine get_orbital(this, io, orbital, ll)
+    class(species_t) :: this
+    integer,                 intent(in)  :: io
+    type(pspiof_meshfunc_t), intent(out) :: orbital
+    integer,                 intent(out) :: ll
+
+    orbital = pspiof_state_get_wf(this%orbitals(io))
+    ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
+
+  end subroutine get_orbital
   
   !----------------------------------------------------
   !Private routines
