@@ -27,6 +27,9 @@ module esl_sparse_matrix_m
 
     !< Initialize a sparse matrix
     procedure, public :: init => init_
+    
+    !< Whether this sparse matrix has been initialized
+    procedure, public :: initialized => initialized_
 
     !< Print, to std-out information regarding this sparse pattern
     procedure, public :: print => print_
@@ -53,6 +56,15 @@ contains
     allocate(this%M(this%sp%nt))
 
   end subroutine init_
+
+  !< Check whether this sparse matrix has been initialized (i.e. allocated)
+  pure function initialized_(this) result(initd)
+    class(sparse_matrix_t), intent(in) :: this
+    logical :: initd
+
+    initd = allocated(this%M)
+
+  end function initialized_
 
   subroutine delete_(this, stat)
     class(sparse_matrix_t), intent(inout) :: this

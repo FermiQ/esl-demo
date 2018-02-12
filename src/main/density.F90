@@ -18,21 +18,20 @@ module esl_density_m
   type density_t
     integer :: np !< Copied from grid
 
-    real(dp), allocatable :: rhoin(:)
-    real(dp), allocatable :: rhoout(:)
-    real(dp), allocatable :: rhonew(:)
+    real(dp), allocatable :: rho(:)
 
-    type(mixing_t)   :: mixer
-    type(density_ac_t) :: density_ac
+    type(density_ac_t) :: ac
     type(density_pw_t) :: density_pw
+    
   contains
+    
     private
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
-    procedure, public :: get_relden
-    procedure, public :: mix
+    procedure, public :: residue
     final  :: cleanup
+    
   end type density_t
 
 contains
@@ -44,43 +43,42 @@ contains
     type(grid_t),     intent(in) :: grid
     type(basis_t),    intent(in) :: basis
 
-    allocate(this%rhoin(1:grid%np))
-    this%rhoin(1:grid%np) = 0.d0
-
-    allocate(this%rhoout(1:grid%np))
-    this%rhoin(1:grid%np) = 0.d0
-
-    allocate(this%rhonew(1:grid%np))
-    this%rhoin(1:grid%np) = 0.d0
-
+    allocate(this%rho(1:grid%np))
+    this%rho(1:grid%np) = 0.d0
     this%np = grid%np
 
-    call this%mixer%init()
-
-    select case (basis%type)
+    select case ( basis%type )
     case ( PLANEWAVES )
+      
       call this%density_pw%init(grid)
+      
     case ( ATOMCENTERED )
-      call this%density_ac%init(grid)
+      
+      call this%ac%init()
+      
     end select
 
   end subroutine init
 
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
-  subroutine guess(this, basis, geo, grid)
+  subroutine guess(this, basis, geo)
     class(density_t), intent(inout) :: this
     type(basis_t),    intent(in) :: basis
     type(geometry_t), intent(in) :: geo
-    type(grid_t),     intent(in) :: grid
    
-    select case (basis%type)
+    select case ( basis%type )
     case ( PLANEWAVES )
-      call this%density_pw%guess(geo, grid)
+
+      ! TODO fix interface 
+      call this%density_pw%guess(geo, basis%grid)
+      
     case ( ATOMCENTERED )
-      call this%density_ac%guess(geo, grid)
+
+      ! Guess the initial density from the atomic fillings
+      call this%ac%guess(basis%grid, basis%ac)
+      
     end select
- 
 
   end subroutine guess
 
@@ -89,73 +87,63 @@ contains
   subroutine cleanup(this)
     type(density_t), intent(inout) :: this
 
-    if(allocated(this%rhoin)) deallocate(this%rhoin)
-    if(allocated(this%rhoout)) deallocate(this%rhoout)
-    if(allocated(this%rhonew)) deallocate(this%rhonew)
+    if( allocated(this%rho) ) then
+      deallocate(this%rho)
+    end if
 
   end subroutine cleanup
 
-  !Calc density
+  ! Calculate output density from an input density
   !----------------------------------------------------
-  subroutine calculate(this, basis)
-    class(density_t), intent(inout) :: this
+  subroutine calculate(this, basis, out)
+    class(density_t), intent(inout) :: this, out
     type(basis_t),  intent(in) :: basis
 
+    ! Calculate density on the grid
     select case (basis%type)
     case ( PLANEWAVES )
-      !Saving the in density for the mixing
-      call this%density_pw%get_den(this%rhoin)
-      !Calc. density
+
       call this%density_pw%calculate()
-      !Saving the out density for the mixing
-      call this%density_pw%get_den(this%rhoout)
+      
     case ( ATOMCENTERED )
-      !Saving the in density for the mixing
-      call this%density_ac%get_den(this%rhoin)
-      !Calc. density
-      call this%density_ac%calculate()
-      !Saving the out density for the mixing
-      call this%density_ac%get_den(this%rhoout)
+
+      ! Calculate the density on the grid
+      call this%ac%calculate(basis%grid, basis%ac, this%rho, out%ac)
+      
     end select
 
   end subroutine calculate
 
 
-  !Copy the relative density
-  !----------------------------------------------------
-  real(kind=dp) function get_relden(this, grid, nel) result(reldens)
-    class(density_t) :: this
-    type(grid_t), intent(in) :: grid
-    integer,      intent(in) :: nel
+  !< Calculate the relative difference between two densities
+  function residue(this, basis, other) result(res)
+    class(density_t), intent(in) :: this, other
+    type(basis_t), intent(in) :: basis
 
-    integer :: ip
+    real(dp) :: res
 
-    !Test tolerance and print status
-    !We use rhonew to compute the relative density
-    do ip = 1, this%np
-      this%rhonew(ip) = abs(this%rhoout(ip) - this%rhoin(ip))
-    end do
-    call integrate(grid, this%rhonew, reldens)
-    reldens = reldens/real(nel)
+        ! Calculate density on the grid
+    select case ( basis%type )
+    case ( PLANEWAVES )
 
-
-  end function get_relden
-
-  !Copyi the density from an array
-  !----------------------------------------------------
-  subroutine mix(this, basis)
-    class(density_t) :: this
-    type(basis_t),  intent(in) :: basis
-
-    select case (basis%type)
-    case ( PLANEWAVES )  
-      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
-      call this%density_pw%set_den(this%rhonew)
+      ! TODO implement the residue function in density_pw_t
+!      res = this%density_pw%residue(basis%grid, basis%pw, other%density_pw)
+      
     case ( ATOMCENTERED )
-      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
-      call this%density_ac%set_den(this%rhonew)
+
+      res = this%ac%residue(other%ac)
+
     end select
 
-  end subroutine mix
+    
+!!$    !Test tolerance and print status
+!!$    !We use rhonew to compute the relative density
+!!$    do ip = 1, this%np
+!!$      this%rhonew(ip) = abs(this%rhoout(ip) - this%rhoin(ip))
+!!$    end do
+!!$    call integrate(grid, this%rhonew, reldens)
+!!$    reldens = reldens/real(nel)
+
+  end function residue
 
 end module esl_density_m

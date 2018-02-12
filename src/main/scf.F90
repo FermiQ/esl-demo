@@ -7,24 +7,37 @@ module esl_scf_m
   use esl_density_m
   use esl_grid_m
   use esl_hamiltonian_m
+  use esl_mixing_m
   use esl_potential_m
   use esl_system_m
 
   implicit none
   private
 
-  public ::                       &
-      scf_t,                &
-      scf_loop
+  public :: &
+      scf_t
 
   !Data structure containing the data for the SCF
   type scf_t 
     real(dp) :: tol_reldens 
     integer(ip) :: max_iter !< Maximum number of iterations
 
+    !< Mixer used during the SCF cycle
+    type(mixing_t) :: mixer
+
+    !< Density in/out
+    type(density_t) :: rho_in, rho_out
+
+    !< Hamiltonian/Potential in/out
+    type(hamiltonian_t) :: H_in, H_out
+
   contains
     private
     procedure, public :: init
+    procedure, public :: mix
+    
+    procedure, public :: loop
+
     final :: cleanup
   end type scf_t
 
@@ -47,66 +60,92 @@ contains
   subroutine cleanup(this)
     type(scf_t) :: this
 
-
   end subroutine cleanup
 
   !Perform the self-consistent field calculation
   !----------------------------------------------------
-  subroutine scf_loop(this, elsi, hamiltonian, system, states, smear)
+  subroutine loop(this, elsi, system, states, smear)
     use yaml_output
     use esl_smear_m
     use esl_states_m
     use elsi_wrapper_esl
 
-    type(scf_t),         intent(inout) :: this
+    class(scf_t),         intent(inout) :: this
     type(elsi_t), intent(inout) :: elsi
-    type(hamiltonian_t), intent(inout) :: hamiltonian
     type(system_t),         intent(in) :: system
     type(states_t),         intent(in) :: states
     type(smear_t), intent(inout) :: smear
 
     integer :: iter, ip !< Interation
-    real(dp) :: reldens
+    real(dp) :: res
 
-    call hamiltonian%density%guess(system%basis, system%geo, system%basis%grid)
+    ! Perform initial guess on the density
+    call this%rho_in%guess(system%basis, system%geo)
 
     call yaml_mapping_open("SCF cycle")
 
-    do iter = 1, this%max_iter
+    loop_scf: do iter = 1, this%max_iter
       call yaml_map("Iteration", iter)
 
-      !Diagonalization (ELSI/KSsolver)
+      ! Diagonalization (ELSI/KSsolver)
 
-      !Update occupations
+      ! Update occupations
       call smear_calc_fermi_and_occ(smear, elsi, states)
 
-      !Calc. density
-      call hamiltonian%density%calculate(system%basis)
+      ! Calculate density
+      call this%rho_in%calculate(system%basis, out=this%rho_out)
+      
       !Calc. potentials
-      call hamiltonian%potentials%calculate(hamiltonian%density%rhoout, hamiltonian%energy)
+!      call this%H_in%potentials%calculate(this%rho_out, this%H_in%energy)
 
       !Calc. energies
-      call hamiltonian%energy%calculate()  
+      call this%H_in%energy%calculate()  
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density
-      reldens = hamiltonian%density%get_relden(system%basis%grid, states%nel)
-      call yaml_map("Rel. Density", reldens)
-      if(reldens <= this%tol_reldens) then
+      ! TODO fix the pw/ac part due to the number of states. They are behaving
+      !      differently, so perhaps it is better to pass everything?
+      !      For now I don't do this...
+      res = this%rho_out%residue(system%basis, this%rho_in)
+      call yaml_map("Residue", res)
+!      call yaml_map("Rel. Density", reldens)
+      if ( res <= this%tol_reldens ) then
+        
         call yaml_comment("SCF cycle converged.")
-        exit
+        
+        exit loop_scf
+        
       end if
 
-      !Mixing
-      call hamiltonian%density%mix(system%basis)
+      ! Perform mixing
+      call this%mix(system%basis)
 
       !Update Hamiltonian matrix
 
-    end do
+    end do loop_scf
+    
     call yaml_mapping_close()
 
-    call hamiltonian%energy%display()
+    call this%H_out%energy%display()
 
-  end subroutine scf_loop
+  end subroutine loop
+  
+  ! Perform mixing step
+  !----------------------------------------------------
+  subroutine mix(this, basis)
+    class(scf_t) :: this
+    type(basis_t),  intent(in) :: basis
+
+    !TODO
+!!$    select case (basis%type)
+!!$    case ( PLANEWAVES )  
+!!$      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
+!!$      call this%density_pw%set_den(this%rhonew)
+!!$    case ( ATOMCENTERED )
+!!$      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
+!!$      call this%ac%set_den(this%rhonew)
+!!$    end select
+
+  end subroutine mix
 
 end module esl_scf_m
