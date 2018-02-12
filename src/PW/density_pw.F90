@@ -119,12 +119,12 @@ contains
 
     ! Density should be calculated from states
     do ik = 1, states%nkpt
-     kpt(3) = 0.d0
       do isp = 1, states%nspin
         do ist = 1, states%nstates
+          !TODO: Here we should have a gmap for each k-point
           !From the G vectors to the real space
-          call fourier2grid(this%pw%grid, this%pw%gmet, kpt, this%pw%ndims, this%pw%ecut, &
-                               states%states(ik,isp,ist)%zcoef, this%np, coef_rs)
+          call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%npw, &
+                               states%states(ik,isp,ist)%zcoef, coef_rs)
  
           !We accumulate the density
           do ip = 1, this%np

@@ -1,7 +1,6 @@
 module esl_hamiltonian_m
   use prec, only : dp,ip
   use esl_basis_m
-  use esl_density_m
   use esl_energy_m
   use esl_force_m
   use esl_geometry_m
@@ -20,7 +19,6 @@ module esl_hamiltonian_m
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
-    type(density_t)         :: density
     type(energy_t)          :: energy
     type(force_t)           :: force
     type(ion_interaction_t) :: ion_inter
@@ -50,7 +48,6 @@ contains
     type(basis_t),    intent(in) :: basis
     logical,          intent(in) :: periodic
 
-    call this%density%init(grid, basis)
     call this%energy%init()
     call this%potentials%init(grid, states, periodic)
     call this%force%init(geo%n_atoms)
@@ -71,7 +68,9 @@ contains
     real(dp),       intent(in)    :: psi(:)
     real(dp),       intent(inout) :: hpsi(:)
 
+    !call fourier2grid(grid, gmet, kpt, ndims, ecut, coef_pw, np, coef_rs)
     !TODO: Here perform FFT-1
+
     call hamiltonian_dapply_local(this, psi,hpsi)
     !TODO: Here perform FFT
 
