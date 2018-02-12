@@ -1,8 +1,8 @@
 <PP_INFO>
 Generated using APE Version-2.x
-Author: Unknown Generation date: 2018/02/09
+Author: Unknown Generation date: 2018/02/12
 Pseudopotential for: O
-Exchange-correlation: 
+Exchange-correlation: Perdew-Wang LDA
     0        The Pseudo was generated with a Non-Relativistic Calculation
 State   n   l    occ     rc         ev
 2s      2   0    2.00    1.10     -0.871222
@@ -15,7 +15,7 @@ State   n   l    occ     rc         ev
   O                    Element
    NC                  Norm - Conserving pseudopotential
     F                  Nonlinear Core Correction
-                            Exchange-Correlation functional
+ SLA  PW   NOGX NOGC        Exchange-Correlation functional
     6.00000000000      Z valence
     0.00000000000      Total energy
   0.0000000  0.0000000 Suggested cutoff for wfc and rho
