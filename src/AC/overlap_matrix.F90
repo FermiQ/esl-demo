@@ -12,14 +12,12 @@ module esl_overlap_matrix_ac_m
 
 contains
 
-  subroutine overlap_matrix_ac_calculate(geo, basis, sp, S)
+  subroutine overlap_matrix_ac_calculate(basis, sp, S)
 
-    use esl_geometry_m, only: geometry_t
     use esl_basis_ac_m, only: basis_ac_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
     use esl_sparse_matrix_m, only: sparse_matrix_t
 
-    class(geometry_t), intent(inout) :: geo
     class(basis_ac_t), intent(inout) :: basis
     class(sparse_pattern_t), intent(inout) :: sp
     class(sparse_matrix_t), intent(inout) :: S
@@ -31,8 +29,8 @@ contains
 
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
-    do ia = 1, geo%n_atoms
-      is = geo%species_idx(ia)
+    do ia = 1, basis%n_sites
+      is = basis%species_idx(ia)
 
       ! Loop on orbitals
       do io = basis%site_function_start(ia), basis%site_function_start(ia + 1) - 1
@@ -46,7 +44,7 @@ contains
           jo = sp%column(ind)
           ! Figure out the atomic index of the orbital
           ja = basis%function_site(jo)
-          js = geo%species_idx(ja)
+          js = basis%species_idx(ja)
           jjo = jo - basis%site_function_start(ja) + 1
 
           ! We are now in a position to calculate the

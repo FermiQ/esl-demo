@@ -17,7 +17,7 @@ module esl_basis_ac_m
     real(dp),        allocatable :: sites_xyz(:,:) !< Cartesian coordinates of the atomic centered sites
     type(species_t), allocatable :: species(:) !< The unique species used on the sites
     integer,         allocatable :: species_idx(:) !< A list of specie indices for each site
-    integer,         allocatable :: site_function_start(:) !< Look-up table to convert a site index to the first global function index
+    integer,         allocatable :: site_function_start(:) !< Look-up table to convert a site index to the first global function index (n_sites + 1)
     integer,         allocatable :: function_g2l(:) !< Look-up table to convert a global function index to the local function index on the specie
     integer,         allocatable :: function_site(:) !< Look-up table to convert a global function index to a site index.
   contains
