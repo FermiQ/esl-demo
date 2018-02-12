@@ -1,5 +1,6 @@
 module esl_basis_pw_m
 
+  include 'fftw3.f90'
   use prec
   use yaml_output
   use esl_geometry_m
@@ -60,7 +61,6 @@ contains
     this%grid => grid
 
     ! Initialization for FFT and IFFT
-    ! TODO include 'fftw3.f90' should be put properly
     allocate(arr(ndims(1),ndims(2),ndims(3)))
 
     call dfftw_plan_dft_3d(this%fftplan, ndims(1), ndims(2), ndims(3), &
