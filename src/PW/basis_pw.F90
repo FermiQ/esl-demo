@@ -15,8 +15,8 @@ module esl_basis_pw_m
     integer  :: npw  !< Number of plane waves
     integer  :: ndims(3) !< Number of plane-waves in each direction
     real(kind=dp) :: gmet(3,3) !< Metric
-    integer*8 fftplan !< Forward FFT plan
-    integer*8 ifftplan !< Backward FFT (IFFT) plan
+    integer(lp) fftplan !< Forward FFT plan
+    integer(lp) ifftplan !< Backward FFT (IFFT) plan
 
     type(grid_t), pointer :: grid
   contains
