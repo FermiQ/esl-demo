@@ -15,6 +15,8 @@ module esl_basis_pw_m
     integer  :: npw  !< Number of plane waves
     integer  :: ndims(3) !< Number of plane-waves in each direction
     real(kind=dp) :: gmet(3,3) !< Metric
+    integer*8 fftplan !< Forward FFT plan
+    integer*8 ifftplan !< Backward FFT (IFFT) plan
 
     type(grid_t), pointer :: grid
   contains
@@ -35,6 +37,8 @@ contains
     integer,              intent(in) :: ndims(3)
     real(dp),             intent(in) :: gcell(3,3)
 
+    complex(dp),         allocatable :: arr(:)
+
     this%ecut = ecut
 
     do i = 1, 3
@@ -50,12 +54,27 @@ contains
 
     this%grid => grid
 
+    ! Initialization for FFT and IFFT
+    ! TODO include 'fftw3.f90' should be put properly
+    allocate(arr(ndims(1),ndims(2),ndims(3)))
+
+    call dfftw_plan_dft_3d(this%fftplan, ndims(1), ndims(2), ndims(3), &
+      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
+
+    call dfftw_plan_dft_3d(this%ifftplan, ndims(1), ndims(2), ndims(3), &
+      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
+
+    deallocate(arr)
+
   end subroutine init
 
   !Release
   !----------------------------------------------------
   subroutine cleanup(this)
     type(basis_pw_t) :: this
+    ! Deconstructor for fft plan
+    call dfftw_destroy_plan(this%fftplan)
+    call dfftw_destroy_plan(this%ifftplan)
   end subroutine cleanup
 
   !Summary
