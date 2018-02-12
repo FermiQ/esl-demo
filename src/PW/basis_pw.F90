@@ -1,6 +1,4 @@
 module esl_basis_pw_m
-
-  include 'fftw3.f90'
   use prec
   use yaml_output
   use esl_geometry_m
@@ -39,8 +37,6 @@ contains
     integer,              intent(in) :: ndims(3)
     real(dp),             intent(in) :: gcell(3,3)
 
-    complex(dp),         allocatable :: arr(:)
-
     this%ecut = ecut
 
     do i = 1, 3
@@ -59,17 +55,6 @@ contains
     this%ndims(1:3) = ndims(1:3)
 
     this%grid => grid
-
-    ! Initialization for FFT and IFFT
-    allocate(arr(ndims(1),ndims(2),ndims(3)))
-
-    call dfftw_plan_dft_3d(this%fftplan, ndims(1), ndims(2), ndims(3), &
-      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
-
-    call dfftw_plan_dft_3d(this%ifftplan, ndims(1), ndims(2), ndims(3), &
-      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
-
-    deallocate(arr)
 
   end subroutine init
 
