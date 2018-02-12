@@ -4,16 +4,17 @@ module esl_mixing_m
   implicit none
   private
 
-  public :: &
-      mixing_t,    &
-      mixing_linear
+  public :: mixing_t
 
-  !Data structure for the mixer
+  ! Data structure for the mixer
   type mixing_t
+
     real(dp) :: alpha !< Mixing parameter
+
   contains
     private
     procedure, public :: init
+    procedure, public :: linear
     final  :: cleanup
   end type mixing_t
 
@@ -22,10 +23,11 @@ contains
   !Initialize the mixer
   !----------------------------------------------------
   subroutine init(this)
+    use fdf, only: fdf_get
     class(mixing_t) :: this
 
-    !For the moment this is hardcoded
-    this%alpha = 0.3d0
+    ! For the moment we read this from SCF.Mix.alpha
+    this%alpha = fdf_get('SCF.Mix.alpha', 0.3_dp)
 
   end subroutine init
 
@@ -37,21 +39,20 @@ contains
 
   end subroutine cleanup
 
-  !Mix the density
-  !----------------------------------------------------
-  subroutine mixing_linear(this, np, rhoin, rhoout, rhonew)
-    type(mixing_t),    intent(in) :: this
-    integer,           intent(in) :: np
-    real(dp),     intent(in) :: rhoin(:)
-    real(dp),     intent(in) :: rhoout(:)
-    real(dp),    intent(out) :: rhonew(:)
+  ! Mix two input vectors
+  subroutine linear(this, np, in, out, next)
+    class(mixing_t), intent(in) :: this
+    integer, intent(in) :: np
+    real(dp), intent(in) :: in(:)
+    real(dp), intent(in) :: out(:)
+    real(dp), intent(out) :: next(:)
 
     integer :: ip
 
-    do ip=1, np
-      rhonew(ip) = rhoin(ip)*(1.0d0-this%alpha) + rhoout(ip)*this%alpha
+    do ip = 1, np
+      next(ip) = in(ip) * (1._dp - this%alpha) + out(ip) * this%alpha
     end do
 
-  end subroutine mixing_linear
+  end subroutine linear
 
 end module esl_mixing_m
