@@ -22,9 +22,6 @@ module esl_geometry_m
     integer(ip) :: n_atoms
     real(dp),    allocatable :: xyz(:,:) ! (1:3,1:natoms)
     integer(ip), allocatable :: species_idx(:) ! (1:n_atoms)
-
-    
-    character(len=10), dimension(:), allocatable :: el
     
     ! Cell
     real(dp) :: cell(3,3) = 0.0_dp
@@ -74,7 +71,7 @@ contains
       if (fdf_block('species', blk)) then
         is = 1
         do while((fdf_bline(blk, pline)) .and. (is <= this%n_species))
-          call this%species(is)%init(fdf_bnames(pline, 1), fdf_bnames(pline, 2))
+          call this%species(is)%init(trim(fdf_bnames(pline, 1)), fdf_bnames(pline, 2))
           is = is + 1
         end do
       end if
@@ -88,7 +85,7 @@ contains
     is_def = .false.
     this%n_atoms = fdf_get('NumberOfAtoms', 0)
     allocate(this%xyz(1:3, this%n_atoms))
-    allocate(this%el(this%n_atoms))
+    allocate(this%species_idx(this%n_atoms))
 
     is_def = fdf_defined('coordinates')
     if (is_def) then
@@ -112,8 +109,6 @@ contains
       call message_error("No atomic coordinates defined in input file!")
     end if
 
-    call this%summary()
-
   end subroutine init
 
   !Release
@@ -135,15 +130,15 @@ contains
     use yaml_output
     class(geometry_t) :: this
 
-    integer :: i
+    integer :: ia
 
     call yaml_mapping_open("Geometry")
     call yaml_map("Cell", this%cell)
     call yaml_sequence_open("Atom Coordinates", advance = "no")
     call yaml_comment("Element | X| Y| Z|", hfill = "-")
-    do i = 1, this%n_atoms
+    do ia = 1, this%n_atoms
        call yaml_sequence(advance="no")
-       call yaml_map(trim(this%el(i)), this%xyz(:,i))
+       call yaml_map(trim(this%species(this%species_idx(ia))%label), this%xyz(:,ia))
     enddo
     call yaml_sequence_close()
     call yaml_map("Volume (Bohr^3)", this%volume())
