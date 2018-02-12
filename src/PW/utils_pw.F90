@@ -4,6 +4,10 @@ module esl_utils_pw_m
   use yaml_output
   use esl_geometry_m
   use esl_grid_m
+  use iso_c_binding
+
+  implicit none
+  include 'fftw3.f03'
   
   private
 
@@ -50,7 +54,7 @@ contains
     real(dp),        intent(out) :: gmod(:)
     integer,         intent(out) :: gmap(:,:)
 
-    integer :: i1, i2, i3, i
+    integer :: i1, i2, i3, npw
     real(dp) :: threshold, tmp_gmod
 
     npw = 0
@@ -106,10 +110,10 @@ contains
 
     ! FFT-1
     ! TODO include 'fftw3.f90' should be put properly
-    call dfftw_execute_dft(grid%iFFTplan, fourier_cube, fourier_cube)
+    call fftw_execute_dft(grid%iFFTplan, fourier_cube, fourier_cube)
 
     ! FFT
-    call dfftw_execute_dft(grid%FFTplan, fourier_cube, fourier_cube)
+    call fftw_execute_dft(grid%FFTplan, fourier_cube, fourier_cube)
 
     call rs_cube2grid(grid, rs_cube, coef_rs)
 
