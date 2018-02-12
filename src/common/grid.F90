@@ -5,8 +5,9 @@ module esl_grid_m
 
   private
 
-  public :: grid_t,   &
-            integrate
+  public :: grid_t,      &
+            integrate,   &
+            rs_cube2grid
 
   !Data structure for the real space grid
   type grid_t
@@ -26,6 +27,10 @@ module esl_grid_m
   interface integrate
     module procedure dintegrate, zintegrate
   end interface integrate
+
+  interface rs_cube2grid
+    module procedure drs_cube2grid, zrs_cube2grid
+  end interface rs_cube2grid
 
 contains
 
@@ -180,5 +185,44 @@ contains
     end if
 
   end function overlap
+
+
+  subroutine zrs_cube2grid(this, ff_cube, ff_grid)
+    type(grid_t),     intent(in)  :: this
+    complex(kind=dp), intent(in)  :: ff_cube(:,:,:)
+    complex(kind=dp), intent(out) :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+ 
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_grid(ip) = ff_cube(ix, iy, iz)    
+        end do
+      end do
+    end do
+
+  end subroutine zrs_cube2grid
+
+  subroutine drs_cube2grid(this, ff_cube, ff_grid)
+    type(grid_t),  intent(in)  :: this
+    real(kind=dp), intent(in)  :: ff_cube(:,:,:)
+    real(kind=dp), intent(out) :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_grid(ip) = ff_cube(ix, iy, iz)
+        end do
+      end do
+    end do
+
+  end subroutine drs_cube2grid
 
 end module esl_grid_m
