@@ -1,4 +1,5 @@
 module esl_grid_m
+  include 'fftw3.f90'
   use prec, only : dp,ip
   use module_fft_sg
   implicit none
@@ -17,6 +18,9 @@ module esl_grid_m
     integer  :: np !< Total number of points in the real space grid
     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
     real(dp) :: volelem !<Volume element
+
+    integer(lp) fftplan !< Forward FFT plan
+    integer(lp) ifftplan !< Backward FFT (IFFT) plan
   contains
     private
     procedure, public :: init
@@ -49,6 +53,7 @@ contains
 
     integer :: idim, ix, iy, iz, ip
     integer :: n, twice
+    complex(dp),         allocatable :: arr(:)
 
     this%ndims = ndims
 
@@ -77,6 +82,17 @@ contains
     end do
     !We have a cubic cell
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
+
+    ! Initialization for FFT and IFFT
+    allocate(arr(ndims(1),ndims(2),ndims(3)))
+
+    call dfftw_plan_dft_3d(this%fftplan, ndims(1), ndims(2), ndims(3), &
+      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
+
+    call dfftw_plan_dft_3d(this%ifftplan, ndims(1), ndims(2), ndims(3), &
+      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
+
+    deallocate(arr)
 
     ndims = this%ndims
   end subroutine init
