@@ -22,9 +22,6 @@ module esl_geometry_m
     integer(ip) :: n_atoms
     real(dp),    allocatable :: xyz(:,:) ! (1:3,1:natoms)
     integer(ip), allocatable :: species_idx(:) ! (1:n_atoms)
-
-    
-    character(len=10), dimension(:), allocatable :: el
     
     ! Cell
     real(dp) :: cell(3,3) = 0.0_dp
