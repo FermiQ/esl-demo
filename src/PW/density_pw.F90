@@ -123,8 +123,8 @@ contains
       do isp = 1, states%nspin
         do ist = 1, states%nstates
           !From the G vectors to the real space
-          call fourier2grid(this%pw%grid, this%pw%gmet, kpt, this%pw%ndims, this%pw%ecut, &
-                               states%states(ik,isp,ist)%zcoef, this%np, coef_rs)
+          call pw2grid(this%pw%grid, this%pw%gmet, kpt, this%pw%ndims, this%pw%ecut, &
+                               states%states(ik,isp,ist)%zcoef, coef_rs)
  
           !We accumulate the density
           do ip = 1, this%np

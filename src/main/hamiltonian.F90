@@ -71,7 +71,9 @@ contains
     real(dp),       intent(in)    :: psi(:)
     real(dp),       intent(inout) :: hpsi(:)
 
+    !call fourier2grid(grid, gmet, kpt, ndims, ecut, coef_pw, np, coef_rs)
     !TODO: Here perform FFT-1
+
     call hamiltonian_dapply_local(this, psi,hpsi)
     !TODO: Here perform FFT
 
