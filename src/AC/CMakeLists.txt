@@ -6,3 +6,5 @@ add_library(ac
   sparse_pattern.F90
   sparse_matrix.F90
   )
+
+target_link_libraries(ac common)

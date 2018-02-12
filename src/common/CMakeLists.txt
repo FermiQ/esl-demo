@@ -1,5 +1,3 @@
-include_directories(${Library_MODDIR})
-
 add_library(common
   constants.F90
   elsi_wrapper.F90
@@ -22,3 +20,16 @@ add_library(common
   states.F90
   xc.F90  
   )
+
+if(WITH_MPI)
+  add_library(esldmpi
+    mpi_dist_block_cyclic.F90 
+    mpi_dist_cyclic.F90
+    mpi_dist.F90
+    )
+  set_target_properties(esldmpi PROPERTIES
+    COMPILE_DEFINITIONS "WITH_MPI"
+    VERSION ${PROJECT_VERSION}
+    SOVERSION ${PROJECT_VERSION_MAJOR}
+    )
+endif()

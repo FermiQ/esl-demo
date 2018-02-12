@@ -1,4 +1,5 @@
 add_library(pw
-  basis_pw.F90  
+  basis_pw.F90
   )
 
+target_link_libraries(pw common)

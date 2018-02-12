@@ -53,18 +53,6 @@ else()
   message(STATUS "Build without flook library (no Lua-interface support)!")
 endif()
 
-if(WITH_MPI)
-  add_library(esldmpi
-    ${src_dir}/common/mpi_dist_block_cyclic.F90 
-    ${src_dir}/common/mpi_dist_cyclic.F90
-    ${src_dir}/common/mpi_dist.F90
-    )
-  set_target_properties(esldmpi PROPERTIES
-    COMPILE_DEFINITIONS "WITH_MPI"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    )
-endif()
 
 include_directories(${PROJECT_BINARY_DIR}/src/common)
 include_directories(${PROJECT_BINARY_DIR}/src/AC)
