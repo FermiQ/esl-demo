@@ -119,11 +119,11 @@ contains
 
     ! Density should be calculated from states
     do ik = 1, states%nkpt
-     kpt(3) = 0.d0
       do isp = 1, states%nspin
         do ist = 1, states%nstates
+          !TODO: Here we should have a gmap for each k-point
           !From the G vectors to the real space
-          call pw2grid(this%pw%grid, this%pw%gmet, kpt, this%pw%ndims, this%pw%ecut, &
+          call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%npw, &
                                states%states(ik,isp,ist)%zcoef, coef_rs)
  
           !We accumulate the density
