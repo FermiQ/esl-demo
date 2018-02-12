@@ -110,6 +110,7 @@ contains
   subroutine esl_init()
     use fdf, only : fdf_init, fdf_get
     use esl_numeric_m, only : init_random
+    use esl_info_m, only : about
 
     character(len=256) :: echo_file, output_file
 
@@ -126,6 +127,7 @@ contains
     ! To be able to use YAML
     call f_lib_initialize()
 
+    call about()
     ! TODO abstraction with MPI (all nodes will write to the same file)
     echo_file = trim(input_file)//".echo"
     call yaml_map("Input file", trim(input_file))

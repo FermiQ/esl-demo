@@ -11,7 +11,7 @@ module esl_species_m
 
   !Data structure for the pseudos
   type species_t
-    character(len=3) :: label
+    character(len=10) :: label
     type(pspiof_pspdata_t) :: psp
 
     ! TODO fix this argument
@@ -28,7 +28,7 @@ contains
   !----------------------------------------------------
   subroutine init(this, label, filename)
     class(species_t) :: this
-    character(len=3), intent(in) :: label
+    character(len=*), intent(in) :: label
     character(len=*), intent(in) :: filename
 
     integer :: ierr
@@ -40,7 +40,7 @@ contains
     if ( ierr /= PSPIO_SUCCESS ) return
 
     ! Parse the file and record the format
-    ierr = check_error_pspio(pspiof_pspdata_read(this%psp, PSPIO_FMT_UNKNOWN, filename))
+    !ierr = check_error_pspio(pspiof_pspdata_read(this%psp, PSPIO_FMT_UNKNOWN, filename))
     if ( ierr /= PSPIO_SUCCESS ) then
        call message_error("Could not read pseudopotential from file: "//filename)
        return
