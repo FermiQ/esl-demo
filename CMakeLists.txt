@@ -53,56 +53,26 @@ else()
   message(STATUS "Build without flook library (no Lua-interface support)!")
 endif()
 
-if(WITH_MPI)
-  add_library(esldmpi
-    ${src_dir}/mpi_dist_block_cyclic.F90 
-    ${src_dir}/mpi_dist_cyclic.F90
-    ${src_dir}/mpi_dist.F90
-    )
-  set_target_properties(esldmpi PROPERTIES
-    COMPILE_DEFINITIONS "WITH_MPI"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
-    )
-endif()
- 
+
+include_directories(${PROJECT_BINARY_DIR}/src/common)
+include_directories(${PROJECT_BINARY_DIR}/src/AC)
+include_directories(${PROJECT_BINARY_DIR}/src/PW)
+
+add_subdirectory(${src_dir}/PW)
+add_subdirectory(${src_dir}/AC)
+add_subdirectory(${src_dir}/common)
+
 
 add_executable(${target_name}
-  ${src_dir}/main.F90
-  ${src_dir}/basis.F90
-  ${src_dir}/basis_ac.F90
-  ${src_dir}/basis_pw.F90
-  ${src_dir}/density.F90
-  ${src_dir}/AC/density_matrix.F90
-  ${src_dir}/energy.F90
-  ${src_dir}/force.F90
-  ${src_dir}/geometry.F90
-  ${src_dir}/grid.F90
-  ${src_dir}/flook_if.F90
-  ${src_dir}/esl_dict.F90
-  ${src_dir}/hamiltonian.F90
-  ${src_dir}/AC/create_sparse_pattern.F90
-  ${src_dir}/ion_interaction.F90
-  ${src_dir}/message.F90
-  ${src_dir}/mixing.F90
-  ${src_dir}/next_step.F90
-  ${src_dir}/constants.F90
-  ${src_dir}/numeric.F90
-  ${src_dir}/AC/overlap_matrix.F90
-  ${src_dir}/psolver.F90
-  ${src_dir}/potential.F90
-  ${src_dir}/scf.F90
-  ${src_dir}/smear.F90
-  ${src_dir}/sparse_pattern.F90
-  ${src_dir}/sparse_matrix.F90
-  ${src_dir}/states.F90
-  ${src_dir}/system.F90
-  ${src_dir}/elsi_wrapper.F90
-  ${src_dir}/elsi_fake.F90
-  ${src_dir}/xc.F90
-  ${src_dir}/species.F90
+  ${src_dir}/main/basis.F90
+  ${src_dir}/main/density.F90
+  ${src_dir}/main/hamiltonian.F90
+  ${src_dir}/main/main.F90
+  ${src_dir}/main/next_step.F90
+  ${src_dir}/main/scf.F90
+  ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
+target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()

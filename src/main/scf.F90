@@ -98,7 +98,7 @@ contains
       !Saving the out density for the mixing
       call hamiltonian%density%get_den(rhoout)
       !Calc. potentials
-      call hamiltonian%potentials%calculate(hamiltonian%density, hamiltonian%energy)
+      call hamiltonian%potentials%calculate(hamiltonian%density%density, hamiltonian%energy)
 
       !Calc. energies
       call hamiltonian%energy%calculate()  

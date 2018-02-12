@@ -1,9 +1,6 @@
 module esl_potential_m
 
   use prec, only : dp,ip
-
-  use esl_basis_m
-  use esl_density_m
   use esl_energy_m
   use esl_grid_m
   use esl_psolver_m
@@ -21,7 +18,7 @@ module esl_potential_m
 
     real(dp), allocatable :: hartree(:)  !Hartree potential
     real(dp), allocatable :: external(:) !External local potential
-    real(dp), allocatable :: vxc(:,:)  !xc potential
+    real(dp), allocatable :: vxc(:)  !xc potential
 
     real(dp) :: ionicOffset !< Offset of the external potential
 
@@ -49,7 +46,7 @@ contains
 
     allocate(pot%hartree(1:pot%np))
     allocate(pot%external(1:pot%np))
-    allocate(pot%vxc(1:pot%np, 1:states%nspin))
+    allocate(pot%vxc(1:pot%np))
 
     if (periodic) then
       geocode = 'P'
@@ -82,11 +79,16 @@ contains
   !----------------------------------------------------
   subroutine calculate(pot, density, energy)
     class(potential_t), intent(inout) :: pot
-    type(density_t),   intent(in)    :: density
-    type(energy_t),    intent(inout) :: energy
+    real(dp),           intent(in)    :: density(*)
+    type(energy_t),     intent(inout) :: energy
 
-    call pot%psolver%h_potential(density, pot%hartree, pot%np, &
-        & pot%external, pot%ionicOffset, energy%hartree)
+    integer :: i
+
+    forall (i = 1:pot%np)
+      pot%hartree(i) = density(i)
+    end forall
+
+    call pot%psolver%h_potential(pot%hartree, pot%external, pot%ionicOffset, energy%hartree)
 
     !Here we need to compute the xc potential
     call pot%xc%calculate(density, pot%vxc)

@@ -1,8 +1,6 @@
 module esl_states_m
 
   use prec, only : dp,ip
-
-  use esl_basis_m
   use yaml_output
 
   implicit none
@@ -21,12 +19,12 @@ module esl_states_m
   !Data structure for the states
   type states_t
      integer :: nstates
-     integer :: nkpt
      integer :: nspin
-     integer :: ncoef
-     integer :: nel  !< Number of electrons
+     integer :: nkpt
+     integer :: nel   !< Number of electrons
 
      logical :: complex_states
+     integer :: ncoef !< Number of coefficients
 
      type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
      real(dp), allocatable :: occ_numbers(:,:,:)
@@ -42,20 +40,22 @@ contains
 
   !Initialize the states
   !----------------------------------------------------
-  subroutine init(this, basis, nstates, nspin, nkpt, nel)
+  subroutine init(this, nstates, nspin, nkpt, complex, ncoef, nel)
     class(states_t)  :: this
-    type(basis_t),  intent(in)    :: basis
-    integer,        intent(in)    :: nstates
-    integer,        intent(in)    :: nspin
-    integer,        intent(in)    :: nkpt
-    integer,        intent(in)    :: nel
+    integer, intent(in) :: nstates
+    integer, intent(in) :: nspin
+    integer, intent(in) :: nkpt
+    logical, intent(in) :: complex !< Should the wavefunctions be complex?
+    integer, intent(in) :: ncoef    !< Size of wavefunctions (number of coefficients)
+    integer, intent(in) :: nel
 
     integer :: ist, isp, ik
 
     this%nstates = nstates
     this%nspin = nspin
     this%nkpt = nkpt
-    this%ncoef = basis%size
+    this%complex_states = complex
+    this%ncoef = ncoef
     this%nel = nel
 
     allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
@@ -65,26 +65,23 @@ contains
     allocate(this%k_weights(1:nkpt))
     this%k_weights(:) = 1.d0/this%nkpt
 
-    select case ( basis%type )
-    case ( PLANEWAVES )
-       this%complex_states = .true.
-       do ik = 1, nkpt
-          do isp = 1, nspin
-             do ist = 1, nstates
-                allocate(this%states(ist, isp, ik)%zcoef(1:basis%size))
-             end do
+    if (this%complex_states) then
+      do ik = 1, nkpt
+        do isp = 1, nspin
+          do ist = 1, nstates
+            allocate(this%states(ist, isp, ik)%zcoef(1:this%ncoef))
           end do
-       end do
-    case ( ATOMCENTERED )
-       this%complex_states = .false.
-       do ik = 1, nkpt
-          do isp = 1, nspin
-             do ist = 1, nstates
-                allocate(this%states(ist, isp, ik)%dcoef(1:basis%size))
-             end do
+        end do
+      end do
+    else
+      do ik = 1, nkpt
+        do isp = 1, nspin
+          do ist = 1, nstates
+            allocate(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
           end do
-       end do
-    end select
+        end do
+      end do
+    end if
 
   end subroutine init
 
@@ -96,18 +93,18 @@ contains
 
     integer :: ist, isp, ik
 
-    if(allocated(this%states)) then
-       do ik = 1, this%nkpt
-          do isp = 1, this%nspin
-             do ist = 1, this%nstates
-                if(allocated(this%states(ist, isp, ik)%dcoef)) &
-                     deallocate(this%states(ist, isp, ik)%dcoef)
-                if(allocated(this%states(ist, isp, ik)%zcoef)) &
-                     deallocate(this%states(ist, isp, ik)%zcoef)
-             end do
+    if (allocated(this%states)) then
+      do ik = 1, this%nkpt
+        do isp = 1, this%nspin
+          do ist = 1, this%nstates
+            if(allocated(this%states(ist, isp, ik)%dcoef)) &
+              deallocate(this%states(ist, isp, ik)%dcoef)
+            if(allocated(this%states(ist, isp, ik)%zcoef)) &
+              deallocate(this%states(ist, isp, ik)%zcoef)
           end do
-       end do
-       deallocate(this%states)
+        end do
+      end do
+      deallocate(this%states)
     end if
     if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
     if(allocated(this%k_weights)) deallocate(this%k_weights)
@@ -124,26 +121,26 @@ contains
     real(dp), allocatable :: tmp_re(:), tmp_im(:)
 
     if(this%complex_states) then
-       allocate(tmp_re(1:this%ncoef))
-       allocate(tmp_im(1:this%ncoef))
-       do ik = 1, this%nkpt
-          do isp = 1, this%nspin
-             do ist = 1, this%nstates
-                call random_number(tmp_re(1:this%ncoef))
-                call random_number(tmp_im(1:this%ncoef))
-                this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) + cmplx(0.d0,1.d0)*tmp_im(1:this%ncoef) 
-             end do
+      allocate(tmp_re(1:this%ncoef))
+      allocate(tmp_im(1:this%ncoef))
+      do ik = 1, this%nkpt
+        do isp = 1, this%nspin
+          do ist = 1, this%nstates
+            call random_number(tmp_re(1:this%ncoef))
+            call random_number(tmp_im(1:this%ncoef))
+            this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) + cmplx(0.d0,1.d0)*tmp_im(1:this%ncoef) 
           end do
-       end do
-       deallocate(tmp_re, tmp_im)
+        end do
+      end do
+      deallocate(tmp_re, tmp_im)
     else 
-       do ik = 1, this%nkpt
-          do isp = 1, this%nspin
-             do ist = 1, this%nstates
-                call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
-             end do
+      do ik = 1, this%nkpt
+        do isp = 1, this%nspin
+          do ist = 1, this%nstates
+            call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
           end do
-       end do
+        end do
+      end do
     end if
 
   end subroutine states_randomize
