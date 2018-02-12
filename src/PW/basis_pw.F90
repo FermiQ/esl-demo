@@ -65,9 +65,6 @@ contains
     if(allocated(this%gmod)) deallocate(this%gmod)
     if(allocated(this%gmap)) deallocate(this%gmap)
 
-    ! Deconstructor for fft plan
-    call dfftw_destroy_plan(this%fftplan)
-    call dfftw_destroy_plan(this%ifftplan)
   end subroutine cleanup
 
   !Summary

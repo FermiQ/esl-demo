@@ -1,8 +1,12 @@
 module esl_grid_m
-  include 'fftw3.f90'
-  use prec, only : dp,ip
-  use module_fft_sg
+  use prec, only : dp,lp
+!  use module_fft_sg
+
+  use iso_c_binding
+
+
   implicit none
+  include 'fftw3.f03'
 
   private
 
@@ -53,7 +57,7 @@ contains
 
     integer :: idim, ix, iy, iz, ip
     integer :: n, twice
-    complex(dp),         allocatable :: arr(:)
+    complex(dp),         allocatable :: arr(:,:,:)
 
     this%ndims = ndims
 
@@ -84,12 +88,12 @@ contains
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
 
     ! Initialization for FFT and IFFT
-    allocate(arr(ndims(1),ndims(2),ndims(3)))
+    allocate(arr(this%ndims(1), this%ndims(2), this%ndims(3)))
 
-    call dfftw_plan_dft_3d(this%fftplan, ndims(1), ndims(2), ndims(3), &
+    call dfftw_plan_dft_3d(this%fftplan, this%ndims(1), this%ndims(2), this%ndims(3), &
       arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
 
-    call dfftw_plan_dft_3d(this%ifftplan, ndims(1), ndims(2), ndims(3), &
+    call dfftw_plan_dft_3d(this%ifftplan, this%ndims(1), this%ndims(2), this%ndims(3), &
       arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
 
     deallocate(arr)
@@ -103,6 +107,10 @@ contains
     type(grid_t) :: this
 
     if(allocated(this%r)) deallocate(this%r)
+
+    ! Deconstructor for fft plan
+    call dfftw_destroy_plan(this%fftplan)
+    call dfftw_destroy_plan(this%ifftplan)
 
   end subroutine cleanup
 
