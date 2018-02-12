@@ -9,7 +9,8 @@ module esl_utils_pw_m
 
   public ::                          &
             get_number_of_pw,        &
-            fourier2grid 
+            pw2grid,                 &
+            grid2pw 
             
 
 contains
@@ -54,14 +55,13 @@ contains
   end function dsq
     
 
-  subroutine fourier2grid(grid, gmet, kpt, ndims, ecut, coef_pw, np, coef_rs)
+  subroutine pw2grid(grid, gmet, kpt, ndims, ecut, coef_pw, coef_rs)
     type(grid_t),          intent(in) :: grid
     real(kind=dp),         intent(in) :: gmet(3,3)
     real(kind=dp),         intent(in) :: kpt(3) 
     integer,               intent(in) :: ndims(3)
     real(kind=dp),         intent(in) :: ecut
     complex(kind=dp),      intent(in) :: coef_pw(:) !(pw%npw)
-    integer,               intent(in) :: np
     complex(kind=dp),     intent(out) :: coef_rs(:) !(np)
 
     complex(kind=dp), allocatable :: fourier_cube(:,:,:)
@@ -83,10 +83,36 @@ contains
 
     deallocate(fourier_cube, rs_cube)
 
-  end subroutine fourier2grid
+  end subroutine pw2grid
+
+  subroutine grid2pw(grid, gmet, kpt, ndims, ecut, coef_rs, coef_pw)
+    type(grid_t),          intent(in) :: grid
+    real(kind=dp),         intent(in) :: gmet(3,3)
+    real(kind=dp),         intent(in) :: kpt(3)
+    integer,               intent(in) :: ndims(3)
+    real(kind=dp),         intent(in) :: ecut
+    complex(kind=dp),     intent(out) :: coef_pw(:) !(pw%npw)
+    complex(kind=dp),      intent(in) :: coef_rs(:) !(np)
+
+    complex(kind=dp), allocatable :: fourier_cube(:,:,:)
+    complex(kind=dp), allocatable :: rs_cube(:,:,:)
+
+    allocate(fourier_cube(1:ndims(1),1:ndims(2),1:ndims(3)))
+    allocate(rs_cube(1:ndims(1),1:ndims(2),1:ndims(3)))
+
+    call rs_grid2cube(grid, coef_rs, rs_cube)
+
+    !Here FFT
+
+    call fourier_cube2sphere(gmet, kpt, ndims, ecut, fourier_cube, coef_pw)
+
+    deallocate(fourier_cube, rs_cube)
+
+  end subroutine grid2pw
 
 
   subroutine fourier_sphere2cube(gmet, kpt, ndims, ecut, coef_pw, fourier_cube)
+    use esl_constants_m, only: pi
     real(kind=dp),         intent(in) :: gmet(3,3)
     real(kind=dp),         intent(in) :: kpt(3)
     integer,               intent(in) :: ndims(3)
@@ -94,7 +120,7 @@ contains
     complex(kind=dp),      intent(in) :: coef_pw(:) !(pw%npw)
     complex(kind=dp),     intent(out) :: fourier_cube(:,:,:)
 
-    integer :: i1, i2, i3, i
+    integer :: i1, i2, i3, npw
     real(dp) :: threshold
 
     fourier_cube(1:ndims(1), 1:ndims(2), 1:ndims(3)) = 0.d0
@@ -104,7 +130,7 @@ contains
     do i1 = 1, ndims(1)
        do i2 = 1, ndims(2)
           do i3 = 1, ndims(3)
-            if (dsq(gmet, kpt, i1-ndims(1)/2, i2-ndims(2)/2, i3-ndims(3)/2) <= threshold) then
+            if (dsq(gmet, kpt, i1-ndims(1)/2-1, i2-ndims(2)/2-1, i3-ndims(3)/2-1) <= threshold) then
                npw = npw + 1
                fourier_cube(i1, i2, i3) = coef_pw(npw)
             end if
@@ -113,6 +139,35 @@ contains
     end do    
 
   end subroutine fourier_sphere2cube
+
+  subroutine fourier_cube2sphere(gmet, kpt, ndims, ecut, fourier_cube, coef_pw)
+    use esl_constants_m, only: pi  
+    real(kind=dp),         intent(in) :: gmet(3,3)
+    real(kind=dp),         intent(in) :: kpt(3)
+    integer,               intent(in) :: ndims(3)
+    real(kind=dp),         intent(in) :: ecut
+    complex(kind=dp),     intent(out) :: coef_pw(:) !(pw%npw)
+    complex(kind=dp),      intent(in) :: fourier_cube(:,:,:)
+
+    integer :: i1, i2, i3, npw
+    real(dp) :: threshold
+
+    coef_pw(:) = 0.d0
+
+    npw = 0
+    threshold = 0.5_dp * ecut / pi**2
+    do i1 = 1, ndims(1)
+       do i2 = 1, ndims(2)
+          do i3 = 1, ndims(3)
+            if (dsq(gmet, kpt, i1-ndims(1)/2-1, i2-ndims(2)/2-1, i3-ndims(3)/2-1) <= threshold) then
+               npw = npw + 1
+               coef_pw(npw) = fourier_cube(i1, i2, i3)
+            end if
+          end do
+       end do
+    end do
+
+  end subroutine fourier_cube2sphere
 
 
 end module esl_utils_pw_m
