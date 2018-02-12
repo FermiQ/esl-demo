@@ -15,7 +15,9 @@ module esl_basis_pw_m
     integer  :: npw  !< Number of plane waves
     integer  :: ndims(3) !< Number of plane-waves in each direction
     real(kind=dp) :: gmet(3,3) !< Metric
-
+    real(kind=dp), allocatable :: gmod(:) !length of the G-vectors
+    integer, allocatable :: gmap(:,:) !Mapping
+ 
     type(grid_t), pointer :: grid
   contains
     private
@@ -43,8 +45,12 @@ contains
               &        + gcell(3, i) * gcell(3, :)
     end do
 
-
     this%npw = get_number_of_pw(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp])
+    
+    !TODO: We should create of these for each k-point
+    allocate(this%gmod(1:npw))
+    allocate(this%gmap(1:3,1:npw))
+    call construct_mod_map_tables(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp], this%gmod, this%gmap)
 
     this%ndims(1:3) = ndims(1:3)
 
@@ -56,6 +62,10 @@ contains
   !----------------------------------------------------
   subroutine cleanup(this)
     type(basis_pw_t) :: this
+
+    if(allocated(this%gmod)) deallocate(this%gmod)
+    if(allocated(this%gmap)) deallocate(this%gmap)
+
   end subroutine cleanup
 
   !Summary
