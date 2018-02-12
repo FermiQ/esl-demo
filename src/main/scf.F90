@@ -92,14 +92,9 @@ contains
       ! Update occupations
       call smear_calc_fermi_and_occ(smear, elsi, states)
 
-<<<<<<< HEAD
-      !Calc. density
-      call hamiltonian%density%calculate(system%basis, states)
-=======
       ! Calculate density
       call this%rho_in%calculate(system%basis, out=this%rho_out)
       
->>>>>>> origin/density-after-basis_density
       !Calc. potentials
 !      call this%H_in%potentials%calculate(this%rho_out, this%H_in%energy)
 
