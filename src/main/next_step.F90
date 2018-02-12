@@ -47,8 +47,7 @@ contains
 
       ! copy old sparse pattern
       ! Initialize the sparse pattern
-      call create_sparse_pattern_ac_create(system%geo, system%basis%ac, &
-          system%sparse_pattern)
+      call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
 
       ! Essentially we have to figure out whether the previous
       ! sparse patterns and quantities needs mangling (i.e.
@@ -58,13 +57,13 @@ contains
 
       ! Calculate the overlap matrix
       ! This requires that the grid information is present
-      call overlap_matrix_ac_calculate(system%geo, system%basis%ac, &
+      call overlap_matrix_ac_calculate(system%basis%ac, &
           system%sparse_pattern, system%S)
 
       ! Figure out the next density matrix
       ! This routine will initially fill it with the
       ! atomic fillings.
-      call density_matrix_ac_next(system%geo, system%basis%ac, &
+      call density_matrix_ac_next(system%basis%ac, &
           old_sp, system%sparse_pattern, system%DM)
 
       ! Clean-up the old sparse-matrix
