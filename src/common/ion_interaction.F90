@@ -123,7 +123,7 @@ contains
           do ia = 1, geo%n_atoms
             is = geo%species_idx(ia)
             gx = sum(gg(1:3)*geo%xyz(1:3,ia))
-            aa = geo%species(is)%z_ion*cmplx(cos(gx),sin(gx))
+            aa = geo%species(is)%z_ion*cmplx(cos(gx),sin(gx),kind=dp)
             phase(ia) = aa
             sumat = sumat + aa
           end do

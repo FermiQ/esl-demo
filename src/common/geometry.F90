@@ -116,8 +116,6 @@ contains
   subroutine cleanup(this)
     type(geometry_t) :: this
 
-    integer :: i
-
     if (allocated(this%species)) deallocate(this%species)
     if (allocated(this%xyz)) deallocate(this%xyz)
     if (allocated(this%species_idx)) deallocate(this%species_idx)

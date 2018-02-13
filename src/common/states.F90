@@ -128,7 +128,8 @@ contains
           do ist = 1, this%nstates
             call random_number(tmp_re(1:this%ncoef))
             call random_number(tmp_im(1:this%ncoef))
-            this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) + cmplx(0.d0,1.d0)*tmp_im(1:this%ncoef) 
+            this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) &
+                   + cmplx(0.d0,1.d0,kind=dp)*tmp_im(1:this%ncoef) 
           end do
         end do
       end do

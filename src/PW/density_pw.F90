@@ -26,6 +26,7 @@ module esl_density_pw_m
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
+    procedure, public :: residue
     procedure, public :: get_den
     procedure, public :: set_den
     final  :: cleanup
@@ -58,7 +59,6 @@ contains
     type(geometry_t), intent(in) :: geo
     type(grid_t),     intent(in) :: grid
     
-    real(dp), allocatable :: radial(:)
     real(dp), allocatable :: atomicden(:)
     integer :: iat, ip, is
     real(dp):: norm
@@ -118,8 +118,10 @@ contains
 
     this%density(:) = 0.d0
 
+
     ! Density should be calculated from states
     do ik = 1, states%nkpt
+      kpt(1:3) = 0.d0
       do isp = 1, states%nspin
         do ist = 1, states%nstates
           !TODO: Here we should have a gmap for each k-point
@@ -139,6 +141,30 @@ contains
 
   end subroutine calculate
 
+  !Residue
+  !---------------------------------------------------
+  function residue(this, grid, nel, other) result(res)
+    class(density_pw_t), intent(in) :: this
+    type(grid_t),        intent(in) :: grid
+    integer,             intent(in) :: nel
+    type(density_pw_t),  intent(in) :: other
+
+    real(kind=dp), allocatable :: diff(:)
+    real(kind=dp) :: res
+    integer :: ip
+
+    allocate(diff(1:grid%np)) 
+
+    !We use rhonew to compute the relative density
+    do ip = 1, this%np
+      diff(ip) = abs(other%density(ip) - this%density(ip))
+    end do
+    call integrate(grid, diff, res)
+    res = res/real(nel)
+
+    deallocate(diff)
+
+  end function residue
 
   !Copy the density to an array
   !----------------------------------------------------

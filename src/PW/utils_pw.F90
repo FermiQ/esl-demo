@@ -66,9 +66,9 @@ contains
              if (tmp_gmod <= threshold) then
                npw = npw + 1
                gmod(npw) = tmp_gmod
-               gmap(1,npw) = i1
-               gmap(2,npw) = i2
-               gmap(3,npw) = i3
+               gmap(1,npw) = i1 + ndims(1)/2 + 1
+               gmap(2,npw) = i2 + ndims(2)/2 + 1
+               gmap(3,npw) = i3 + ndims(3)/2 + 1
              endif
           end do
        end do
@@ -136,7 +136,7 @@ contains
     ! FFT
     call fftw_execute_dft(grid%FFTplan, rs_cube, fourier_cube)
 
-    call fourier_cube2sphere(gmap, ndims, npw, fourier_cube, coef_pw)
+    call fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw)
 
     deallocate(fourier_cube, rs_cube)
 
@@ -150,29 +150,25 @@ contains
     complex(kind=dp),      intent(in) :: coef_pw(:) !(pw%npw)
     complex(kind=dp),     intent(out) :: fourier_cube(:,:,:)
 
-    integer :: i1, i2, i3, ipw
-    real(dp) :: threshold
+    integer :: ipw
 
-    fourier_cube(1:ndims(1), 1:ndims(2), 1:ndims(3)) = 0.d0
+    fourier_cube(1:ndims(1), 1:ndims(2), 1:ndims(3)) = cmplx(0.d0,0.d0,kind=dp)
 
     do ipw = 1, npw
-      fourier_cube(gmap(1,ipw)+ndims(1)/2+1, gmap(2,ipw)+ndims(3)/2+1, &
-                     gmap(3,ipw)+ndims(3)/2+1) = coef_pw(ipw)
+      fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw)) = coef_pw(ipw)
     end do    
 
   end subroutine fourier_sphere2cube
 
-  subroutine fourier_cube2sphere(gmap, ndims, npw, fourier_cube, coef_pw)
+  subroutine fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw)
     integer,               intent(in) :: gmap(:,:)
-    integer,               intent(in) :: ndims(3)
     integer,               intent(in) :: npw
     complex(kind=dp),     intent(out) :: coef_pw(:) !(pw%npw)
     complex(kind=dp),      intent(in) :: fourier_cube(:,:,:)
 
-    integer :: i1, i2, i3, ipw
-    real(dp) :: threshold
+    integer :: ipw
 
-    coef_pw(1:npw) = 0.d0
+    coef_pw(1:npw) = cmplx(0.d0,0.d0,kind=dp)
  
     do ipw = 1, npw
       coef_pw(ipw) = fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw))
