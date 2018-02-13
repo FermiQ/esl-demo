@@ -34,21 +34,19 @@ contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, grid, basis_pw)
+  subroutine init(this, grid, basis)
     class(density_pw_t),     intent(inout) :: this
     type(grid_t),               intent(in) :: grid
-    type(basis_pw_t), target,   intent(in) :: basis_pw
+    type(basis_pw_t), target,   intent(in) :: basis
 
-    if(grid%np /= product(basis_pw%ndims)) then
+    if(grid%np /= product(basis%ndims)) then
       call message_error("Number of grid point and number of plane waves are not consistent.")
     end if
 
     allocate(this%density(1:grid%np))
-    this%density(1:grid%np) = 0.d0
-
     this%np = grid%np
 
-    this%pw => basis_pw
+    this%pw => basis
 
   end subroutine init
 

@@ -64,7 +64,7 @@ contains
     !call fourier2grid(grid, gmet, kpt, ndims, ecut, coef_pw, np, coef_rs)
     !TODO: Here perform FFT-1
 
-    call hamiltonian_dapply_local(this, psi,hpsi)
+    call hamiltonian_dapply_local(this, psi, hpsi)
     !TODO: Here perform FFT
 
   end subroutine hamiltonian_dapply
@@ -97,6 +97,22 @@ contains
     end forall
 
   end subroutine hamiltonian_dapply_local
+
+  !Apply the local part of the Hamitonian to a wavefunction
+  !----------------------------------------------------
+  subroutine hamiltonian_zapply_local(this, psi, hpsi)
+    type(hamiltonian_t),  intent(in)    :: this
+    complex(dp),        intent(in)    :: psi(:)
+    complex(dp),        intent(inout) :: hpsi(:)
+
+    integer :: ip
+
+    !TODO: Here there is no spin
+    forall(ip = 1:this%potentials%np)
+      hpsi(ip) = hpsi(ip) + (this%potentials%external(ip) + this%potentials%hartree(ip) + this%potentials%vxc(ip))*psi(ip)
+    end forall
+
+  end subroutine hamiltonian_zapply_local
 
   !Release
   !----------------------------------------------------
