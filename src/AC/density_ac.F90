@@ -29,7 +29,7 @@ module esl_density_ac_m
 
     procedure, public :: guess
     procedure, public :: calculate
-    procedure, public :: add_density_matrix
+    procedure, nopass, public :: add_density_matrix
     final  :: cleanup
 
   end type density_ac_t
@@ -74,18 +74,34 @@ contains
     class(grid_t), intent(in) :: grid
     !< Atomic orbital basis
     class(basis_ac_t), intent(in) :: basis
-    !< Real-space grid on which to calculate the density from the DM
+    !< Real-space grid on which to calculate the (total) density from the DM
     real(dp), intent(inout) :: rho(:)
     !< Output density
     type(density_ac_t), intent(inout) :: out
 
+    !< Real-space grid on which to retain the atomic filled density
+    real(dp), allocatable :: rho_atom(:)
+    !< Create the initial DM
+    type(sparse_matrix_t) :: DM_atom
+
     ! TODO logic for calculating the output density from an input
     ! density.
 
-    ! I.e. we should calculate the Hamiltonian etc.
+    allocate(rho_atom(grid%np))
     
-    ! This should contain
-    call this%add_density_matrix(grid, basis, this%DM, rho)
+    ! Calculate the atomic density
+    call basis%atomic_density_matrix(DM_atom)
+    ! Expand the atomic dM on an auxiliary grid
+    call add_density_matrix(grid, basis, DM_atom, rho_atom)
+    call DM_atom%delete()
+    
+    ! 1. Start by calculating the density from the DM on the grid
+    call add_density_matrix(grid, basis, this%DM, rho)
+
+    ! Now we are in a position to calculate Hartree potential from
+    ! rho and/or rho_atom
+
+    ! 2. Calculate matrix elements for the Hamiltonian
     
   end subroutine calculate
     
@@ -93,11 +109,8 @@ contains
   !< Add a sparse density matrix to the density grid using basis coefficients, etc.
   !<
   !< Add the basis functions density to the grid via an input density matrix.
-  subroutine add_density_matrix(this, grid, basis, DM, rho)
+  subroutine add_density_matrix(grid, basis, DM, rho)
 
-    use esl_numeric_m, only: grylmr
-
-    class(density_ac_t), intent(inout) :: this
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
     !< Atomic orbital basis
@@ -121,11 +134,13 @@ contains
     integer :: ia, is, io, iio
     ! Second site indices
     integer :: ja, js, jo, jjo
+    integer :: max_no ! number of orbitals per state
 
     ! Looping species quantum numbers (l and m)
     integer :: il, im, jl, jm
     ! Looping species distance to the grid-point and the atomic orbital at the grid-point
-    real(dp) :: idr(3), iao, jdr(3), jao
+    real(dp) :: idr(3), jdr(3), jpsi
+    real(dp), allocatable :: ipsi(:)
 
     ! Total density at grid-point
     real(dp) :: rho_ip
@@ -140,7 +155,15 @@ contains
     ! added by using MOD operations etc.
 
     ! Initialize the neighbour list
-    allocate(neigh(basis%n_sites))
+    allocate(neigh(basis%n_site))
+
+    max_no = 0
+    do is = 1 , basis%n_state
+      max_no = max(max_no, basis%state(is)%n_orbital)
+    end do
+    
+    ! Allocate one array to calculate all psi for the LHS 
+    allocate(ipsi(max_no))
 
     loop_grid: do ip = 1, grid%np
 
@@ -155,18 +178,19 @@ contains
 
         ! Retrieve current site
         ia = neigh(in)
-        is = basis%species_idx(ia)
+        is = basis%site_state_idx(ia)
 
         ! Retrieve current vector from grid-point to the basis-orbital
         idr(:) = grid%r(:,ip) - basis%xyz(:,ia)
 
-        ! TODO retrieve quantum numbers l and m
-        call grylmr(idr(1), idr(2), idr(3), il, im, iao)
+        ! Calculate all psi-components at point r for all basis-functions
+        ! on this specie
+        call basis%get_psi(is, idr, ipsi)
 
         ! Loop over basis DM functions
-        loop_DM: do io = basis%site_function_start(ia), basis%site_function_start(ia + 1) - 1
+        loop_DM: do io = basis%site_orbital_start(ia), basis%site_orbital_start(ia + 1) - 1
 
-          iio = io - basis%site_function_start(ia) + 1 ! local basis-function index of site ia
+          iio = io - basis%site_orbital_start(ia) + 1 ! local basis-function index of site ia
 
           ! Loop over density matrix for the neighbouring basis-sites
           ! TODO this loop could be reduced by limiting the basis functions
@@ -176,16 +200,15 @@ contains
             ! Figure out which atom this orbital belongs too
             jo = sp%column(ind) ! global basis-function index
             ! Figure out the atomic index of the orbital
-            ja = basis%function_site(jo) ! global basis site
-            js = basis%species_idx(ja) ! which basis specie
-            jjo = jo - basis%site_function_start(ja) + 1 ! local basis-function index of site ja
+            ja = basis%orbital_site(jo) ! global basis site
+            js = basis%site_state_idx(ja) ! which basis specie
+            jjo = jo - basis%site_orbital_start(ja) + 1 ! local basis-function index of site ja
 
             jdr(:) = grid%r(:,ip) - basis%xyz(:,ja)
-            ! TODO retrieve quantum numbers l and m
-            call grylmr(jdr(1), jdr(2), jdr(3), jl, jm, jao)
+            call basis%get_psi(js, jjo, jdr, jpsi)
 
             ! Add density contribution to the grid
-            rho_ip = rho_ip + iao * DM%M(ind) * jao
+            rho_ip = rho_ip + ipsi(iio) * DM%M(ind) * jpsi
 
           end do
 
@@ -198,7 +221,7 @@ contains
     end do loop_grid
 
     ! Clean up
-    deallocate(neigh)
+    deallocate(neigh, ipsi)
 
   contains
 
@@ -209,8 +232,8 @@ contains
       integer :: is
 
       n_neigh = 0
-      r_max = 10._dp ! TODO retrieve correct radius of basis-functions
-      do is = 1, basis%n_sites
+      r_max = 14._dp ! TODO retrieve correct radius of basis-functions
+      do is = 1, basis%n_site
 
         dist = sqrt(sum( (basis%xyz(:, is) - r) ** 2 ))
 

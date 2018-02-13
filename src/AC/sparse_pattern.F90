@@ -25,60 +25,60 @@ module esl_sparse_pattern_m
   !< consecutively populated via the `this%add(r, c)` method.
   type sparse_pattern_t
 
-     integer(ii_) :: nr = ZERO !< Number of rows in sparse pattern
-     integer(ii_) :: nc = ZERO !< Number of columns in sparse pattern
-     integer(ii_) :: nz = ZERO !< Number of non-zero elements in sparse pattern
-     integer(ii_) :: nt = ZERO !< Maximum number of non-zero elements in sparse pattern
+    integer(ii_) :: nr = ZERO !< Number of rows in sparse pattern
+    integer(ii_) :: nc = ZERO !< Number of columns in sparse pattern
+    integer(ii_) :: nz = ZERO !< Number of non-zero elements in sparse pattern
+    integer(ii_) :: nt = ZERO !< Maximum number of non-zero elements in sparse pattern
 
-     logical :: finalized = .false. !< Parameter to check whether the sparse pattern is finalized (nz == nt)
+    logical :: finalized = .false. !< Parameter to check whether the sparse pattern is finalized (nz == nt)
 
-     !< 1-based pointers for each row.
-     !<   column(rptr(2))
-     !< is the first column in the sparse pattern for row 2.
-     !<   column(rptr(2) + nrow(2) - 1)
-     !< is the last column in the sparse pattern for row 2.
-     integer(ii_), allocatable :: rptr(:)
+    !< 1-based pointers for each row.
+    !<   column(rptr(2))
+    !< is the first column in the sparse pattern for row 2.
+    !<   column(rptr(2) + nrow(2) - 1)
+    !< is the last column in the sparse pattern for row 2.
+    integer(ii_), allocatable :: rptr(:)
 
-     !< Number of entries per row (size() == nr), sum(nrow) == nz
-     !< This is a necessity only when constructing the matrix.
-     !< It however, has some added benefits when one wishes to figure
-     !< out the edges of a given node.
-     integer(ii_), allocatable :: nrow(:)
+    !< Number of entries per row (size() == nr), sum(nrow) == nz
+    !< This is a necessity only when constructing the matrix.
+    !< It however, has some added benefits when one wishes to figure
+    !< out the edges of a given node.
+    integer(ii_), allocatable :: nrow(:)
 
-     !< Column indices.
-     integer(ii_), allocatable :: column(:)
+    !< Column indices.
+    integer(ii_), allocatable :: column(:)
 
-   contains
+  contains
 
-     procedure, public :: init => init_dim_
+    procedure, public :: init => init_dim_
 
-     !< True if the sparse pattern is initialized
-     procedure, public :: initialized => initialized_
+    !< True if the sparse pattern is initialized
+    procedure, public :: initialized => initialized_
 
-     !< Query number of nonzero elements currently in the sparse pattern
-     procedure, public :: nonzeros => nonzeros_
-     !< Query maximum number of nonzero elements that this sparse pattern may contain
-     procedure, public :: max_nonzeros => max_nonzeros_
+    !< Query number of nonzero elements currently in the sparse pattern
+    procedure, public :: nonzeros => nonzeros_
+    !< Query maximum number of nonzero elements that this sparse pattern may contain
+    procedure, public :: max_nonzeros => max_nonzeros_
 
-     !< Number of rows in the sparse pattern 
-     procedure, public :: rows => rows_
-     !< Number of columns in the sparse pattern 
-     procedure, public :: columns => columns_
+    !< Number of rows in the sparse pattern 
+    procedure, public :: rows => rows_
+    !< Number of columns in the sparse pattern 
+    procedure, public :: columns => columns_
 
-     !< Directly query the sparse index for a given `row, column`
-     procedure, public :: index => index_
+    !< Directly query the sparse index for a given `row, column`
+    procedure, public :: index => index_
 
-     !< Add a new row and column to the sparse pattern
-     procedure, public :: add => add_
+    !< Add a new row and column to the sparse pattern
+    procedure, public :: add => add_
 
-     !< Finalize the sparse pattern such that the pointers and elements
-     procedure, public :: finalize => finalize_
+    !< Finalize the sparse pattern such that the pointers and elements
+    procedure, public :: finalize => finalize_
 
-     !< Print, to std-out information regarding this sparse pattern
-     procedure, public :: print => print_
+    !< Print, to std-out information regarding this sparse pattern
+    procedure, public :: print => print_
 
-     !< Delete this sparse object
-     procedure, public :: delete => delete_
+    !< Delete this sparse object
+    procedure, public :: delete => delete_
 
   end type sparse_pattern_t
 
@@ -117,7 +117,7 @@ contains
   subroutine print_(this)
     class(sparse_pattern_t), intent(in) :: this
     write(*,'(3(a,i0),a)') "<sparse_pattern rows=", this%nr, &
-         ", columns=", this%nc, ", non-zeros=",this%nz, "/>"
+        ", columns=", this%nc, ", non-zeros=",this%nz, "/>"
   end subroutine print_
 
   subroutine delete_(this, stat)
@@ -155,13 +155,15 @@ contains
     this%nc = nc
     ! store the initial size of the sparse pattern
     if ( present(nt) ) then
-       this%nt = nt
+      this%nt = nt
     else if ( present(np) ) then
-       this%nt = np * nr
+      this%nt = np * nr
     else
-       ! np is defaulting to 10
-       this%nt = nr * 10_ii_
+      ! np is defaulting to 10
+      this%nt = nr * 10_ii_
     end if
+    ! Ensure that nt is at least nr
+    this%nt = max(this%nr, this%nt)
 
     ! initial number of non-zero elements
     this%nz = ZERO
@@ -177,10 +179,10 @@ contains
     ! pre-define pointers to sparse pattern
     lnp = this%nt / this%nr
     this%rptr(ONE) = ONE
-    do i = ONE , nr
-       this%rptr(i) = this%rptr(i-ONE) + np
+    do i = ONE + ONE , nr
+      this%rptr(i) = this%rptr(i-ONE) + lnp
     end do
-    this%rptr(nr+ONE) = this%rptr(nr) + ONE
+    this%rptr(nr+ONE) = this%nt
 
   end subroutine init_dim_
 
@@ -191,7 +193,7 @@ contains
     integer(ii_), intent(in) :: ic
     integer(ii_) :: idx
     do idx = this%rptr(ir) , this%rptr(ir) + this%nrow(ir) - ONE
-       if ( this%column(idx) == ic ) return
+      if ( this%column(idx) == ic ) return
     end do
     idx = -ONE
   end function index_
@@ -207,14 +209,14 @@ contains
     ! Loop rows
     do ir = ONE, this%nr
 
-       ! Loop over sparse elements
-       first_ind = ind
-       do rind = this%rptr(ir), this%rptr(ir) + this%nrow(ir) - ONE
-          this%column(ind) = this%column(rind)
-          ind = ind + ONE
-       end do
+      ! Loop over sparse elements
+      first_ind = ind
+      do rind = this%rptr(ir), this%rptr(ir) + this%nrow(ir) - ONE
+        this%column(ind) = this%column(rind)
+        ind = ind + ONE
+      end do
 
-       this%rptr(ir) = first_ind
+      this%rptr(ir) = first_ind
 
     end do
 
@@ -226,7 +228,7 @@ contains
     this%nt = ind - ONE
 
     ! Update last pointer
-    this%rptr(this%nr) = ind
+    this%rptr(this%nr+1) = ind
 
     this%finalized = .true.
 
@@ -241,13 +243,15 @@ contains
 
     ! first try simple add
     if ( simple_add() ) then
-       if ( present(ind) ) ind = lind
-       return
+      ! Good, we do not need to call complex_add
+    else
+
+      ! We have to do the complex thing... :(
+      ! This means heavy work due to deallocation, allocation, etc.
+      call complex_add()
+      
     end if
 
-    ! We have to do the complex thing... :(
-    ! This means heavy work due to deallocation, allocation, etc.
-    call complex_add()
     if ( present(ind) ) ind = lind
 
   contains

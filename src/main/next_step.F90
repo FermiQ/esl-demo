@@ -57,7 +57,7 @@ contains
 
       ! Calculate the overlap matrix
       ! This requires that the grid information is present
-      call overlap_matrix_ac_calculate(system%basis%ac, &
+      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
           system%sparse_pattern, system%S)
 
       ! Figure out the next density matrix
