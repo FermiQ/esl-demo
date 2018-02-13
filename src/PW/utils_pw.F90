@@ -29,7 +29,7 @@ contains
     real(dp),         intent(in) :: gmet(3, 3)
     real(dp),         intent(in) :: kpt(3)
 
-    integer :: i1, i2, i3, i
+    integer :: i1, i2, i3
     real(dp) :: threshold
 
     npw = 0
@@ -109,7 +109,7 @@ contains
     call fourier_sphere2cube(gmap, ndims, npw, coef_pw, fourier_cube)    
 
     ! FFT-1
-    call fftw_execute_dft(grid%iFFTplan, fourier_cube, rs_cube)
+    call fftw_execute_dft(grid%iFFTplan, fourier_cube(:,:,:), rs_cube(:,:,:))
 
     call rs_cube2grid(grid, rs_cube, coef_rs)
 
@@ -134,7 +134,7 @@ contains
     call rs_grid2cube(grid, coef_rs, rs_cube)
 
     ! FFT
-    call fftw_execute_dft(grid%FFTplan, rs_cube, fourier_cube)
+    call fftw_execute_dft(grid%FFTplan, rs_cube(:,:,:), fourier_cube(:,:,:))
 
     call fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw)
 

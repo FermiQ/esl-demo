@@ -51,7 +51,8 @@ contains
 
     this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
     this%max_iter    = fdf_get('SCFMaxIterations', 100)
-    !Parse here the data for the SCF
+
+    call this%mixer%init()
 
   end subroutine init
 
@@ -139,14 +140,17 @@ contains
   subroutine mix(this, basis, rho_in, rho_out)
     class(scf_t) :: this
     type(basis_t),  intent(in)   :: basis
-    type(density_t), intent(out) :: rho_in, rho_out 
+    type(density_t), intent(in) :: rho_in, rho_out 
 
     real(kind=dp), allocatable :: rhonew(:)
+    integer :: np
+
+    np = rho_in%np
 
     select case (basis%type)
     case ( PLANEWAVES )  
-      allocate(rhonew(1:rho_in%np))
-      call this%mixer%linear(rho_in%np, rho_in%density_pw%density, rho_out%density_pw%density, rhonew)
+      allocate(rhonew(1:np))
+      call this%mixer%linear(np, rho_in%density_pw%density(1:np), rho_out%density_pw%density(1:np), rhonew(1:np))
       call rho_in%density_pw%set_den(rhonew)
       deallocate(rhonew)
     case ( ATOMCENTERED )

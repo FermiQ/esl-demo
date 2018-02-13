@@ -137,15 +137,6 @@ contains
 
     end select
 
-    
-!!$    !Test tolerance and print status
-!!$    !We use rhonew to compute the relative density
-!!$    do ip = 1, this%np
-!!$      this%rhonew(ip) = abs(this%rhoout(ip) - this%rhoin(ip))
-!!$    end do
-!!$    call integrate(grid, this%rhonew, reldens)
-!!$    reldens = reldens/real(nel)
-
   end function residue
 
 end module esl_density_m
