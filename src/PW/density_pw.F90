@@ -75,7 +75,7 @@ contains
       is = geo%species_idx(iat)      
 
       !Convert the radial density to the cartesian grid
-      call grid%radial_function(geo%species(iat)%rho, 0, 0, geo%xyz(:,iat), atomicden)
+      call grid%radial_function(geo%species(is)%rho, 0, 0, geo%xyz(:,iat), atomicden)
 
       call integrate(grid, atomicden, norm)
       call yaml_map("Norm", norm)
