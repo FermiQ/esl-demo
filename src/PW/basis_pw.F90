@@ -4,7 +4,8 @@ module esl_basis_pw_m
   use esl_geometry_m
   use esl_utils_pw_m
   use esl_grid_m
-  
+ 
+  implicit none 
   private
 
   public :: basis_pw_t
@@ -37,6 +38,8 @@ contains
     integer,              intent(in) :: ndims(3)
     real(dp),             intent(in) :: gcell(3,3)
 
+    integer :: i
+
     this%ecut = ecut
 
     do i = 1, 3
@@ -48,8 +51,8 @@ contains
     this%npw = get_number_of_pw(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp])
     
     !TODO: We should create of these for each k-point
-    allocate(this%gmod(1:npw))
-    allocate(this%gmap(1:3,1:npw))
+    allocate(this%gmod(1:this%npw))
+    allocate(this%gmap(1:3,1:this%npw))
     call construct_mod_map_tables(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp], this%gmod, this%gmap)
 
     this%ndims(1:3) = ndims(1:3)

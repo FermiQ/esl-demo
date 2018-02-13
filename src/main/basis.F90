@@ -112,7 +112,7 @@ contains
     real(dp), intent(in)  :: kpt(3)
 
     real(dp) :: threshold
-    integer  :: dir, n, i
+    integer  :: dir, i
     real(dp) :: gmet(3,3)
     real(dp), parameter :: BOXCUTMIN = 2.0_dp
 

@@ -105,7 +105,7 @@ contains
     case ( PLANEWAVES )
 
       ! Calculate density
-      call this%density_pw%calculate(states)
+      call out%density_pw%calculate(states)
 
     case ( ATOMCENTERED )
 
@@ -118,9 +118,10 @@ contains
 
 
   !< Calculate the relative difference between two densities
-  function residue(this, basis, other) result(res)
-    class(density_t), intent(in) :: this, other
-    type(basis_t), intent(in) :: basis
+  function residue(this, basis, other, states) result(res)
+    class(density_t),    intent(in) :: this, other
+    type(basis_t),       intent(in) :: basis
+    type(states_t),      intent(in) :: states
 
     real(dp) :: res
 
@@ -128,8 +129,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
 
-      ! TODO implement the residue function in density_pw_t
-!      res = this%density_pw%residue(basis%grid, basis%pw, other%density_pw)
+      res = this%density_pw%residue(basis%grid, states%nel, other%density_pw)
       
     case ( ATOMCENTERED )
 

@@ -33,12 +33,11 @@ contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-  subroutine init(this, grid, geo, states, basis, periodic)
+  subroutine init(this, grid, geo, states, periodic)
     class(hamiltonian_t) :: this
     type(grid_t),     intent(in) :: grid
     type(geometry_t), intent(in) :: geo
     type(states_t),   intent(in) :: states
-    type(basis_t),    intent(in) :: basis
     logical,          intent(in) :: periodic
 
     call this%energy%init()

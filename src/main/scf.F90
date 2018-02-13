@@ -76,11 +76,12 @@ contains
     type(states_t),         intent(in) :: states
     type(smear_t), intent(inout) :: smear
 
-    integer :: iter, ip !< Interation
+    integer :: iter !< Interation
     real(dp) :: res
 
     ! Initialize the densities
     call this%rho_in%init(system%basis)
+    call this%rho_out%init(system%basis)
 
     ! Perform initial guess on the density
     call this%rho_in%guess(system%basis, system%geo)
@@ -109,7 +110,7 @@ contains
       ! TODO fix the pw/ac part due to the number of states. They are behaving
       !      differently, so perhaps it is better to pass everything?
       !      For now I don't do this...
-      res = this%rho_out%residue(system%basis, this%rho_in)
+      res = this%rho_in%residue(system%basis, this%rho_out, states)
       call yaml_map("Residue", res)
 !      call yaml_map("Rel. Density", reldens)
       if ( res <= this%tol_reldens ) then
@@ -121,7 +122,7 @@ contains
       end if
 
       ! Perform mixing
-      call this%mix(system%basis)
+      call this%mix(system%basis, this%rho_in, this%rho_out)
 
       !Update Hamiltonian matrix
 
@@ -135,19 +136,24 @@ contains
   
   ! Perform mixing step
   !----------------------------------------------------
-  subroutine mix(this, basis)
+  subroutine mix(this, basis, rho_in, rho_out)
     class(scf_t) :: this
-    type(basis_t),  intent(in) :: basis
+    type(basis_t),  intent(in)   :: basis
+    type(density_t), intent(out) :: rho_in, rho_out 
 
+    real(kind=dp), allocatable :: rhonew(:)
+
+    select case (basis%type)
+    case ( PLANEWAVES )  
+      allocate(rhonew(1:rho_in%np))
+      call this%mixer%linear(rho_in%np, rho_in%density_pw%density, rho_out%density_pw%density, rhonew)
+      call rho_in%density_pw%set_den(rhonew)
+      deallocate(rhonew)
+    case ( ATOMCENTERED )
     !TODO
-!!$    select case (basis%type)
-!!$    case ( PLANEWAVES )  
-!!$      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
-!!$      call this%density_pw%set_den(this%rhonew)
-!!$    case ( ATOMCENTERED )
 !!$      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
 !!$      call this%ac%set_den(this%rhonew)
-!!$    end select
+    end select
 
   end subroutine mix
 
