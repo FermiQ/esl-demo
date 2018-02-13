@@ -1,7 +1,9 @@
 module esl_basis_ac_m
   use prec
   use yaml_output
+  use pspiof_m
 
+  use esl_numeric_m
   use esl_message_m
   use esl_species_m
   use esl_geometry_m
@@ -13,25 +15,72 @@ module esl_basis_ac_m
 
   public :: basis_ac_t
 
+
+  ! Local container for the orbital basis function.
+  ! This orbital object contains three things:
+  !  1. l, l-quantum number
+  !  2. m, m-quantum number
+  !  3. R(r), radial function.
+  !  4. occ, initial occupation
+  ! From these 3 quantities one can re-create the full
+  !   psi(r) = R(r) Y_l^m(r)
+  ! values at any point.
+  ! Later this orbital may contain information such
+  ! as polarization, zeta-information etc.
+  type orbital_ac_t
+    
+    integer :: l = 0, m = 0
+    real(dp) :: occ = 0._dp
+    !< Radial function of psi [R(r) Y_l^m(r) == psi(r)]
+    type(pspiof_meshfunc_t), pointer :: R => null()
+    
+  end type orbital_ac_t
+  
+  ! Each site consists of a set of orbitals
+  ! These orbitals are the *expanded* versions of a state
+  ! I.e. n_orbital is the actual total number of basis-orbitals on that
+  ! site.
+  type state_ac_t
+    
+    integer :: n_orbital = 0
+    type(orbital_ac_t), pointer :: orb(:) => null()
+    
+  end type state_ac_t
+
   type basis_ac_t
-    integer :: n_sites !< Number of different atomic centered sites
-    integer :: n_species !< Number of different atomic centered species used on the sites
-    integer :: n_functions !< Number of functions in basis (sum of number of functions per site)
-    real(dp),        allocatable :: xyz(:,:) !< Cartesian coordinates of the atomic centered sites
-    type(species_t), allocatable :: species(:) !< The unique species used on the sites
-    integer,         allocatable :: species_idx(:) !< A list of specie indices for each site
-    integer,         allocatable :: site_function_start(:) !< Look-up table to convert a site index to the first global function index (n_sites + 1)
-    integer,         allocatable :: function_g2l(:) !< Look-up table to convert a global function index to the local function index on the specie
-    integer,         allocatable :: function_site(:) !< Look-up table to convert a global function index to a site index.
+
+    integer :: n_site = 0 !< Number of atomic centered sites
+    real(dp), allocatable :: xyz(:,:) !< Cartesian coordinates of the atomic centered sites
+
+    !< Number of unique sites (irrespective of Cartesian positions)
+    integer :: n_state = 0
+    !< Container for each site. Each site contains a set of orbitals on which the basis is expanded
+    type(state_ac_t), allocatable :: state(:)
+
+    !< Total number of orbitals in this AC-basis
+    !< This equates to sum[ state(is)%n_orbital * <number of sites with state is> for all is]
+    integer :: n_orbital = 0 !< Number of functions in basis (sum of number of functions per site)
+
+    integer, allocatable :: site_state_idx(:) !< State indices for each site
+
+    integer, allocatable :: site_orbital_start(:) !< Look-up table to convert a site index to the first global orbital index (n_site + 1)
+    integer, allocatable :: orbital_g2l(:) !< Look-up table to convert a global orbital index to the local function index on the specie
+    integer, allocatable :: orbital_site(:) !< Look-up table to convert a global orbital index to a site index.
+
   contains
     private
     procedure, public :: init
     procedure, public :: summary
 
+    procedure, private :: get_psi_all, get_psi_single
+    generic, public :: get_psi => get_psi_all, get_psi_single
+    
     procedure, public :: atomic_density_matrix
 
     final :: cleanup
+    
   end type basis_ac_t
+
 
 contains
 
@@ -41,12 +90,100 @@ contains
     class(basis_ac_t) :: this
     type(geometry_t), intent(in) :: geo
 
+    ! Local variables
+    type(pspiof_meshfunc_t), pointer :: mesh_R => null()
+    integer :: is, no, io
+    integer :: l, m
+    real(dp) :: occ
+
+    ! Construct the basis functions
+
+    ! First copy over the Cartesian coordinates
+    this%n_site = geo%n_atoms
+    allocate( this%xyz(3, this%n_site) )
+    ! Copy coordinates
+    this%xyz(:,:) = geo%xyz(:,:)
+
+    ! Each specie corresponds to a "state"
+    this%n_state = geo%n_species
+    allocate( this%state(this%n_state) )
+    
+    ! Loop over each specie and construct the basis orbitals
+    do is = 1, geo%n_species
+      
+      ! For each state we need to figure out how many basis-orbitals
+      ! the state is expanded into.
+      ! So the species%state does not per see contain all orbitals
+
+      no = 0
+      ! %n_orbitals is a bit misleading as they are not orbitals.
+      ! Rather, they are l, R states
+      do io = 1, geo%species(is)%n_radial_orbitals
+
+        call geo%species(is)%get_radial_orbital(io, ll=l)
+        no = no + l * 2 + 1
+
+      end do
+
+      ! Allocate all orbitals for this site
+      ! Note that this is aranged according to the species
+      ! states
+      !   for species%rad_orb has
+      !     rad_orb , l = 1
+      !     rad_orb , l = 2
+      !     rad_orb , l = 1
+      ! the final orbitals will be:
+      !   l=1,m=-1
+      !   l=1,m=0
+      !   l=1,m=1
+      !   l=2,m=-2
+      !   l=2,m=-1
+      !   l=2,m=0
+      !   l=2,m=1
+      !   l=2,m=2
+      !   l=1,m=-1
+      !   l=1,m=0
+      !   l=1,m=1
+      this%state(is)%n_orbital = no
+      allocate(this%state(is)%orb(no))
+
+      ! Loop and create the things
+      no = 0 ! counter for the current placement of the radial orbital
+      do io = 1, geo%species(is)%n_radial_orbitals
+
+        ! Retrieve it once, then subsequent orbitals are pointing to a single
+        ! instance.
+        allocate(mesh_r)
+
+        ! Get all radial orbital information
+        call geo%species(is)%get_radial_orbital(io, l, mesh_r, occ)
+
+        do m = -l, l
+          ! Populate the orbital
+          no = no + 1
+          this%state(is)%orb(no)%l = l
+          this%state(is)%orb(no)%m = m
+          this%state(is)%orb(no)%R => mesh_r
+          this%state(is)%orb(no)%occ = occ / (l * 2 + 1)
+        end do
+
+        ! Nullify to retain only the references within the orbital lists
+        nullify(mesh_r)
+
+      end do
+      
+    end do
+
   end subroutine init
 
   !Release
   !----------------------------------------------------
   subroutine cleanup(this)
     type(basis_ac_t) :: this
+
+    if ( .not. allocated(this%xyz) ) return
+
+    deallocate(this%xyz)
 
   end subroutine cleanup
 
@@ -101,7 +238,7 @@ contains
     DM%M(:) = 0._dp
     
     ! Fill the density matrix with 1's
-    do io = 1, this%n_functions
+    do io = 1, this%n_orbital
       
       ! Figure out if this basis function has initial density
       do ind = sp%rptr(io) , sp%rptr(io) + sp%nrow(io) - 1
@@ -129,10 +266,10 @@ contains
       allocate(sp)
 
       ! Initialize the sparse pattern with only one element per-row
-      call sp%init(this%n_functions, this%n_functions, np=1)
+      call sp%init(this%n_orbital, this%n_orbital, np=1)
 
       ! Add elements to the sparse matrix
-      do ia = 1, this%n_sites
+      do ia = 1, this%n_site
 
         ! TODO fill here to correctly fill the diagonal elements
         ! we should loop on the electronic configuration
@@ -151,6 +288,64 @@ contains
   end subroutine atomic_density_matrix
 
 
+  !< Calculate the basis function at a position `r` from the center of the basis function
+  !<
+  !< @param this the basis type
+  !< @param specie integer index of the specie
+  !< @param r the vector (r_p - r_C) where r_p is the point of evaluation and r_C is the center of the basis functions
+  !< @param psi the values of the wave function (has to be large enough to get all)
+  subroutine get_psi_all(this, state, r, psi)
+    class(basis_ac_t), intent(in) :: this
+    integer, intent(in) :: state
+    real(dp), intent(in) :: r(3)
+    real(dp), intent(out) :: psi(:)
+
+    ! Local variables
+    integer :: norb, io ! number of orbitals, loop
+    real(dp) :: dist, FR
+    type(orbital_ac_t), pointer :: orb => null()
+
+    norb = this%state(state)%n_orbital
+    if ( size(psi) < norb ) then
+      stop 'error in get_psi_all'
+    end if
+
+    ! Loop orbitals on this state
+    dist = sqrt( sum( r ** 2 ) )
+    do io = 1, norb
+
+      if ( associated(orb, this%state(state)%orb(io)) ) then
+        ! do nothing, the radial value is the same
+      else
+        orb => this%state(state)%orb(io)
+        FR = pspiof_meshfunc_eval(orb%R, dist)
+      end if
+      
+      call grylmr(r(1), r(2), r(3), orb%l, orb%m, psi(io))
+      
+      psi(io) = psi(io) * FR
+      
+    end do
+    
+  end subroutine get_psi_all
+
+  subroutine get_psi_single(this, state, io, r, psi)
+    class(basis_ac_t), intent(in) :: this
+    integer, intent(in) :: state, io
+    real(dp), intent(in) :: r(3)
+    real(dp), intent(out) :: psi
+
+    ! Local variables
+    real(dp) :: dist
+    type(orbital_ac_t), pointer :: orb
+
+    orb => this%state(state)%orb(io)
+    call grylmr(r(1), r(2), r(3), orb%l, orb%m, psi)
+    dist = sqrt( sum( r ** 2 ) )
+    psi = psi * pspiof_meshfunc_eval(orb%R, dist)
+    
+  end subroutine get_psi_single
+  
   !Summary
   !----------------------------------------------------
   subroutine summary(this)
@@ -161,18 +356,19 @@ contains
 
     call yaml_mapping_open("basis_ac")
     
-    call yaml_map("Number of sites", this%n_sites)
+    call yaml_map("Number of sites", this%n_site)
     
     call yaml_sequence_open("Site coordinates", advance = "no")
     call yaml_comment("| X | Y | Z |", hfill = "-")
-    do is = 1, this%n_sites
+    do is = 1, this%n_site
       call yaml_sequence(advance="no")
       write(str, '(i0)') is
       call yaml_map(trim(str), this%xyz(:,is))
     end do
     call yaml_sequence_close()
     
-    call yaml_map("Number of functions", this%n_functions)
+    call yaml_map("Number of functions", this%n_orbital)
+    call yaml_comment("| l | m |", hfill = "-")
     call yaml_mapping_close()
 
   end subroutine summary

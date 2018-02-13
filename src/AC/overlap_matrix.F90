@@ -34,13 +34,13 @@ contains
 
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
-    do ia = 1, basis%n_sites
-      is = basis%species_idx(ia)
+    do ia = 1, basis%n_site
+      is = basis%site_state_idx(ia)
 
       ! Loop on orbitals
-      do io = basis%site_function_start(ia), basis%site_function_start(ia + 1) - 1
+      do io = basis%site_orbital_start(ia), basis%site_orbital_start(ia + 1) - 1
         ! Orbital index on atom
-        iio = io - basis%site_function_start(ia) + 1
+        iio = io - basis%site_orbital_start(ia) + 1
 
         !TODO: get ll and mm
  !       call basis%grid%radial_function(basis%orbitals(iio), ll, mm, xyz(:,ia), ao1)
@@ -51,9 +51,9 @@ contains
           ! Figure out which atom this orbital belongs too
           jo = sp%column(ind)
           ! Figure out the atomic index of the orbital
-          ja = basis%function_site(jo)
-          js = basis%species_idx(ja)
-          jjo = jo - basis%site_function_start(ja) + 1
+          ja = basis%orbital_site(jo)
+          js = basis%site_state_idx(ja)
+          jjo = jo - basis%site_orbital_start(ja) + 1
 
           ! We are now in a position to calculate the
           ! overlap matrix. I.e. we know the atom, the

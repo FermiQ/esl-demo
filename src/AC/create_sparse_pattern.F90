@@ -34,28 +34,26 @@ contains
 
     ! Figure out the number of orbitals
     max_no = 0
-    do ia = 1, basis%n_sites
-      no = basis%site_function_start(ia+1) - &
-          basis%site_function_start(ia)
-      max_no = max(max_no, no)
+    do is = 1 , basis%n_state
+      max_no = max(max_no, basis%state(is)%n_orbital)
     end do
     ! Total number of basis-functions
-    no = basis%n_functions
+    no = basis%n_orbital
 
     ! Now re-initialize the sparse matrix.
     ! In this case we will assume a maximum of 20 atomic connections
     call sp%init(no, no, np=max_no * 20)
 
     ! Loop over all sites
-    do ia = 1, basis%n_sites
-      is = basis%species_idx(ia)
+    do ia = 1, basis%n_site
+      is = basis%site_state_idx(ia)
 
       ! Add the connections to it-self
       call add_elements(ia, ia, 0._dp)
 
       ! Only loop the remaining atoms (no need to double process)
-      do ja = ia + 1, basis%n_sites
-        js = basis%species_idx(ja)
+      do ja = ia + 1, basis%n_site
+        js = basis%site_state_idx(ja)
 
         ! Calculate whether the distance between the two
         ! atoms is within their basis range.
@@ -90,8 +88,8 @@ contains
       ! TODO do orbital dependent distances
 
       ! Loop orbitals on both atoms
-      do io = basis%site_function_start(ia) , basis%site_function_start(ia+1) - 1
-        do jo = basis%site_function_start(ja) , basis%site_function_start(ja+1) - 1
+      do io = basis%site_orbital_start(ia) , basis%site_orbital_start(ia+1) - 1
+        do jo = basis%site_orbital_start(ja) , basis%site_orbital_start(ja+1) - 1
           call sp%add(io, jo)
         end do
       end do

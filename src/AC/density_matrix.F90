@@ -80,13 +80,13 @@ contains
 
     ! Loop over all orbital connections in the sparse pattern and
     ! set the diagonal density matrix
-    do ia = 1, basis%n_sites
-      is = basis%species_idx(ia)
+    do ia = 1, basis%n_site
+      is = basis%site_state_idx(ia)
 
       ! Loop on orbitals
-      do io = basis%site_function_start(ia), basis%site_function_start(ia + 1) - 1
+      do io = basis%site_orbital_start(ia), basis%site_orbital_start(ia + 1) - 1
         ! Orbital index on atom
-        iio = io - basis%site_function_start(ia) + 1
+        iio = io - basis%site_orbital_start(ia) + 1
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1

@@ -70,7 +70,7 @@ contains
 
       ! Initialize AC basis
       call this%ac%init(geo)
-      this%size = this%ac%n_functions
+      this%size = this%ac%n_orbital
       
     else
       call message_error("Unknown basis set: "//trim(str))
