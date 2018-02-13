@@ -33,6 +33,7 @@ module esl_geometry_m
     procedure, public :: init
     procedure, public :: summary
     procedure, public :: volume
+    procedure, public :: electronic_charge
     final  :: cleanup
   end type geometry_t
 
@@ -145,6 +146,7 @@ contains
       call this%species(ia)%summary()
     end do
     call yaml_sequence_close()
+    call yaml_map("Number of electrons", this%electronic_charge())
     call yaml_map("Volume (Bohr^3)", this%volume())
     call yaml_mapping_close()
 
@@ -162,4 +164,18 @@ contains
 
   end function volume
 
+  !----------------------------------------------------
+  function electronic_charge(this) result(charge)
+    class(geometry_t), intent(inout) :: this
+    real(dp) :: charge
+
+    integer :: ia
+
+    charge = 0.0_dp
+    do ia = 1, this%n_atoms
+      charge = charge + this%species(this%species_idx(ia))%q
+    end do
+
+  end function electronic_charge
+  
 end module esl_geometry_m
