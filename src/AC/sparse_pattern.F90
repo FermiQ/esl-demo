@@ -228,7 +228,7 @@ contains
     this%nt = ind - ONE
 
     ! Update last pointer
-    this%rptr(this%nr) = ind
+    this%rptr(this%nr+1) = ind
 
     this%finalized = .true.
 
@@ -276,7 +276,9 @@ contains
       ! A copy of cols before we insert it.
       integer(ii_), allocatable :: cols(:)
 
+#ifdef __GFORTRAN__
       call backtrace()
+#endif
       stop 'currently not implemented'
 
     end subroutine complex_add

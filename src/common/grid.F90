@@ -29,6 +29,7 @@ module esl_grid_m
     private
     procedure, public :: init
     procedure, public :: radial_function
+    procedure, public :: overlap
     procedure, public :: summary
     final  :: cleanup
   end type grid_t
@@ -203,7 +204,7 @@ contains
   !Overlap
   !----------------------------------------------------
   real(dp) function overlap(grid, xyz1, ao1, r1, xyz2, ao2, r2)
-    type(grid_t),    intent(in) :: grid
+    class(grid_t),    intent(in) :: grid
     real(dp),   intent(in) :: xyz1(3)
     real(dp),   intent(in) :: ao1(:)
     real(dp),   intent(in) :: r1
@@ -213,16 +214,19 @@ contains
 
     integer :: ip
     real(dp) :: dist
-
+    
     dist = sqrt(sum( (xyz1 - xyz2) ** 2 ))
-    overlap = 0._dp
     if ( dist < r1 + r2 ) then
 
-       do ip = 1 , grid%np
-          overlap = overlap + ao1(ip)*ao2(ip)
-       end do
-       overlap = overlap*grid%volelem
+      do ip = 1 , grid%np
+        overlap = overlap + ao1(ip)*ao2(ip)
+      end do
+      overlap = overlap*grid%volelem
 
+    else
+      
+      overlap = 0._dp
+      
     end if
 
   end function overlap
