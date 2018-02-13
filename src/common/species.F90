@@ -26,6 +26,7 @@ module esl_species_m
     private
     procedure, public :: init
     procedure, public :: get_radial_orbital
+    procedure, public :: get_radial_orbital_rmax
     procedure, public :: summary
     final :: cleanup
   end type species_t
@@ -113,10 +114,9 @@ contains
     call yaml_map("Ionic charge", this%z_ion)
     call yaml_map("Electronic charge", this%q)
     call yaml_mapping_close()
-
+    
   end subroutine summary
 
-  
   subroutine get_radial_orbital(this, io, ll, radial_orbital, occ)
     class(species_t) :: this
     integer,                           intent(in)  :: io
@@ -135,6 +135,26 @@ contains
     end if
 
   end subroutine get_radial_orbital
+
+  function get_radial_orbital_rmax(this, io, tolerance) result(rmax)
+    class(species_t) :: this
+    integer,  intent(in) :: io
+    real(dp), intent(in) :: tolerance
+    real(dp) :: rmax
+
+    integer :: ir
+    real(dp), pointer :: r(:)
+    type(pspiof_mesh_t) :: mesh
+
+    mesh = pspiof_pspdata_get_mesh(this%psp)
+    r => pspiof_mesh_get_r(mesh)
+
+    do ir = pspiof_mesh_get_np(mesh), 1, -1 
+      rmax = r(ir)
+      if (abs(pspiof_state_wf_eval(this%radial_orbitals(io), rmax)*rmax) > tolerance) exit
+    end do
+    
+  end function get_radial_orbital_rmax
   
   !----------------------------------------------------
   !Private routines
