@@ -49,7 +49,7 @@ include_directories(${PSPIO_INCLUDE_DIRS})
 link_directories(${PSPIO_LIBRARY_DIRS})
 
 message(STATUS "Found FFTW support!")
-include_directories(${FFTW_INCLUDE_DIRS})
+include_directories(${FFTW_PREFIX}/include)
 link_directories(${FFTW_LIBRARY_DIRS})
 
 if(WITH_FLOOK)
