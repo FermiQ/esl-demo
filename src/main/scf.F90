@@ -59,9 +59,9 @@ contains
 
     select case (system%basis%type)
     case ( PLANEWAVES )
-      call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+      call this%H%init(system%basis, system%geo, states, periodic=.false.)
     case( ATOMCENTERED )
-      call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+      call this%H%init(system%basis, system%geo, states, periodic=.false.)
     end select
 
   end subroutine init
@@ -106,7 +106,7 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
-      call this%H_in%eigensolver(system%basis, states)
+      call this%H%eigensolver(system%basis, states)
 
       ! Update occupations
       call smear_calc_fermi_and_occ(smear, elsi, states)
