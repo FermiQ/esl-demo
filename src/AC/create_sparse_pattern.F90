@@ -69,7 +69,6 @@ contains
 
           ! Add all orbitals to the sparse pattern
           call add_elements(ia, ja, dist)
-          call add_elements(ja, ia, dist)
 
         end if
 
@@ -88,26 +87,50 @@ contains
       integer :: isite, jsite
       integer :: is, io, js, jo
 
-      ! TODO, only do it one way (it is symmetric by definition, these floating point operations may!)
+      if ( basis%site_orbital_start(ia) < basis%site_orbital_start(ja) ) then
 
-      ! Loop orbitals on both atoms
-      do io = basis%site_orbital_start(ia) , basis%site_orbital_start(ia+1) - 1
-        
-        isite = basis%orbital_site(io)
-        is = basis%site_state_idx(isite)
-        ir_cut = basis%state(is)%orb(io - basis%site_orbital_start(isite) + 1)%r_cut
-        
-        do jo = basis%site_orbital_start(ja) , basis%site_orbital_start(ja+1) - 1
+        ! Loop orbitals on both atoms
+        do io = basis%site_orbital_start(ia) , basis%site_orbital_start(ia+1) - 1
           
-          jsite = basis%orbital_site(jo)
-          js = basis%site_state_idx(jsite)
-          jr_cut = basis%state(js)%orb(jo - basis%site_orbital_start(jsite) + 1)%r_cut
-
-          ! Only add the element in case the distances match
-          if ( dist <= ir_cut + jr_cut ) call sp%add(io, jo)
+          isite = basis%orbital_site(io)
+          is = basis%site_state_idx(isite)
+          ir_cut = basis%state(is)%orb(io - basis%site_orbital_start(isite) + 1)%r_cut
+          
+          do jo = basis%site_orbital_start(ja) , basis%site_orbital_start(ja+1) - 1
+            
+            jsite = basis%orbital_site(jo)
+            js = basis%site_state_idx(jsite)
+            jr_cut = basis%state(js)%orb(jo - basis%site_orbital_start(jsite) + 1)%r_cut
+            
+            ! Only add the element in case the distances match
+            if ( dist <= ir_cut + jr_cut ) then
+              
+              call sp%add(io, jo)
+              call sp%add(jo, io)
+              
+            end if
+            
+          end do
         end do
-      end do
+        
+      else if ( ia == ja ) then
+        
+        ! Loop only on unique connections on this atom
+        do io = basis%site_orbital_start(ia) , basis%site_orbital_start(ia+1) - 1
 
+          ! Add diagonal element
+          call sp%add(io, io)
+
+          do jo = io + 1 , basis%site_orbital_start(ja+1) - 1
+            
+            call sp%add(io, jo)
+            call sp%add(jo, io)
+            
+          end do
+        end do
+        
+      end if
+        
     end subroutine add_elements
 
   end subroutine create_sparse_pattern_ac_create
