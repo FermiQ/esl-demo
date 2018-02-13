@@ -1,9 +1,9 @@
 module esl_species_m
-
-  use prec, only: dp
-  use esl_message_m
-  use pspiof_m
   use esl_grid_m
+  use esl_message_m
+  use prec
+  use pspiof_m
+  use yaml_output
   implicit none
   private
 
@@ -25,6 +25,7 @@ module esl_species_m
     private
     procedure, public :: init
     procedure, public :: get_orbital
+    procedure, public :: summary
     final :: cleanup
   end type species_t
 
@@ -84,6 +85,19 @@ contains
     
   end subroutine cleanup
 
+  !summary
+  !----------------------------------------------------
+  subroutine summary(this)
+    class(species_t) :: this
+
+    call yaml_mapping_open(this%label)
+    call yaml_map("Ionic charge", this%z_ion)
+    call yaml_map("Electronic charge", this%q)
+    call yaml_mapping_close()
+
+  end subroutine summary
+
+  
   subroutine get_orbital(this, io, orbital, ll)
     class(species_t) :: this
     integer,                 intent(in)  :: io

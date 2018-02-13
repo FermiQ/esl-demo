@@ -139,7 +139,13 @@ contains
     do ia = 1, this%n_atoms
        call yaml_sequence(advance="no")
        call yaml_map(trim(this%species(this%species_idx(ia))%label), this%xyz(:,ia))
-    enddo
+    end do
+    call yaml_sequence_close()
+    call yaml_sequence_open("Species info")
+    do ia = 1, this%n_species
+      call yaml_sequence(advance="no")
+      call this%species(ia)%summary()
+    end do
     call yaml_sequence_close()
     call yaml_map("Volume (Bohr^3)", this%volume())
     call yaml_mapping_close()
