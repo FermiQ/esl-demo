@@ -79,6 +79,9 @@ contains
     integer :: iter, ip !< Interation
     real(dp) :: res
 
+    ! Initialize the densities
+    call this%rho_in%init(system%basis)
+
     ! Perform initial guess on the density
     call this%rho_in%guess(system%basis, system%geo)
 

@@ -57,10 +57,8 @@ contains
   !<
   !< The guessed fillings are based on the basis%atomic_density_matrix
   !< which is the neutral atom valence fillings.
-  subroutine guess(this, grid, basis)
+  subroutine guess(this, basis)
     class(density_ac_t), intent(inout) :: this
-    !< Grid container that defines this density object
-    type(grid_t),     intent(in) :: grid
     !< Atomic orbital basis
     type(basis_ac_t), intent(in) :: basis
 

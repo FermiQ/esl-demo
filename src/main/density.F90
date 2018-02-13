@@ -5,7 +5,6 @@ module esl_density_m
   use esl_density_ac_m
   use esl_density_pw_m
   use esl_geometry_m
-  use esl_grid_m
   use esl_mixing_m
   use esl_states_m
 
@@ -39,19 +38,18 @@ contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, grid, basis)
+  subroutine init(this, basis)
     class(density_t), intent(inout) :: this
-    type(grid_t),     intent(in) :: grid
     type(basis_t),    intent(in) :: basis
 
-    allocate(this%rho(1:grid%np))
-    this%rho(1:grid%np) = 0.d0
-    this%np = grid%np
+    allocate(this%rho(1:basis%grid%np))
+    this%rho(1:basis%grid%np) = 0.d0
+    this%np = basis%grid%np
 
     select case ( basis%type )
     case ( PLANEWAVES )
       
-      call this%density_pw%init(grid)
+      call this%density_pw%init(basis%grid, basis%pw)
       
     case ( ATOMCENTERED )
       
@@ -77,7 +75,7 @@ contains
     case ( ATOMCENTERED )
 
       ! Guess the initial density from the atomic fillings
-      call this%ac%guess(basis%grid, basis%ac)
+      call this%ac%guess(basis%ac)
       
     end select
 
