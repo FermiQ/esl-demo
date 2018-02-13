@@ -11,7 +11,9 @@ module esl_grid_m
   public :: grid_t,      &
             integrate,   &
             rs_cube2grid,&
-            rs_grid2cube
+            rs_grid2cube,&
+            overlap,     &
+            matrixelem
 
   !Data structure for the real space grid
   type grid_t
@@ -139,7 +141,7 @@ contains
     real(dp), optional,      intent(out) :: gfunc(:,:)
 
     integer :: ip
-    real(dp) :: x, y, z, r
+    real(dp) :: x, y, z, r, fr
 
     do ip = 1, this%np
       x = this%r(1,ip) - r_center(1)
@@ -148,9 +150,10 @@ contains
       call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
 
       r = sqrt(x**2 + y**2 + z**2)
-      func(ip) = func(ip)*pspiof_meshfunc_eval(rfunc, r)
+      fr = pspiof_meshfunc_eval(rfunc, r)
+      func(ip) = func(ip)*fr
       if (present(gfunc)) then
-        gfunc(1:3, ip) = gfunc(1:3, ip)*pspiof_meshfunc_eval_deriv(rfunc, r)
+        gfunc(1:3, ip) = func(ip)*pspiof_meshfunc_eval_deriv(rfunc, r) + gfunc(1:3, ip)*fr
       end if
     end do
      
@@ -217,6 +220,34 @@ contains
     end if
 
   end function overlap
+
+  !Matrix element
+  !----------------------------------------------------
+  real(dp) function matrixelem(grid, xyz1, ao1, r1, xyz2, ao2, r2, pot)
+    type(grid_t),    intent(in) :: grid
+    real(dp),   intent(in) :: xyz1(3)
+    real(dp),   intent(in) :: ao1(:)
+    real(dp),   intent(in) :: r1
+    real(dp),   intent(in) :: xyz2(3)
+    real(dp),   intent(in) :: ao2(:)
+    real(dp),   intent(in) :: r2
+    real(dp),   intent(in) :: pot(:)
+
+    integer :: ip
+    real(dp) :: dist
+
+    dist = sqrt(sum( (xyz1 - xyz2) ** 2 ))
+    matrixelem = 0._dp
+    if ( dist < r1 + r2 ) then
+
+       do ip = 1 , grid%np
+          matrixelem = matrixelem + ao1(ip)*ao2(ip)*pot(ip)
+       end do
+       matrixelem = matrixelem*grid%volelem
+
+    end if
+
+  end function matrixelem
 
 
   subroutine zrs_cube2grid(this, ff_cube, ff_grid)

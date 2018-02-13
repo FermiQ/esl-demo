@@ -1,9 +1,9 @@
 module esl_species_m
-
-  use prec, only: dp
-  use esl_message_m
-  use pspiof_m
   use esl_grid_m
+  use esl_message_m
+  use prec
+  use pspiof_m
+  use yaml_output
   implicit none
   private
 
@@ -15,6 +15,7 @@ module esl_species_m
     
     type(pspiof_pspdata_t)  :: psp
     type(pspiof_meshfunc_t) :: rho
+    type(pspiof_meshfunc_t) :: vlocal
 
     integer :: n_orbitals
     type(pspiof_state_t), allocatable :: orbitals(:)
@@ -25,6 +26,7 @@ module esl_species_m
     private
     procedure, public :: init
     procedure, public :: get_orbital
+    procedure, public :: summary
     final :: cleanup
   end type species_t
 
@@ -37,7 +39,11 @@ contains
     character(len=*), intent(in) :: label
     character(len=*), intent(in) :: filename
 
-    integer :: ierr, io
+    integer :: ierr, io, ir
+    real(dp), pointer :: r(:)
+    real(dp), allocatable :: vl(:)
+    type(pspiof_potential_t) :: vlocal
+    type(pspiof_mesh_t) :: mesh
 
     this%label = label
     
@@ -65,6 +71,19 @@ contains
     this%z_ion = pspiof_pspdata_get_zvalence(this%psp)
     this%q = pspiof_pspdata_get_nelvalence(this%psp)
 
+    ! Get local potential.
+    ! At the moment pspio does not have a getter for the meshfunc_t from a potential_t, so we are going to use a workaround
+    mesh = pspiof_pspdata_get_mesh(this%psp)
+    vlocal = pspiof_pspdata_get_vlocal(this%psp)
+    allocate(vl(pspiof_mesh_get_np(mesh)))
+    ierr = check_error_pspio(pspiof_meshfunc_alloc(this%vlocal, pspiof_mesh_get_np(mesh)))
+    r => pspiof_mesh_get_r(mesh)
+    do ir = 1, pspiof_mesh_get_np(mesh)
+      vl(ir) = pspiof_potential_eval(vlocal, r(ir))
+    end do
+    ierr = check_error_pspio(pspiof_meshfunc_init(this%vlocal, mesh, vl))
+    deallocate(vl)
+
   end subroutine init
 
   !Release
@@ -81,17 +100,33 @@ contains
         call pspiof_state_free(this%orbitals(io))
       end do
     end if
-    
+    call pspiof_meshfunc_free(this%vlocal)
+
   end subroutine cleanup
 
-  subroutine get_orbital(this, io, orbital, ll)
+  !summary
+  !----------------------------------------------------
+  subroutine summary(this)
+    class(species_t) :: this
+
+    call yaml_mapping_open(this%label)
+    call yaml_map("Ionic charge", this%z_ion)
+    call yaml_map("Electronic charge", this%q)
+    call yaml_mapping_close()
+
+  end subroutine summary
+
+  
+  subroutine get_orbital(this, io, orbital, ll, occ)
     class(species_t) :: this
     integer,                 intent(in)  :: io
     type(pspiof_meshfunc_t), intent(out) :: orbital
     integer,                 intent(out) :: ll
-
+    real(dp),                intent(out) :: occ
+    
     orbital = pspiof_state_get_wf(this%orbitals(io))
     ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
+    occ = pspiof_state_get_occ(this%orbitals(io))
 
   end subroutine get_orbital
   
