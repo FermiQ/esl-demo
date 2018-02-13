@@ -70,10 +70,10 @@ contains
     use esl_states_m
     use elsi_wrapper_esl
 
-    class(scf_t),         intent(inout) :: this
-    type(elsi_t), intent(inout) :: elsi
-    type(system_t),         intent(in) :: system
-    type(states_t),         intent(in) :: states
+    class(scf_t),  intent(inout) :: this
+    type(elsi_t),  intent(inout) :: elsi
+    type(system_t),   intent(in) :: system
+    type(states_t),intent(inout) :: states
     type(smear_t), intent(inout) :: smear
 
     integer :: iter !< Interation
@@ -92,7 +92,7 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
-      call this%H_in%eigensolver(system%basis)
+      call this%H_in%eigensolver(system%basis, states)
 
       ! Update occupations
       call smear_calc_fermi_and_occ(smear, elsi, states)
