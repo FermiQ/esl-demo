@@ -64,8 +64,11 @@ module esl_basis_ac_m
     integer, allocatable :: site_state_idx(:) !< State indices for each site
 
     integer, allocatable :: site_orbital_start(:) !< Look-up table to convert a site index to the first global orbital index (n_site + 1)
-    integer, allocatable :: orbital_g2l(:) !< Look-up table to convert a global orbital index to the local function index on the specie
     integer, allocatable :: orbital_site(:) !< Look-up table to convert a global orbital index to a site index.
+
+    ! Currently we don't need this array.
+    ! It may be used later.
+    !    integer, allocatable :: orbital_g2l(:) !< Look-up table to convert a global orbital index to the local function index on the specie
 
   contains
     private
@@ -92,7 +95,7 @@ contains
 
     ! Local variables
     type(pspiof_meshfunc_t), pointer :: mesh_R => null()
-    integer :: is, no, io
+    integer :: is, no, io, isite
     integer :: l, m
     real(dp) :: occ
 
@@ -101,8 +104,17 @@ contains
     ! First copy over the Cartesian coordinates
     this%n_site = geo%n_atoms
     allocate( this%xyz(3, this%n_site) )
+    
     ! Copy coordinates
     this%xyz(:,:) = geo%xyz(:,:)
+
+    ! Site to state pointers
+    ! This is equivalent to the species_idx in geo%
+    allocate( this%site_state_idx(this%n_site) )
+    this%site_state_idx = geo%species_idx
+
+    ! Starting orbital pointers according to each site
+    allocate( this%site_orbital_start(this%n_site + 1) )
 
     ! Each specie corresponds to a "state"
     this%n_state = geo%n_species
@@ -145,7 +157,7 @@ contains
       !   l=1,m=0
       !   l=1,m=1
       this%state(is)%n_orbital = no
-      allocate(this%state(is)%orb(no))
+      allocate( this%state(is)%orb(no) )
 
       ! Loop and create the things
       no = 0 ! counter for the current placement of the radial orbital
@@ -174,16 +186,77 @@ contains
       
     end do
 
+    ! Now populate the orbital indices
+    no = 1
+    do isite = 1, this%n_site
+
+      this%site_orbital_start(isite) = no
+
+      ! Accummulate
+      is = this%site_state_idx(isite)
+      do io = 1, this%state(is)%n_orbital
+        this%orbital_site(no) = isite
+        no = no + 1
+      end do
+
+    end do
+    this%site_orbital_start(this%n_site+1) = no
+    this%n_orbital = no - 1
+
   end subroutine init
 
   !Release
   !----------------------------------------------------
   subroutine cleanup(this)
     type(basis_ac_t) :: this
+    integer :: is, io
+    type(pspiof_meshfunc_t), pointer :: R => null()
 
     if ( .not. allocated(this%xyz) ) return
 
     deallocate(this%xyz)
+    deallocate(this%site_state_idx)
+    deallocate(this%site_orbital_start)
+    deallocate(this%orbital_site)
+
+    ! Loop over all states
+    do is = 1, this%n_state
+
+      ! Loop all orbitals on this state
+      do io = 1, this%state(is)%n_orbital
+
+        ! This should find the unique orbitals and deallocate each of them
+        ! Also see init
+        ! In init we associate the same radial function %orb(..)%R with
+        ! multiple orbitals, since for each l we have -l:l different m quantum
+        ! numbers with the same radial function.
+        ! Instead of duplicating each of them, we use pointers to
+        ! create a single instance and let all orbitals point to the same
+        ! thing. This complicates things a bit.
+        ! One could also make an l-state-container, but that would increase
+        ! the type-levels by 1.
+        if ( .not. associated(R) ) then
+          R => this%state(is)%orb(io)%R
+
+          cycle
+          
+        else if ( associated(this%state(is)%orb(io)%R, R) ) then
+          nullify( this%state(is)%orb(io)%R )
+          
+          cycle
+          
+        end if
+
+        ! Clean it
+        deallocate(R)
+        nullify(R)
+        
+      end do
+
+      deallocate( this%state(is)%orb )
+      nullify( this%state(is)%orb )
+      
+    end do
 
   end subroutine cleanup
 
