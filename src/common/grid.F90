@@ -1,10 +1,8 @@
 module esl_grid_m
   use prec, only : dp,lp
-!  use module_fft_sg
-
   use iso_c_binding
-
-
+  use module_fft_sg
+  use pspiof_m
   implicit none
   include 'fftw3.f03'
 
@@ -28,7 +26,7 @@ module esl_grid_m
   contains
     private
     procedure, public :: init
-    procedure, public :: get_atomic_orbital
+    procedure, public :: radial_function
     procedure, public :: summary
     final  :: cleanup
   end type grid_t
@@ -130,29 +128,33 @@ contains
 
   !Evaluate an atomic orbital on the real-space grid
   !----------------------------------------------------
-  subroutine get_atomic_orbital(this, ll, mm, r_at, ao, grad_ao)
+  subroutine radial_function(this, rfunc, ll, mm, r_center, func, gfunc)
     use esl_numeric_m, only: grylmr
     class(grid_t) :: this
-    integer,        intent(in) :: ll
-    integer,        intent(in) :: mm
-    real(dp), intent(out) :: r_at(3)
-    real(dp), intent(out) :: ao(:)
-    real(dp), intent(out) :: grad_ao(:,:)
+    type(pspiof_meshfunc_t), intent(in)  :: rfunc
+    integer,                 intent(in)  :: ll
+    integer,                 intent(in)  :: mm
+    real(dp),                intent(in)  :: r_center(3)
+    real(dp),                intent(out) :: func(:)
+    real(dp), optional,      intent(out) :: gfunc(:,:)
 
     integer :: ip
     real(dp) :: x, y, z, r
 
     do ip = 1, this%np
-       x = this%r(1,ip) - r_at(1)
-       y = this%r(2,ip) - r_at(2)
-       z = this%r(3,ip) - r_at(3)
-       call grylmr(x, y, z, ll, mm, ao(ip), grad_ao(1:3,ip)) 
+      x = this%r(1,ip) - r_center(1)
+      y = this%r(2,ip) - r_center(2)
+      z = this%r(3,ip) - r_center(3)
+      call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
 
-       r = sqrt(x**2+y**2+z**2)
-       !Here we need to multiply by the radial part
+      r = sqrt(x**2 + y**2 + z**2)
+      func(ip) = func(ip)*pspiof_meshfunc_eval(rfunc, r)
+      if (present(gfunc)) then
+        gfunc(1:3, ip) = gfunc(1:3, ip)*pspiof_meshfunc_eval_deriv(rfunc, r)
+      end if
     end do
-
-  end subroutine get_atomic_orbital
+     
+  end subroutine radial_function
 
   !Integrate a function over the real-space grid
   !----------------------------------------------------
