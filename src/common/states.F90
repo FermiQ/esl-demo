@@ -3,6 +3,8 @@ module esl_states_m
   use prec, only : dp,ip
   use yaml_output
 
+  use esl_geometry_m
+
   implicit none
   private
 
@@ -39,28 +41,28 @@ contains
 
   !Initialize the states
   !----------------------------------------------------
-  subroutine init(this, nstates, nspin, nkpt, complex, ncoef, nel)
+  subroutine init(this, geo, nspin, nkpt, complex, ncoef)
     class(states_t)  :: this
-    integer, intent(in) :: nstates
-    integer, intent(in) :: nspin
-    integer, intent(in) :: nkpt
-    logical, intent(in) :: complex !< Should the wavefunctions be complex?
-    integer, intent(in) :: ncoef    !< Size of wavefunctions (number of coefficients)
-    integer, intent(in) :: nel
+    type(geometry_t), intent(inout) :: geo
+    integer,          intent(in)    :: nspin
+    integer,          intent(in)    :: nkpt
+    logical,          intent(in)    :: complex !< Should the wavefunctions be complex?
+    integer,          intent(in)    :: ncoef    !< Size of wavefunctions (number of coefficients)
 
     integer :: ist, isp, ik
 
-    this%nstates = nstates
+    !TODO: the charge hould be a real number, not an integer
+    this%nel = int(geo%electronic_charge())
+    this%nstates = this%nel
     this%nspin = nspin
     this%nkpt = nkpt
     this%complex_states = complex
     this%ncoef = ncoef
-    this%nel = nel
 
-    allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
-    allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
-    this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
-    this%occ_numbers(1:nel,  1:nspin, 1:nkpt) = 1.d0
+    allocate(this%states(1:this%nstates, 1:nspin, 1:nkpt))
+    allocate(this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt))
+    this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt) = 0._dp
+    this%occ_numbers(1:this%nel,  1:nspin, 1:nkpt) = 1.d0
 
     allocate(this%k_weights(1:nkpt))
     this%k_weights(:) = 1.d0/this%nkpt
@@ -68,7 +70,7 @@ contains
     if (this%complex_states) then
       do ik = 1, nkpt
         do isp = 1, nspin
-          do ist = 1, nstates
+          do ist = 1, this%nstates
             allocate(this%states(ist, isp, ik)%zcoef(1:this%ncoef))
           end do
         end do
@@ -76,7 +78,7 @@ contains
     else
       do ik = 1, nkpt
         do isp = 1, nspin
-          do ist = 1, nstates
+          do ist = 1, this%nstates
             allocate(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
           end do
         end do

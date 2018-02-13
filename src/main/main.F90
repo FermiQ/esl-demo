@@ -45,7 +45,7 @@ contains
     type(elsi_t)        :: elsi
 
     !--------------TEMP --------------------
-    integer :: nstates, nspin, nel
+    integer :: nspin
     !--------------------------------------
 
     ! Steps
@@ -59,11 +59,9 @@ contains
 #endif
 
     !--------------TEMP --------------------
-    nstates = 1
     nspin = 1
-    nel = 1
     !---------------------------------------
-    call states%init(nstates, nspin, 1, .true., system%basis%size, nel)
+    call states%init(system%geo, nspin, 1, .true., system%basis%size)
     call states%summary()
 
     ! TODO Nstep should probably be read from another entity

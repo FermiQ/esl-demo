@@ -164,7 +164,9 @@ contains
       diff(ip) = abs(other%density(ip) - this%density(ip))
     end do
     call integrate(grid, diff, res)
-    res = res/real(nel)
+    if(nel>0) then
+      res = res/real(nel)
+    end if
 
     deallocate(diff)
 
