@@ -88,6 +88,7 @@ contains
     ! density.
 
     allocate(rho_atom(grid%np))
+    
     ! Calculate the atomic density
     call basis%atomic_density_matrix(DM_atom)
     ! Expand the atomic dM on an auxiliary grid
@@ -109,8 +110,6 @@ contains
   !<
   !< Add the basis functions density to the grid via an input density matrix.
   subroutine add_density_matrix(grid, basis, DM, rho)
-
-    use esl_numeric_m, only: grylmr
 
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
@@ -233,7 +232,7 @@ contains
       integer :: is
 
       n_neigh = 0
-      r_max = 10._dp ! TODO retrieve correct radius of basis-functions
+      r_max = 14._dp ! TODO retrieve correct radius of basis-functions
       do is = 1, basis%n_site
 
         dist = sqrt(sum( (basis%xyz(:, is) - r) ** 2 ))

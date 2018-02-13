@@ -186,7 +186,19 @@ contains
       
     end do
 
-    ! Now populate the orbital indices
+    ! Calculate total number of orbitals
+    no = 0
+    do isite = 1, this%n_site
+      
+      is = this%site_state_idx(isite)
+      no = no + this%state(is)%n_orbital
+      
+    end do
+          
+    ! Allocate an orbital -> site index
+    allocate( this%orbital_site(no) )
+    
+    ! Populate orbital indices
     no = 1
     do isite = 1, this%n_site
 
@@ -288,7 +300,8 @@ contains
     ! Local variables
     type(sparse_pattern_t), pointer :: sp => null()
 
-    integer :: io, ind
+    integer :: io, ind, isite, is, iio
+    real(dp) :: occ
 
     if ( .not. DM%initialized() ) then
       
@@ -300,11 +313,6 @@ contains
       ! density on grids etc.
       call init()
       
-    else
-      
-      call message_error('atomic_density_matrix: non-initialized DM &
-          &is Currently not implemented!')
-      
     end if
 
     ! Initialize everything to 0
@@ -312,7 +320,12 @@ contains
     
     ! Fill the density matrix with 1's
     do io = 1, this%n_orbital
-      
+
+      isite = this%orbital_site(io)
+      is = this%site_state_idx(isite)
+      iio = io - this%site_orbital_start(isite) + 1
+      occ = this%state(is)%orb(iio)%occ
+
       ! Figure out if this basis function has initial density
       do ind = sp%rptr(io) , sp%rptr(io) + sp%nrow(io) - 1
 
@@ -320,7 +333,7 @@ contains
         if ( sp%column(ind) == io ) then
           
           ! Ok, we have a diagonal entry.
-          DM%M(ind) = 1._dp
+          DM%M(ind) = occ
           
         end if
         
@@ -342,11 +355,8 @@ contains
       call sp%init(this%n_orbital, this%n_orbital, np=1)
 
       ! Add elements to the sparse matrix
-      do ia = 1, this%n_site
-
-        ! TODO fill here to correctly fill the diagonal elements
-        ! we should loop on the electronic configuration
-
+      do io = 1, this%n_orbital
+        call sp%add(io, io)
       end do
 
       ! Finalize the sparse object to remove all unnecessary elements
@@ -424,24 +434,54 @@ contains
   subroutine summary(this)
     class(basis_ac_t), intent(in) :: this
 
-    integer :: is
+    integer :: isite, is, no, io
     character(len=10) :: str
+    type(orbital_ac_t), pointer :: orb
+    integer, allocatable :: i1(:)
+    real(dp), allocatable :: d1(:)
 
     call yaml_mapping_open("basis_ac")
     
     call yaml_map("Number of sites", this%n_site)
-    
-    call yaml_sequence_open("Site coordinates", advance = "no")
-    call yaml_comment("| X | Y | Z |", hfill = "-")
-    do is = 1, this%n_site
+
+    call yaml_map("Sites first orbital", this%site_orbital_start(:this%n_site))
+    call yaml_map("Sites last orbital", this%site_orbital_start(2:this%n_site+1) - 1)
+
+    call yaml_sequence_open("Sites")
+    do isite = 1, this%n_site
+      
+      write(str, '(i0)') isite
       call yaml_sequence(advance="no")
-      write(str, '(i0)') is
-      call yaml_map(trim(str), this%xyz(:,is))
+      call yaml_mapping_open(trim(str))
+
+      call yaml_map("Coordinate", this%xyz(:,isite))
+      is = this%site_state_idx(isite)
+      call yaml_map("State Index", is)
+      no = this%state(is)%n_orbital
+      call yaml_map("Orbitals", no)
+
+      allocate(i1(no))
+      do io = 1, no
+        i1(io) = this%state(is)%orb(io)%l
+      end do
+      call yaml_map("l", i1)
+      do io = 1, no
+        i1(io) = this%state(is)%orb(io)%m
+      end do
+      call yaml_map("m", i1)
+      deallocate(i1)
+
+      allocate(d1(no))
+      do io = 1, no
+        d1(io) = this%state(is)%orb(io)%occ
+      end do
+      call yaml_map("Q0", d1)
+      deallocate(d1)
+      
+      call yaml_mapping_close()
     end do
     call yaml_sequence_close()
     
-    call yaml_map("Number of functions", this%n_orbital)
-    call yaml_comment("| l | m |", hfill = "-")
     call yaml_mapping_close()
 
   end subroutine summary

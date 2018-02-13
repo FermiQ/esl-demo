@@ -40,6 +40,9 @@ contains
     ! Total number of basis-functions
     no = basis%n_orbital
 
+    ! TODO cutoff radius of the orbitals
+    r2 = 15._dp
+
     ! Now re-initialize the sparse matrix.
     ! In this case we will assume a maximum of 20 atomic connections
     call sp%init(no, no, np=max_no * 20)
@@ -61,7 +64,7 @@ contains
 !          r2 = pseudo(is)%rmax + pseudo(js)%rmax
 
         ! Calculate the distance between the two atomic centers
-        dist = sqrt(sum((basis%xyz(:,ia) - basis%xyz(:,ja)) ** 2))
+        dist = sqrt( sum((basis%xyz(:,ia) - basis%xyz(:,ja)) ** 2) )
         
         ! Only process if the maximum distance is within range.
         if ( dist <= r2 ) then
