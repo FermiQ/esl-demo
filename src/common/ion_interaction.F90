@@ -58,7 +58,7 @@ contains
     !We start with the short range part of the Ewald summation
     do ia = 1, geo%n_atoms
       is = geo%species_idx(ia)
-      zi = geo%species(is)%Z
+      zi = geo%species(is)%z_ion
 
       !We need to find the periodic copies with a range of rcut
       ncopy = 1
@@ -67,7 +67,7 @@ contains
 
         do ja = 1, geo%n_atoms
           js = geo%species_idx(ja)
-          zj = geo%species(js)%Z
+          zj = geo%species(js)%z_ion
 
           ! Calculate the distance between the two atoms
           r(1:3) = rcopy(1:3) - geo%xyz(1:3,ja)
@@ -88,7 +88,7 @@ contains
     !Self interaction part
     do ia = 1, geo%n_atoms
       is = geo%species_idx(ia)
-      zi = geo%species(is)%Z
+      zi = geo%species(is)%z_ion
       charge = charge + zi
       eii = eii - this%alpha/sqrt(PI)*zi**2
     end do
@@ -123,7 +123,7 @@ contains
           do ia = 1, geo%n_atoms
             is = geo%species_idx(ia)
             gx = sum(gg(1:3)*geo%xyz(1:3,ia))
-            aa = geo%species(is)%Z*cmplx(cos(gx),sin(gx))
+            aa = geo%species(is)%z_ion*cmplx(cos(gx),sin(gx))
             phase(ia) = aa
             sumat = sumat + aa
           end do
@@ -158,11 +158,11 @@ contains
 
     do ia = 1, geo%n_atoms      
       is = geo%species_idx(ia)
-      zi = geo%species(is)%Z
+      zi = geo%species(is)%z_ion
 
       do ja = ia + 1, geo%n_atoms 
         js = geo%species_idx(ja)
-        zj = geo%species(js)%Z
+        zj = geo%species(js)%z_ion
 
         ! Calculate the distance between the two atoms
         r(1:3) = geo%xyz(1:3,ia) - geo%xyz(1:3,ja)

@@ -3,7 +3,7 @@ module esl_species_m
   use prec, only: dp
   use esl_message_m
   use pspiof_m
-
+  use esl_grid_m
   implicit none
   private
 
@@ -12,13 +12,19 @@ module esl_species_m
   !Data structure for the pseudos
   type species_t
     character(len=10) :: label
-    type(pspiof_pspdata_t) :: psp
+    
+    type(pspiof_pspdata_t)  :: psp
+    type(pspiof_meshfunc_t) :: rho
 
-    ! TODO fix this argument
-    real(dp) :: Z = 0._dp !< Ionic charge, real because of mixed species
+    integer :: n_orbitals
+    type(pspiof_state_t), allocatable :: orbitals(:)
+
+    real(dp) :: z_ion = 0._dp !< Ionic charge, real because of mixed species
+    real(dp) :: q = 0._dp     !< Electronic charge
   contains
     private
     procedure, public :: init
+    procedure, public :: get_orbital
     final :: cleanup
   end type species_t
 
@@ -31,7 +37,7 @@ contains
     character(len=*), intent(in) :: label
     character(len=*), intent(in) :: filename
 
-    integer :: ierr
+    integer :: ierr, io
 
     this%label = label
     
@@ -46,6 +52,19 @@ contains
        return
     endif
 
+    ! Store some information
+    this%rho = pspiof_pspdata_get_rho_valence(this%psp)
+    this%n_orbitals = pspiof_pspdata_get_n_states(this%psp)
+    if (this%n_orbitals > 0) then
+      allocate(this%orbitals(this%n_orbitals))
+      do io = 1, this%n_orbitals
+        this%orbitals(io) = pspiof_pspdata_get_state(this%psp, io)
+      end do
+    end if
+    
+    this%z_ion = pspiof_pspdata_get_zvalence(this%psp)
+    this%q = pspiof_pspdata_get_nelvalence(this%psp)
+
   end subroutine init
 
   !Release
@@ -53,10 +72,29 @@ contains
   subroutine cleanup(this)
     type(species_t) :: this
 
+    integer :: io
+    
     call pspiof_pspdata_free(this%psp)
-
+    call pspiof_meshfunc_free(this%rho)
+    if (allocated(this%orbitals)) then
+      do io = 1, this%n_orbitals
+        call pspiof_state_free(this%orbitals(io))
+      end do
+    end if
+    
   end subroutine cleanup
 
+  subroutine get_orbital(this, io, orbital, ll)
+    class(species_t) :: this
+    integer,                 intent(in)  :: io
+    type(pspiof_meshfunc_t), intent(out) :: orbital
+    integer,                 intent(out) :: ll
+
+    orbital = pspiof_state_get_wf(this%orbitals(io))
+    ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
+
+  end subroutine get_orbital
+  
   !----------------------------------------------------
   !Private routines
   !----------------------------------------------------
