@@ -2,14 +2,27 @@ stages:
   - build
   - deploy
 
-test:opensuse:
+opensuse:
   image: drfaustroll/esl:tumbleweed
   stage: build
   script:
     - sh utils/opensuse-gcc-openmpi.sh
 
-test:debian:
+  
+opensuse-paranoid:
+  image: drfaustroll/esl:tumbleweed
+  stage: build
+  script:
+    - sh utils/opensuse-paranoid.sh
+
+debian:
   image: drfaustroll/esl:debian
   stage: build
   script:
     - sh utils/debian-gcc-openmpi.sh
+
+debian-paranoid:
+  image: drfaustroll/esl:debian
+  stage: build
+  script:
+    - sh utils/debian-paranoid.sh
