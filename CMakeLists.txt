@@ -69,12 +69,13 @@ endif()
 
 include_directories(${PROJECT_BINARY_DIR}/src/common)
 include_directories(${PROJECT_BINARY_DIR}/src/AC)
+include_directories(${PROJECT_BINARY_DIR}/src/elsi_rci)
 include_directories(${PROJECT_BINARY_DIR}/src/PW)
 
 add_subdirectory(${src_dir}/PW)
+add_subdirectory(${src_dir}/elsi_rci)
 add_subdirectory(${src_dir}/AC)
 add_subdirectory(${src_dir}/common)
-add_subdirectory(${src_dir}/elsi_rci)
 
 
 add_executable(${target_name}
@@ -86,7 +87,7 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES})
+target_link_libraries(${target_name} ac pw elsi_rci common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES})
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()
