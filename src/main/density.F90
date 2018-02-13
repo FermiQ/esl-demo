@@ -1,8 +1,13 @@
 module esl_density_m
 
   use prec, only : dp
+  use esl_basis_m
+  use esl_density_ac_m
+  use esl_density_pw_m
   use esl_geometry_m
   use esl_grid_m
+  use esl_mixing_m
+  use esl_states_m
 
   implicit none
 
@@ -14,68 +19,67 @@ module esl_density_m
   type density_t
     integer :: np !< Copied from grid
 
-    real(dp), allocatable :: density(:)
+    real(dp), allocatable :: rho(:)
+
+    type(density_ac_t) :: ac
+    type(density_pw_t) :: density_pw
+    
   contains
+    
     private
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
-    procedure, public :: get_den
-    procedure, public :: set_den
+    procedure, public :: residue
     final  :: cleanup
+    
   end type density_t
 
 contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, grid)
+  subroutine init(this, grid, basis)
     class(density_t), intent(inout) :: this
-    type(grid_t), intent(in) :: grid
+    type(grid_t),     intent(in) :: grid
+    type(basis_t),    intent(in) :: basis
 
-    allocate(this%density(1:grid%np))
-    this%density(1:grid%np) = 0.d0
-
+    allocate(this%rho(1:grid%np))
+    this%rho(1:grid%np) = 0.d0
     this%np = grid%np
+
+    select case ( basis%type )
+    case ( PLANEWAVES )
+      
+      call this%density_pw%init(grid)
+      
+    case ( ATOMCENTERED )
+      
+      call this%ac%init()
+      
+    end select
 
   end subroutine init
 
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
-  subroutine guess(this, geo, grid)
+  subroutine guess(this, basis, geo)
     class(density_t), intent(inout) :: this
+    type(basis_t),    intent(in) :: basis
     type(geometry_t), intent(in) :: geo
-    type(grid_t),     intent(in) :: grid
-    
-    real(dp), allocatable :: radial(:)
-    real(dp), allocatable :: atomicden(:)
-    integer :: iat, np_radial, ip
+   
+    select case ( basis%type )
+    case ( PLANEWAVES )
 
-    this%density(1:grid%np) = 0.d0
-
-    allocate(atomicden(1:grid%np))
-    atomicden(1:grid%np) = 0.d0
-
-    ! We expect only atoms to contain initial density
-    do iat = 1, geo%n_atoms
+      ! TODO fix interface 
+      call this%density_pw%guess(geo, basis%grid)
       
-      !Get the number of points in the radial grid
-      np_radial = 1
-      allocate(radial(1:np_radial))
-      !Get atomic density on the radial grid
+    case ( ATOMCENTERED )
 
-      !Convert the radial density to the cartesian grid
-
-      !We do not need the radial density anymore
-      deallocate(radial)
-
-      !Summing up to the total density
-      forall (ip = 1:grid%np)
-        this%density(ip) = this%density(ip) + atomicden(ip)
-      end forall
-    end do
-
-    deallocate(atomicden)
+      ! Guess the initial density from the atomic fillings
+      call this%ac%guess(basis%grid, basis%ac)
+      
+    end select
 
   end subroutine guess
 
@@ -84,46 +88,66 @@ contains
   subroutine cleanup(this)
     type(density_t), intent(inout) :: this
 
-    if(allocated(this%density)) deallocate(this%density)
+    if( allocated(this%rho) ) then
+      deallocate(this%rho)
+    end if
 
   end subroutine cleanup
 
-  !Calc density
+  ! Calculate output density from an input density
   !----------------------------------------------------
-  subroutine calculate(this)
-    class(density_t), intent(inout) :: this
+  subroutine calculate(this, basis, states, out)
+    class(density_t),   intent(inout) :: this
+    type(basis_t),       intent(in) :: basis
+    type(states_t),      intent(in) :: states
+    type(density_t),  intent(inout) ::  out
 
-    ! Density should be calculated from states
+    ! Calculate density on the grid
+    select case (basis%type)
+    case ( PLANEWAVES )
+
+      ! Calculate density
+      call this%density_pw%calculate(states)
+
+    case ( ATOMCENTERED )
+
+      ! Calculate the density on the grid
+      call this%ac%calculate(basis%grid, basis%ac, this%rho, out%ac)
+      
+    end select
 
   end subroutine calculate
 
 
-  !Copy the density to an array
-  !----------------------------------------------------
-  subroutine get_den(this, rho)
-    class(density_t) :: this
-    real(dp), intent(out) :: rho(:)
+  !< Calculate the relative difference between two densities
+  function residue(this, basis, other) result(res)
+    class(density_t), intent(in) :: this, other
+    type(basis_t), intent(in) :: basis
 
-    integer :: ip
+    real(dp) :: res
 
-    forall(ip = 1:this%np)
-      rho(ip) = this%density(ip)
-    end forall
+        ! Calculate density on the grid
+    select case ( basis%type )
+    case ( PLANEWAVES )
 
-  end subroutine get_den
+      ! TODO implement the residue function in density_pw_t
+!      res = this%density_pw%residue(basis%grid, basis%pw, other%density_pw)
+      
+    case ( ATOMCENTERED )
 
-  !Copyi the density from an array
-  !----------------------------------------------------
-  subroutine set_den(this, rho)
-    class(density_t) :: this
-    real(dp), intent(in) :: rho(:)
+      res = this%ac%residue(other%ac)
 
-    integer :: ip
+    end select
 
-    forall (ip = 1:this%np)
-      this%density(ip) = rho(ip)
-    end forall
+    
+!!$    !Test tolerance and print status
+!!$    !We use rhonew to compute the relative density
+!!$    do ip = 1, this%np
+!!$      this%rhonew(ip) = abs(this%rhoout(ip) - this%rhoin(ip))
+!!$    end do
+!!$    call integrate(grid, this%rhonew, reldens)
+!!$    reldens = reldens/real(nel)
 
-  end subroutine set_den
+  end function residue
 
 end module esl_density_m

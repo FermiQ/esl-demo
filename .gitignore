@@ -4,3 +4,4 @@ _templates
 CMakeCache.txt
 CMakeFiles
 /doc/developers
+*.mod

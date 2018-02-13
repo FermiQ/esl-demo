@@ -1,12 +1,19 @@
 module esl_grid_m
-  use prec, only : dp,ip
-  use module_fft_sg
+  use prec, only : dp,lp
+!  use module_fft_sg
+
+  use iso_c_binding
+
+
   implicit none
+  include 'fftw3.f03'
 
   private
 
-  public :: grid_t,   &
-            integrate
+  public :: grid_t,      &
+            integrate,   &
+            rs_cube2grid,&
+            rs_grid2cube
 
   !Data structure for the real space grid
   type grid_t
@@ -15,6 +22,9 @@ module esl_grid_m
     integer  :: np !< Total number of points in the real space grid
     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
     real(dp) :: volelem !<Volume element
+
+    type(C_PTR) fftplan !< Forward FFT plan
+    type(C_PTR) ifftplan !< Backward FFT (IFFT) plan
   contains
     private
     procedure, public :: init
@@ -27,6 +37,15 @@ module esl_grid_m
     module procedure dintegrate, zintegrate
   end interface integrate
 
+  interface rs_cube2grid
+    module procedure drs_cube2grid, zrs_cube2grid
+  end interface rs_cube2grid
+
+  interface rs_grid2cube
+    module procedure drs_grid2cube, zrs_grid2cube
+  end interface rs_grid2cube
+
+
 contains
 
   !Initialize the grid
@@ -38,6 +57,7 @@ contains
 
     integer :: idim, ix, iy, iz, ip
     integer :: n, twice
+    complex(dp),         allocatable :: arr(:,:,:)
 
     this%ndims = ndims
 
@@ -67,6 +87,17 @@ contains
     !We have a cubic cell
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
 
+    ! Initialization for FFT and IFFT
+    allocate(arr(this%ndims(1), this%ndims(2), this%ndims(3)))
+
+    this%fftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
+      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
+
+    this%ifftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
+      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
+
+    deallocate(arr)
+
     ndims = this%ndims
   end subroutine init
 
@@ -76,6 +107,10 @@ contains
     type(grid_t) :: this
 
     if(allocated(this%r)) deallocate(this%r)
+
+    ! Deconstructor for fft plan
+    call dfftw_destroy_plan(this%fftplan)
+    call dfftw_destroy_plan(this%ifftplan)
 
   end subroutine cleanup
 
@@ -180,5 +215,83 @@ contains
     end if
 
   end function overlap
+
+
+  subroutine zrs_cube2grid(this, ff_cube, ff_grid)
+    type(grid_t),     intent(in)  :: this
+    complex(kind=dp), intent(in)  :: ff_cube(:,:,:)
+    complex(kind=dp), intent(out) :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+ 
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_grid(ip) = ff_cube(ix, iy, iz)    
+        end do
+      end do
+    end do
+
+  end subroutine zrs_cube2grid
+
+  subroutine drs_cube2grid(this, ff_cube, ff_grid)
+    type(grid_t),  intent(in)  :: this
+    real(kind=dp), intent(in)  :: ff_cube(:,:,:)
+    real(kind=dp), intent(out) :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_grid(ip) = ff_cube(ix, iy, iz)
+        end do
+      end do
+    end do
+
+  end subroutine drs_cube2grid
+
+  subroutine zrs_grid2cube(this, ff_grid, ff_cube)
+    type(grid_t),  intent(in)  :: this
+    complex(kind=dp), intent(out) :: ff_cube(:,:,:)
+    complex(kind=dp), intent(in)  :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_cube(ix, iy, iz) = ff_grid(ip)
+        end do
+      end do
+    end do
+
+  end subroutine zrs_grid2cube
+
+
+  subroutine drs_grid2cube(this, ff_grid, ff_cube)
+    type(grid_t),  intent(in)  :: this
+    real(kind=dp), intent(out) :: ff_cube(:,:,:)
+    real(kind=dp), intent(in)  :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_cube(ix, iy, iz) = ff_grid(ip)
+        end do
+      end do
+    end do
+
+  end subroutine drs_grid2cube
 
 end module esl_grid_m

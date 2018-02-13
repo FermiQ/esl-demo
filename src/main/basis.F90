@@ -38,8 +38,8 @@ contains
   !Initialize the basis set
   !----------------------------------------------------
   subroutine init(this, geo)
-    class(basis_t) :: this
-    type(geometry_t), intent(in) :: geo
+    class(basis_t)                   :: this
+    type(geometry_t),     intent(in) :: geo
     
     character(len=100) :: str
     real(dp) :: ecut
@@ -56,7 +56,7 @@ contains
       call this%grid%init(ndims, geo%cell)
 
       ! Initialize PW basis
-      call this%pw%init(ecut, ndims, geo%icell)
+      call this%pw%init(this%grid, ecut, ndims, geo%icell)
       this%size = this%pw%npw
       
     else if ( leqi(str, 'AtomicOrbitals') ) then
