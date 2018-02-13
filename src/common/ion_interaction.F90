@@ -50,7 +50,7 @@ contains
     real(dp) :: dist, zi, zj, rcut, rcopy(3), erfc, charge
     real(dp) :: factor, gx, glen2, gg(3), r(3)
     complex(dp) :: sumat, aa, tmp(3), phase(geo%n_atoms)
-
+    integer :: kk, nbmin(3), nbmax(3)
     eii = 0.d0
     forces(1:3, 1:geo%n_atoms) = 0.d0
 
@@ -64,9 +64,22 @@ contains
       zi = geo%species(is)%z_ion
 
       !We need to find the periodic copies with a range of rcut
-      ncopy = 1
+      gg(1:3) = matmul(geo%xyz(1:3,ia),geo%icell(1:3,1:3))
+      do idim = 1, 3
+        nbmin(idim) = -nint(-(gg(idim)-rcut)/(geo%cell(idim,idim))+0.5d0)
+        nbmax(idim) =  nint((gg(idim)+rcut)/(geo%cell(idim,idim))+0.5d0)
+      end do
+      ncopy = product(nbmax(1:3)-nbmin(1:3)+1)
+
       do ic = 1, ncopy
         !get the position of the copy inside rcopy
+        kk = ic-1
+        do idim = 3, 1, -1
+          factor = mod(kk, nbmax(idim)-nbmin(idim)+1) + nbmin(idim)
+          rcopy(idim) = gg(idim) - geo%cell(idim,idim)*factor
+          kk = kk/(nbmax(idim)-nbmin(idim)+1)
+        end do
+        rcopy(1:3) = matmul(geo%cell(1:3,1:3), rcopy(1:3))
 
         do ja = 1, geo%n_atoms
           js = geo%species_idx(ja)
