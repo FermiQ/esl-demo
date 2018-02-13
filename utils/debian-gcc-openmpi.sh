@@ -6,4 +6,4 @@ module load esl/openmpi/0.0.1
 mkdir build
 cd build
 cmake ../
-make -j
+make -j VERBOSE=1

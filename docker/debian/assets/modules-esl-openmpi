@@ -1,0 +1,27 @@
+#%Module1.0#####################################################################
+##
+## AME 06/02/2018
+##
+set pkg esl
+set version 0.0.1
+set comp openmpi
+proc ModulesHelp {} {
+        global version
+        puts stderr "\n\tesl$pkg $version"
+        puts stderr "\tCompiled with $comp"
+        puts stderr "\tVersion $version\n"
+}
+
+module-whatis   "$pkg"
+
+
+set base /home/drFaustroll/$pkg/$comp/$version
+setenv ESL_ROOT $base
+prepend-path LD_LIBRARY_PATH  $base/lib
+prepend-path INCLUDE $base/include
+prepend-path PKG_CONFIG_PATH $base/lib/pkgconfig
+# a helpful message for users
+if [module-info mode load] {
+  puts stderr "\n\t$pkg loaded"
+}
+
