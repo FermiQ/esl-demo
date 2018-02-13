@@ -139,7 +139,7 @@ contains
     real(dp), optional,      intent(out) :: gfunc(:,:)
 
     integer :: ip
-    real(dp) :: x, y, z, r
+    real(dp) :: x, y, z, r, fr
 
     do ip = 1, this%np
       x = this%r(1,ip) - r_center(1)
@@ -148,9 +148,10 @@ contains
       call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
 
       r = sqrt(x**2 + y**2 + z**2)
-      func(ip) = func(ip)*pspiof_meshfunc_eval(rfunc, r)
+      fr = pspiof_meshfunc_eval(rfunc, r)
+      func(ip) = func(ip)*fr
       if (present(gfunc)) then
-        gfunc(1:3, ip) = gfunc(1:3, ip)*pspiof_meshfunc_eval_deriv(rfunc, r)
+        gfunc(1:3, ip) = func(ip)*pspiof_meshfunc_eval_deriv(rfunc, r) + gfunc(1:3, ip)*fr
       end if
     end do
      
