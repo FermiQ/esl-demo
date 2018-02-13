@@ -1,12 +1,17 @@
 module esl_grid_m
-  use prec, only : dp,ip
+  use prec, only : dp,lp
+  use iso_c_binding
   use module_fft_sg
+  use pspiof_m
   implicit none
+  include 'fftw3.f03'
 
   private
 
-  public :: grid_t,   &
-            integrate
+  public :: grid_t,      &
+            integrate,   &
+            rs_cube2grid,&
+            rs_grid2cube
 
   !Data structure for the real space grid
   type grid_t
@@ -15,10 +20,13 @@ module esl_grid_m
     integer  :: np !< Total number of points in the real space grid
     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
     real(dp) :: volelem !<Volume element
+
+    type(C_PTR) fftplan !< Forward FFT plan
+    type(C_PTR) ifftplan !< Backward FFT (IFFT) plan
   contains
     private
     procedure, public :: init
-    procedure, public :: get_atomic_orbital
+    procedure, public :: radial_function
     procedure, public :: summary
     final  :: cleanup
   end type grid_t
@@ -26,6 +34,15 @@ module esl_grid_m
   interface integrate
     module procedure dintegrate, zintegrate
   end interface integrate
+
+  interface rs_cube2grid
+    module procedure drs_cube2grid, zrs_cube2grid
+  end interface rs_cube2grid
+
+  interface rs_grid2cube
+    module procedure drs_grid2cube, zrs_grid2cube
+  end interface rs_grid2cube
+
 
 contains
 
@@ -38,6 +55,7 @@ contains
 
     integer :: idim, ix, iy, iz, ip
     integer :: n, twice
+    complex(dp),         allocatable :: arr(:,:,:)
 
     this%ndims = ndims
 
@@ -67,6 +85,17 @@ contains
     !We have a cubic cell
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
 
+    ! Initialization for FFT and IFFT
+    allocate(arr(this%ndims(1), this%ndims(2), this%ndims(3)))
+
+    this%fftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
+      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
+
+    this%ifftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
+      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
+
+    deallocate(arr)
+
     ndims = this%ndims
   end subroutine init
 
@@ -76,6 +105,10 @@ contains
     type(grid_t) :: this
 
     if(allocated(this%r)) deallocate(this%r)
+
+    ! Deconstructor for fft plan
+    call dfftw_destroy_plan(this%fftplan)
+    call dfftw_destroy_plan(this%ifftplan)
 
   end subroutine cleanup
 
@@ -95,29 +128,33 @@ contains
 
   !Evaluate an atomic orbital on the real-space grid
   !----------------------------------------------------
-  subroutine get_atomic_orbital(this, ll, mm, r_at, ao, grad_ao)
+  subroutine radial_function(this, rfunc, ll, mm, r_center, func, gfunc)
     use esl_numeric_m, only: grylmr
     class(grid_t) :: this
-    integer,        intent(in) :: ll
-    integer,        intent(in) :: mm
-    real(dp), intent(out) :: r_at(3)
-    real(dp), intent(out) :: ao(:)
-    real(dp), intent(out) :: grad_ao(:,:)
+    type(pspiof_meshfunc_t), intent(in)  :: rfunc
+    integer,                 intent(in)  :: ll
+    integer,                 intent(in)  :: mm
+    real(dp),                intent(in)  :: r_center(3)
+    real(dp),                intent(out) :: func(:)
+    real(dp), optional,      intent(out) :: gfunc(:,:)
 
     integer :: ip
     real(dp) :: x, y, z, r
 
     do ip = 1, this%np
-       x = this%r(1,ip) - r_at(1)
-       y = this%r(2,ip) - r_at(2)
-       z = this%r(3,ip) - r_at(3)
-       call grylmr(x, y, z, ll, mm, ao(ip), grad_ao(1:3,ip)) 
+      x = this%r(1,ip) - r_center(1)
+      y = this%r(2,ip) - r_center(2)
+      z = this%r(3,ip) - r_center(3)
+      call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
 
-       r = sqrt(x**2+y**2+z**2)
-       !Here we need to multiply by the radial part
+      r = sqrt(x**2 + y**2 + z**2)
+      func(ip) = func(ip)*pspiof_meshfunc_eval(rfunc, r)
+      if (present(gfunc)) then
+        gfunc(1:3, ip) = gfunc(1:3, ip)*pspiof_meshfunc_eval_deriv(rfunc, r)
+      end if
     end do
-
-  end subroutine get_atomic_orbital
+     
+  end subroutine radial_function
 
   !Integrate a function over the real-space grid
   !----------------------------------------------------
@@ -180,5 +217,83 @@ contains
     end if
 
   end function overlap
+
+
+  subroutine zrs_cube2grid(this, ff_cube, ff_grid)
+    type(grid_t),     intent(in)  :: this
+    complex(kind=dp), intent(in)  :: ff_cube(:,:,:)
+    complex(kind=dp), intent(out) :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+ 
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_grid(ip) = ff_cube(ix, iy, iz)    
+        end do
+      end do
+    end do
+
+  end subroutine zrs_cube2grid
+
+  subroutine drs_cube2grid(this, ff_cube, ff_grid)
+    type(grid_t),  intent(in)  :: this
+    real(kind=dp), intent(in)  :: ff_cube(:,:,:)
+    real(kind=dp), intent(out) :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_grid(ip) = ff_cube(ix, iy, iz)
+        end do
+      end do
+    end do
+
+  end subroutine drs_cube2grid
+
+  subroutine zrs_grid2cube(this, ff_grid, ff_cube)
+    type(grid_t),  intent(in)  :: this
+    complex(kind=dp), intent(out) :: ff_cube(:,:,:)
+    complex(kind=dp), intent(in)  :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_cube(ix, iy, iz) = ff_grid(ip)
+        end do
+      end do
+    end do
+
+  end subroutine zrs_grid2cube
+
+
+  subroutine drs_grid2cube(this, ff_grid, ff_cube)
+    type(grid_t),  intent(in)  :: this
+    real(kind=dp), intent(out) :: ff_cube(:,:,:)
+    real(kind=dp), intent(in)  :: ff_grid(:)
+
+    integer :: ip, ix, iy, iz
+
+    ip = 0
+    do ix = 1, this%ndims(1)
+      do iy = 1, this%ndims(2)
+        do iz = 1, this%ndims(3)
+          ip = ip + 1
+          ff_cube(ix, iy, iz) = ff_grid(ip)
+        end do
+      end do
+    end do
+
+  end subroutine drs_grid2cube
 
 end module esl_grid_m

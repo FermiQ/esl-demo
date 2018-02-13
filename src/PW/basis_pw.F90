@@ -1,8 +1,9 @@
 module esl_basis_pw_m
-
   use prec
   use yaml_output
   use esl_geometry_m
+  use esl_utils_pw_m
+  use esl_grid_m
   
   private
 
@@ -11,6 +12,13 @@ module esl_basis_pw_m
   type basis_pw_t
     real(dp) :: ecut !< Plane wave cut-off in Hartree
     integer  :: npw  !< Number of plane waves
+    integer  :: ndims(3) !< Number of plane-waves in each direction
+    real(kind=dp) :: gmet(3,3) !< Metric
+
+    real(kind=dp), allocatable :: gmod(:) !length of the G-vectors
+    integer, allocatable :: gmap(:,:) !Mapping
+ 
+    type(grid_t), pointer :: grid
   contains
     private
     procedure, public :: init
@@ -22,14 +30,31 @@ contains
 
   !Initialize the basis
   !----------------------------------------------------
-  subroutine init(this, ecut, ndims, gcell)
-    class(basis_pw_t) :: this
-    real(dp), intent(in) :: ecut
-    integer,  intent(in) :: ndims(3)
-    real(dp), intent(in) :: gcell(3,3)
+  subroutine init(this, grid, ecut, ndims, gcell)
+    class(basis_pw_t)                :: this
+    type(grid_t), target, intent(in) :: grid
+    real(dp),             intent(in) :: ecut
+    integer,              intent(in) :: ndims(3)
+    real(dp),             intent(in) :: gcell(3,3)
 
     this%ecut = ecut
-    this%npw = get_number_of_pw(ndims, ecut, gcell, [0._dp, 0._dp, 0._dp])
+
+    do i = 1, 3
+       this%gmet(i, :) = gcell(1, i) * gcell(1, :) &
+              &        + gcell(2, i) * gcell(2, :) &
+              &        + gcell(3, i) * gcell(3, :)
+    end do
+
+    this%npw = get_number_of_pw(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp])
+    
+    !TODO: We should create of these for each k-point
+    allocate(this%gmod(1:npw))
+    allocate(this%gmap(1:3,1:npw))
+    call construct_mod_map_tables(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp], this%gmod, this%gmap)
+
+    this%ndims(1:3) = ndims(1:3)
+
+    this%grid => grid
 
   end subroutine init
 
@@ -37,6 +62,10 @@ contains
   !----------------------------------------------------
   subroutine cleanup(this)
     type(basis_pw_t) :: this
+
+    if(allocated(this%gmod)) deallocate(this%gmod)
+    if(allocated(this%gmap)) deallocate(this%gmap)
+
   end subroutine cleanup
 
   !Summary
@@ -50,49 +79,5 @@ contains
     call yaml_mapping_close()
 
   end subroutine summary
-
-  integer function get_number_of_pw(ndims, ecut, gcell, kpt) result(npw)
-    use esl_constants_m, only: pi
-    integer,  intent(in) :: ndims(3)
-    real(dp), intent(in) :: ecut
-    real(dp), intent(in) :: gcell(3, 3)
-    real(dp), intent(in) :: kpt(3)
-
-    integer :: i1, i2, i3, i
-    real(dp) :: gmet(3, 3)
-    real(dp) :: threshold
-
-    do i = 1, 3
-       gmet(i, :) = gcell(1, i) * gcell(1, :) &
-            &        + gcell(2, i) * gcell(2, :) &
-            &        + gcell(3, i) * gcell(3, :)
-    end do
-
-    npw = 0
-    threshold = 0.5_dp * ecut / pi**2
-    do i1 = -ndims(1) / 2, ndims(1)/2
-       do i2 = -ndims(2) / 2, ndims(2)/2
-          do i3 = -ndims(3) / 2, ndims(3)/2
-             if (dsq(i1, i2, i3) <= threshold) npw = npw + 1
-          end do
-       end do
-    end do
-
-  contains
-    
-    function dsq(i1, i2, i3)
-      integer, intent(in) :: i1, i2, i3
-      real(dp) :: dsq
-
-      dsq = gmet(1, 1)*(kpt(1) + dble(i1))**2 &
-           & + gmet(2, 2)*(kpt(2) + dble(i2))**2 &
-           & + gmet(3, 3)*(kpt(3) + dble(i3))**2 &
-           & + 2._dp*(gmet(1, 2)*(kpt(1) + dble(i1))*(kpt(2) + dble(i2)) &
-           & + gmet(2, 3)*(kpt(2) + dble(i2))*(kpt(3) + dble(i3)) &
-           & + gmet(3, 1)*(kpt(3) + dble(i3))*(kpt(1) + dble(i1)))
-
-    end function dsq
-    
-  end function get_number_of_pw
 
 end module esl_basis_pw_m

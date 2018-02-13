@@ -31,7 +31,7 @@ contains
 
   subroutine esl_main()
     use esl_hamiltonian_m, only : hamiltonian_t
-    use esl_scf_m, only : scf_t, scf_loop
+    use esl_scf_m, only : scf_t
     use esl_states_m, only : states_t
     use esl_system_m, only : system_t
     use esl_smear_m, only : smear_t
@@ -83,12 +83,12 @@ contains
       ! This initializes all variables that
       call next_step_setup(system)
 
-      call hamiltonian%init(system%basis%grid, system%geo, states, periodic=.false.)
+      call hamiltonian%init(system%basis%grid, system%geo, states, system%basis, periodic=.false.)
       call scf%init()
       call smear%init()
 
       !SCF loop
-      call scf_loop(scf, elsi, hamiltonian, system, states, smear)
+      call scf%loop(elsi, system, states, smear)
 
 #ifdef WITH_FLOOK
       ! Call lua after the forces has been calculated.

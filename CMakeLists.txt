@@ -34,6 +34,7 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
 pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
 pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
+pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
 
 message(STATUS "Found FDF support!")
 include_directories(${FDF_INCLUDE_DIRS})
@@ -47,6 +48,9 @@ message(STATUS "Found PSPIO support!")
 include_directories(${PSPIO_INCLUDE_DIRS})
 link_directories(${PSPIO_LIBRARY_DIRS})
 
+message(STATUS "Found FFTW support!")
+include_directories(${FFTW_INCLUDE_DIRS})
+link_directories(${FFTW_LIBRARY_DIRS})
 
 if(WITH_FLOOK)
   pkg_check_modules(FLOOK REQUIRED flook)
@@ -76,7 +80,7 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES})
+target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES})
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()

@@ -63,7 +63,7 @@ contains
 !          r2 = pseudo(is)%rmax + pseudo(js)%rmax
 
         ! Calculate the distance between the two atomic centers
-        dist = sqrt(sum((basis%sites_xyz(:,ia) - basis%sites_xyz(:,ja)) ** 2))
+        dist = sqrt(sum((basis%xyz(:,ia) - basis%xyz(:,ja)) ** 2))
         
         ! Only process if the maximum distance is within range.
         if ( dist <= r2 ) then
