@@ -48,9 +48,17 @@ contains
 
   !Eigensolver
   !----------------------------------------------------
-  subroutine eigensolver(this, basis)
+  subroutine eigensolver(this, basis, states)
     class(hamiltonian_t) :: this
-    type(basis_t),  intent(in) :: basis
+    type(basis_t),  intent(in)    :: basis
+    type(states_t), intent(inout) :: states
+
+    select case (basis%type)
+    case ( PLANEWAVES )
+      call this%hm_pw%eigensolver(states)
+    case ( ATOMCENTERED )
+    !TODO
+    end select
 
   end subroutine eigensolver
 

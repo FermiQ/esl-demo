@@ -2,6 +2,7 @@ module esl_hamiltonian_pw_m
   use prec, only : dp,ip
 
   use esl_potential_m
+  use esl_states_m
 
   implicit none
   private
@@ -16,6 +17,7 @@ module esl_hamiltonian_pw_m
   contains
     private
     procedure, public :: init
+    procedure, public :: eigensolver
     final :: cleanup
   end type hamiltonian_pw_t
 
@@ -42,6 +44,14 @@ contains
     type(hamiltonian_pw_t) :: this
 
   end subroutine cleanup
+
+  !Eigensolver
+  !----------------------------------------------------
+  subroutine eigensolver(this, states)
+    class(hamiltonian_pw_t) :: this
+    type(states_t), intent(inout) :: states
+
+  end subroutine eigensolver
 
 
   !Apply the Hamiltonian matrix
