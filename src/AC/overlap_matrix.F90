@@ -26,8 +26,8 @@ contains
     real(kind=dp), allocatable :: ao1(:), ao2(:)
     integer :: ll, mm
 
-    allocate(ao1(1:basis%grid%np))
-    allocate(ao2(1:basis%grid%np))
+!    allocate(ao1(1:basis%grid%np))
+!    allocate(ao2(1:basis%grid%np))
 
     ! Re-initialize the sparse matrix
     call S%init(sp)
@@ -43,7 +43,7 @@ contains
         iio = io - basis%site_function_start(ia) + 1
 
         !TODO: get ll and mm
-        call basis%grid%radial_function(basis%orbitals(iio), ll, mm, xyz(:,ia), ao1)
+ !       call basis%grid%radial_function(basis%orbitals(iio), ll, mm, xyz(:,ia), ao1)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -60,11 +60,11 @@ contains
           ! orbital indices and their positions
 
           !TODO: get ll and mm
-          call basis%grid%radial_function(basis%orbitals(iio), ll, mm, xyz(:,ja), ao2)
+!          call basis%grid%radial_function(basis%orbitals(iio), ll, mm, xyz(:,ja), ao2)
 
-          S%M(ind) = &
-              basis%grid%overlap(xyz(:,ia), ao1, pseudo(is)%rmax, &
-              xyz(:,ja), ao2, pseudo(js)%rmax)
+!          S%M(ind) = &
+!              basis%grid%overlap(xyz(:,ia), ao1, pseudo(is)%rmax, &
+!              xyz(:,ja), ao2, pseudo(js)%rmax)
 
         end do
 
