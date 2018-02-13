@@ -80,8 +80,10 @@ contains
     integer :: ip
 
     !TODO: Here there is no spin
+
+    !Note that hartree contains the external potential (from PSolver)
     forall(ip = 1:pot%np)
-      hpsi(ip) = hpsi(ip) + (pot%external(ip) + pot%hartree(ip) + pot%vxc(ip))*psi(ip)
+      hpsi(ip) = hpsi(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi(ip)
     end forall
 
   end subroutine hamiltonian_pw_dapply_local
@@ -97,8 +99,10 @@ contains
     integer :: ip
 
     !TODO: Here there is no spin
+ 
+    !Note that hartree contains the external potential (from PSolver)
     forall(ip = 1:pot%np)
-      hpsi(ip) = hpsi(ip) + (pot%external(ip) + pot%hartree(ip) + pot%vxc(ip))*psi(ip)
+      hpsi(ip) = hpsi(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi(ip)
     end forall
 
   end subroutine hamiltonian_pw_zapply_local

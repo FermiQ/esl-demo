@@ -38,7 +38,6 @@ contains
     use elsi_wrapper_esl, only : elsi_t
     use esl_next_step_m, only: next_step_setup
 
-    type(hamiltonian_t) :: hamiltonian
     type(system_t)      :: system
     type(scf_t)         :: scf
     type(smear_t)       :: smear
@@ -83,8 +82,7 @@ contains
       ! This initializes all variables that
       call next_step_setup(system)
 
-      call hamiltonian%init(system%basis%grid, system%geo, states, periodic=.false.)
-      call scf%init()
+      call scf%init(system, states)
       call smear%init()
 
       !SCF loop
