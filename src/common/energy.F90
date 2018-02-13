@@ -53,8 +53,8 @@ contains
   subroutine calculate(this)
     class(energy_t) :: this
 
-    this%total = this%ionion + this%correlation 
-    this%total = this%total + 0.5_dp*(this%eigenvalues + this%kinetic + this%extern + this%int_nvxc)
+    this%total = this%ionion +  this%eigenvalues  + this%extern &
+                 -this%hartree + this%exchange + this%correlation + this%kinetic - this%int_nvxc
 
   end subroutine calculate
 
