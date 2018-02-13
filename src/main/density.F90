@@ -104,6 +104,7 @@ contains
     select case (basis%type)
     case ( PLANEWAVES )
 
+<<<<<<< HEAD
       call this%density_pw%calculate(states)
     case ( ATOMCENTERED )
 
@@ -135,6 +136,41 @@ contains
 
     end select
 
+=======
+      ! Calculate density
+      call this%density_pw%calculate(states)
+
+    case ( ATOMCENTERED )
+
+      ! Calculate the density on the grid
+      call this%ac%calculate(basis%grid, basis%ac, this%rho, out%ac)
+      
+    end select
+
+  end subroutine calculate
+
+
+  !< Calculate the relative difference between two densities
+  function residue(this, basis, other) result(res)
+    class(density_t), intent(in) :: this, other
+    type(basis_t), intent(in) :: basis
+
+    real(dp) :: res
+
+        ! Calculate density on the grid
+    select case ( basis%type )
+    case ( PLANEWAVES )
+
+      ! TODO implement the residue function in density_pw_t
+!      res = this%density_pw%residue(basis%grid, basis%pw, other%density_pw)
+      
+    case ( ATOMCENTERED )
+
+      res = this%ac%residue(other%ac)
+
+    end select
+
+>>>>>>> 4c2f0e6aa9d4f98348842c29c1c0f203ed0a6a55
     
 !!$    !Test tolerance and print status
 !!$    !We use rhonew to compute the relative density

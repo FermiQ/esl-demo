@@ -14,6 +14,7 @@ module esl_basis_pw_m
     integer  :: npw  !< Number of plane waves
     integer  :: ndims(3) !< Number of plane-waves in each direction
     real(kind=dp) :: gmet(3,3) !< Metric
+
     real(kind=dp), allocatable :: gmod(:) !length of the G-vectors
     integer, allocatable :: gmap(:,:) !Mapping
  
