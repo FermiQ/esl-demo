@@ -2,6 +2,7 @@ module esl_potential_m
 
   use prec, only : dp,ip
   use esl_energy_m
+  use esl_geometry_m
   use esl_grid_m
   use esl_psolver_m
   use esl_states_m
@@ -27,6 +28,7 @@ module esl_potential_m
   contains
     procedure, public :: init
     procedure, public :: calculate
+    procedure, public :: compute_ext_loc
     final  :: cleanup
   end type potential_t
 
@@ -34,11 +36,12 @@ contains
 
   !Initialize the potentials
   !----------------------------------------------------
-  subroutine init(pot, grid, states, periodic)
+  subroutine init(pot, grid, states, geo, periodic)
     class(potential_t) :: pot
-    type(grid_t),   intent(in) :: grid
-    type(states_t), intent(in) :: states
-    logical,        intent(in) :: periodic
+    type(grid_t),    intent(in) :: grid
+    type(states_t),  intent(in) :: states
+    type(geometry_t),intent(in) :: geo
+    logical,         intent(in) :: periodic
     
     character(len = 1) :: geocode
 
@@ -58,7 +61,8 @@ contains
     call pot%psolver%init(0, 1, geocode, grid%ndims, grid%hgrid)
 
     call pot%xc%init()
-    !Here we need to init the libxc and pspio parts
+
+    call pot%compute_ext_loc(grid, geo)
 
   end subroutine init
 
@@ -94,5 +98,34 @@ contains
     call pot%xc%calculate(density, pot%vxc)
 
   end subroutine calculate
+
+
+  !Compute the local part of the external potential
+  !----------------------------------------------------
+  subroutine compute_ext_loc(pot, grid, geo)
+    class(potential_t), intent(inout) :: pot
+    type(grid_t),       intent(in)    :: grid
+    type(geometry_t),   intent(in)    :: geo
+
+    integer :: ia, ip, is
+    real(kind=dp), allocatable :: extloc(:)
+
+    allocate(extloc(1:pot%np)) 
+
+    pot%external(1:pot%np) = 0.d0
+ 
+    do ia = 1, geo%n_atoms
+      is = geo%species_idx(ia)
+
+      !Hre we need to get the potential for the species
+
+      do ip=1, pot%np
+        pot%external(ip) = pot%external(ip) + extloc(ip)
+      end do
+    end do
+
+    deallocate(extloc)
+
+  end subroutine compute_ext_loc
 
 end module esl_potential_m
