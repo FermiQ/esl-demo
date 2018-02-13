@@ -17,15 +17,15 @@ module esl_species_m
     type(pspiof_meshfunc_t) :: rho
     type(pspiof_meshfunc_t) :: vlocal
 
-    integer :: n_orbitals
-    type(pspiof_state_t), allocatable :: orbitals(:)
+    integer :: n_radial_orbitals
+    type(pspiof_state_t), allocatable, private :: radial_orbitals(:)
 
     real(dp) :: z_ion = 0._dp !< Ionic charge, real because of mixed species
     real(dp) :: q = 0._dp     !< Electronic charge
   contains
     private
     procedure, public :: init
-    procedure, public :: get_orbital
+    procedure, public :: get_radial_orbital
     procedure, public :: summary
     final :: cleanup
   end type species_t
@@ -60,11 +60,11 @@ contains
 
     ! Store some information
     this%rho = pspiof_pspdata_get_rho_valence(this%psp)
-    this%n_orbitals = pspiof_pspdata_get_n_states(this%psp)
-    if (this%n_orbitals > 0) then
-      allocate(this%orbitals(this%n_orbitals))
-      do io = 1, this%n_orbitals
-        this%orbitals(io) = pspiof_pspdata_get_state(this%psp, io)
+    this%n_radial_orbitals = pspiof_pspdata_get_n_states(this%psp)
+    if (this%n_radial_orbitals > 0) then
+      allocate(this%radial_orbitals(this%n_radial_orbitals))
+      do io = 1, this%n_radial_orbitals
+        this%radial_orbitals(io) = pspiof_pspdata_get_state(this%psp, io)
       end do
     end if
     
@@ -95,9 +95,9 @@ contains
     
     call pspiof_pspdata_free(this%psp)
     call pspiof_meshfunc_free(this%rho)
-    if (allocated(this%orbitals)) then
-      do io = 1, this%n_orbitals
-        call pspiof_state_free(this%orbitals(io))
+    if (allocated(this%radial_orbitals)) then
+      do io = 1, this%n_radial_orbitals
+        call pspiof_state_free(this%radial_orbitals(io))
       end do
     end if
     call pspiof_meshfunc_free(this%vlocal)
@@ -117,18 +117,24 @@ contains
   end subroutine summary
 
   
-  subroutine get_orbital(this, io, orbital, ll, occ)
+  subroutine get_radial_orbital(this, io, ll, radial_orbital, occ)
     class(species_t) :: this
-    integer,                 intent(in)  :: io
-    type(pspiof_meshfunc_t), intent(out) :: orbital
-    integer,                 intent(out) :: ll
-    real(dp),                intent(out) :: occ
-    
-    orbital = pspiof_state_get_wf(this%orbitals(io))
-    ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
-    occ = pspiof_state_get_occ(this%orbitals(io))
+    integer,                           intent(in)  :: io
+    integer,                 optional, intent(out) :: ll
+    type(pspiof_meshfunc_t), optional, intent(out) :: radial_orbital
+    real(dp),                optional, intent(out) :: occ
 
-  end subroutine get_orbital
+    if (present(ll)) then
+      ll = pspiof_qn_get_l(pspiof_state_get_qn(this%radial_orbitals(io)))
+    end if
+    if (present(radial_orbital)) then
+      radial_orbital = pspiof_state_get_wf(this%radial_orbitals(io))
+    end if
+    if (present(occ)) then
+      occ = pspiof_state_get_occ(this%radial_orbitals(io))
+    end if
+
+  end subroutine get_radial_orbital
   
   !----------------------------------------------------
   !Private routines
