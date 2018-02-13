@@ -97,6 +97,9 @@ contains
     ! Perform initial guess on the density
     call this%rho_in%guess(system%basis, system%geo)
 
+    !Randomize the states
+    call states%randomize()
+
     call yaml_mapping_open("SCF cycle")
 
     loop_scf: do iter = 1, this%max_iter

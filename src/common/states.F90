@@ -6,9 +6,7 @@ module esl_states_m
   implicit none
   private
 
-  public ::                   &
-       states_t,         &
-       states_randomize
+  public :: states_t
 
   type wfn_t
      real(dp),    allocatable :: dcoef(:) !<Coefficients of the wavefunction in the basis
@@ -33,6 +31,7 @@ module esl_states_m
      private
      procedure, public :: init
      procedure, public :: summary
+     procedure, public :: randomize
      final :: cleanup
   end type states_t
 
@@ -114,11 +113,12 @@ contains
 
   !Randomize the states
   !----------------------------------------------------
-  subroutine states_randomize(this)
-    type(states_t):: this
+  subroutine randomize(this)
+    class(states_t):: this
 
     integer :: ist, isp, ik
     real(dp), allocatable :: tmp_re(:), tmp_im(:)
+    real(dp) :: norm
 
     if(this%complex_states) then
       allocate(tmp_re(1:this%ncoef))
@@ -130,6 +130,8 @@ contains
             call random_number(tmp_im(1:this%ncoef))
             this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) &
                    + cmplx(0.d0,1.d0,kind=dp)*tmp_im(1:this%ncoef) 
+            norm = sum(abs(this%states(ist, isp, ik)%zcoef(1:this%ncoef))**2)
+            this%states(ist, isp, ik)%zcoef(1:this%ncoef) = this%states(ist, isp, ik)%zcoef(1:this%ncoef)/sqrt(norm)
           end do
         end do
       end do
@@ -139,12 +141,14 @@ contains
         do isp = 1, this%nspin
           do ist = 1, this%nstates
             call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
+            norm = sum(abs(this%states(ist, isp, ik)%dcoef(1:this%ncoef))**2)
+            this%states(ist, isp, ik)%dcoef(1:this%ncoef) = this%states(ist, isp, ik)%dcoef(1:this%ncoef)/sqrt(norm)
           end do
         end do
       end do
     end if
 
-  end subroutine states_randomize
+  end subroutine randomize
 
   !Summary
   !----------------------------------------------------
