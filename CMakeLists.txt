@@ -74,6 +74,7 @@ include_directories(${PROJECT_BINARY_DIR}/src/PW)
 add_subdirectory(${src_dir}/PW)
 add_subdirectory(${src_dir}/AC)
 add_subdirectory(${src_dir}/common)
+add_subdirectory(${src_dir}/elsi_rci)
 
 
 add_executable(${target_name}

@@ -5,4 +5,4 @@ add_library(pw
   utils_pw.F90
   )
 
-target_link_libraries(pw common)
+target_link_libraries(pw elsi_rci common)
