@@ -28,14 +28,23 @@ contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-  subroutine init(this, grid, geo, states, periodic)
+  subroutine init(this, basis, geo, states, periodic)
     class(hamiltonian_t) :: this
-    type(grid_t),     intent(in) :: grid
+    type(basis_t),    intent(in) :: basis
     type(geometry_t), intent(in) :: geo
     type(states_t),   intent(in) :: states
     logical,          intent(in) :: periodic
 
-    call this%potential%init(grid, states, geo, periodic)
+    call this%energy%init()
+    call this%potentials%init(basis%grid, states, geo, periodic)
+
+    select case (basis%type)
+    case ( PLANEWAVES )
+      call this%hm_pw%init(states)
+    case ( ATOMCENTERED )
+    !TODO
+    end select
+ 
 
   end subroutine init
 

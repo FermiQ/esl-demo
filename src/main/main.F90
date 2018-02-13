@@ -80,7 +80,7 @@ contains
       ! Prepare the next step for the system
       call next_step_setup(system)
 
-      ! Initialize the SCF type to be able to perform the SCF-loop
+      call hamiltonian%init(system%basis, system%geo, states, periodic=.false.)
       call scf%init(system, states)
       
       call smear%init()
