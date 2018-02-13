@@ -117,16 +117,22 @@ contains
   end subroutine summary
 
   
-  subroutine get_orbital(this, io, orbital, ll, occ)
+  subroutine get_orbital(this, io, ll, orbital, occ)
     class(species_t) :: this
-    integer,                 intent(in)  :: io
-    type(pspiof_meshfunc_t), intent(out) :: orbital
-    integer,                 intent(out) :: ll
-    real(dp),                intent(out) :: occ
-    
-    orbital = pspiof_state_get_wf(this%orbitals(io))
-    ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
-    occ = pspiof_state_get_occ(this%orbitals(io))
+    integer,                           intent(in)  :: io
+    integer,                 optional, intent(out) :: ll
+    type(pspiof_meshfunc_t), optional, intent(out) :: orbital
+    real(dp),                optional, intent(out) :: occ
+
+    if (present(ll)) then
+      ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
+    end if
+    if (present(orbital)) then
+      orbital = pspiof_state_get_wf(this%orbitals(io))
+    end if
+    if (present(occ)) then
+      occ = pspiof_state_get_occ(this%orbitals(io))
+    end if
 
   end subroutine get_orbital
   
