@@ -20,6 +20,7 @@ module esl_hamiltonian_m
   contains
     private
     procedure, public :: init
+    procedure, public :: eigensolver
     final :: cleanup
   end type hamiltonian_t
 
@@ -44,6 +45,15 @@ contains
     type(hamiltonian_t) :: this
 
   end subroutine cleanup
+
+  !Eigensolver
+  !----------------------------------------------------
+  subroutine eigensolver(this, basis)
+    class(hamiltonian_t) :: this
+    type(basis_t),  intent(in) :: basis
+
+  end subroutine eigensolver
+
 
   
 end module esl_hamiltonian_m

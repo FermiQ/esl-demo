@@ -138,6 +138,7 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
+      call this%H_in%eigensolver(system%basis)
 
       ! Update occupations
       call smear%calc_fermi_occ(elsic, states)
