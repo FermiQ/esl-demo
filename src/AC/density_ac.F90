@@ -91,10 +91,11 @@ contains
     
     ! Calculate the atomic density
     call basis%atomic_density_matrix(DM_atom)
+    
     ! Expand the atomic dM on an auxiliary grid
     call add_density_matrix(grid, basis, DM_atom, rho_atom)
     call DM_atom%delete()
-    
+
     ! 1. Start by calculating the density from the DM on the grid
     call add_density_matrix(grid, basis, this%DM, rho)
 
@@ -193,6 +194,7 @@ contains
           iio = io - basis%site_orbital_start(ia) + 1 ! local basis-function index of site ia
 
           ! Loop over density matrix for the neighbouring basis-sites
+          
           ! TODO this loop could be reduced by limiting the basis functions
           ! with respect to individual ranges.
           do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -228,19 +230,22 @@ contains
     subroutine populate_neighbours(n_neigh, r)
       integer, intent(inout) :: n_neigh
       real(dp), intent(in) :: r(3)
-      real(dp) :: dist, r_max
+      real(dp) :: dist, r_cut
       integer :: is
 
       n_neigh = 0
-      r_max = 14._dp ! TODO retrieve correct radius of basis-functions
       do is = 1, basis%n_site
 
         dist = sqrt(sum( (basis%xyz(:, is) - r) ** 2 ))
 
-        ! TODO add check for r-max
-        if ( dist <= r_max ) then
+        ! Retrieve cut-off
+        r_cut = basis%state(basis%site_state_idx(is))%r_cut
+        
+        if ( dist <= r_cut ) then
+          
           n_neigh = n_neigh + 1
           neigh(n_neigh) = is
+          
         end if
 
       end do
@@ -254,7 +259,7 @@ contains
     class(density_ac_t), intent(in) :: this, other
 
     real(dp) :: res
-    
+
     res = maxval( abs( this%DM%M - other%DM%M ) )
 
   end function residue
