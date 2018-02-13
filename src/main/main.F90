@@ -64,7 +64,7 @@ contains
     nspin = 1
     nel = 1
     !---------------------------------------
-    call states%init(nstates, nspin, 1, .false., system%basis%size, nel)
+    call states%init(nstates, nspin, 1, .true., system%basis%size, nel)
     call states%summary()
 
     ! TODO Nstep should probably be read from another entity

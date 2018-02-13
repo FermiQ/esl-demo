@@ -145,7 +145,11 @@ contains
       x = this%r(1,ip) - r_center(1)
       y = this%r(2,ip) - r_center(2)
       z = this%r(3,ip) - r_center(3)
-      call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
+      if (present(gfunc)) then
+        call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
+      else
+        call grylmr(x, y, z, ll, mm, func(ip))
+      end if
 
       r = sqrt(x**2 + y**2 + z**2)
       func(ip) = func(ip)*pspiof_meshfunc_eval(rfunc, r)

@@ -109,11 +109,7 @@ contains
     call fourier_sphere2cube(gmap, ndims, npw, coef_pw, fourier_cube)    
 
     ! FFT-1
-    ! TODO include 'fftw3.f90' should be put properly
-    call fftw_execute_dft(grid%iFFTplan, fourier_cube, fourier_cube)
-
-    ! FFT
-    call fftw_execute_dft(grid%FFTplan, fourier_cube, fourier_cube)
+    call fftw_execute_dft(grid%iFFTplan, fourier_cube, rs_cube)
 
     call rs_cube2grid(grid, rs_cube, coef_rs)
 
@@ -137,7 +133,8 @@ contains
 
     call rs_grid2cube(grid, coef_rs, rs_cube)
 
-    !Here FFT
+    ! FFT
+    call fftw_execute_dft(grid%FFTplan, rs_cube, fourier_cube)
 
     call fourier_cube2sphere(gmap, ndims, npw, fourier_cube, coef_pw)
 
@@ -159,7 +156,8 @@ contains
     fourier_cube(1:ndims(1), 1:ndims(2), 1:ndims(3)) = 0.d0
 
     do ipw = 1, npw
-      fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw)) = coef_pw(ipw)
+      fourier_cube(gmap(1,ipw)+ndims(1)/2+1, gmap(2,ipw)+ndims(3)/2+1, &
+                     gmap(3,ipw)+ndims(3)/2+1) = coef_pw(ipw)
     end do    
 
   end subroutine fourier_sphere2cube
