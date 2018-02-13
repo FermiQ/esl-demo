@@ -23,10 +23,10 @@ contains
     call yaml_map("compiler options", trim(compiler_options()))
 #ifdef WITH_MPI
     call MPI_Get_version(mpi_ver,mpi_subver,ierr)
-    call MPI_Get_library_version(lib,ll,ierr)
+!    call MPI_Get_library_version(lib,ll,ierr)
     write(aux,'(i0,a1,i0)')mpi_ver,'.',mpi_subver
     call yaml_map("MPI Standard: ", trim(aux))
-    call yaml_map("MPI Implementation",trim(lib))
+!    call yaml_map("MPI Implementation",trim(lib))
 #endif
     call yaml_mapping_close()
   end subroutine about
