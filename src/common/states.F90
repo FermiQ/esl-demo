@@ -60,6 +60,7 @@ contains
     allocate(this%states(1:nstates, 1:nspin, 1:nkpt))
     allocate(this%occ_numbers(1:nstates, 1:nspin, 1:nkpt))
     this%occ_numbers(1:nstates, 1:nspin, 1:nkpt) = 0._dp
+    this%occ_numbers(1:nel,  1:nspin, 1:nkpt) = 1.d0
 
     allocate(this%k_weights(1:nkpt))
     this%k_weights(:) = 1.d0/this%nkpt
