@@ -76,18 +76,9 @@ contains
 
     select case (system%basis%type)
     case ( PLANEWAVES )
-
-      ! TODO anything syecific to SCF initialization
-      
+      call this%H%init(system%basis, system%geo, states, periodic=.false.)
     case( ATOMCENTERED )
-
-      ! Initialization of the SCF step is done here.
-      call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
-
-      ! Calculate the overlap matrix for this SCF cycle
-      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
-          system%sparse_pattern, system%S)
-
+      call this%H%init(system%basis, system%geo, states, periodic=.false.)
     end select
 
     ! Finally we can initialize the densities
@@ -138,7 +129,7 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
-      call this%H_in%eigensolver(system%basis, states)
+      call this%H%eigensolver(system%basis, states)
 
       ! Update occupations
       call smear%calc_fermi_occ(elsic, states)
