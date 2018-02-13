@@ -45,7 +45,7 @@ contains
 
     integer(kind=i4) :: solver, matrix_size
 
-    call elsi_init(this%e_h, solver, 1, 0, matrix_size, states%nel, states%nstates)
+    call elsi_init(this%e_h, solver, 1, 0, matrix_size, real(states%nel,kind=dp), states%nstates)
 
   end subroutine init
 
