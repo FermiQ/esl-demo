@@ -5,5 +5,7 @@ module use $HOME/modules
 module load esl/openmpi/0.0.1
 mkdir build
 cd build
-cmake ../
-make -j VERBOSE=1
+cmake ../ -DWITH_DOC=On
+make -j
+make doc
+
