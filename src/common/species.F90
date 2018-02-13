@@ -19,8 +19,8 @@ module esl_species_m
     integer :: n_orbitals
     type(pspiof_state_t), allocatable :: orbitals(:)
 
-    ! TODO fix this argument
-    real(dp) :: Z = 0._dp !< Ionic charge, real because of mixed species
+    real(dp) :: z_ion = 0._dp !< Ionic charge, real because of mixed species
+    real(dp) :: q = 0._dp     !< Electronic charge
   contains
     private
     procedure, public :: init
@@ -61,7 +61,10 @@ contains
         this%orbitals(io) = pspiof_pspdata_get_state(this%psp, io)
       end do
     end if
-      
+    
+    this%z_ion = pspiof_pspdata_get_zvalence(this%psp)
+    this%q = pspiof_pspdata_get_nelvalence(this%psp)
+
   end subroutine init
 
   !Release
