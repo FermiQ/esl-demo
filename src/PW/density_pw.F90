@@ -7,6 +7,7 @@ module esl_density_pw_m
   use esl_message_m
   use esl_states_m
   use esl_utils_pw_m
+  use yaml_output
 
   implicit none
 
@@ -59,25 +60,25 @@ contains
     
     real(dp), allocatable :: radial(:)
     real(dp), allocatable :: atomicden(:)
-    integer :: iat, np_radial, ip
+    integer :: iat, ip, is
+    real(dp):: norm
 
     this%density(1:grid%np) = 0.d0
 
     allocate(atomicden(1:grid%np))
     atomicden(1:grid%np) = 0.d0
 
+    call yaml_mapping_open("Guess atomic density")
+
     ! We expect only atoms to contain initial density
     do iat = 1, geo%n_atoms
-      
-      !Get the number of points in the radial grid
-      np_radial = 1
-      allocate(radial(1:np_radial))
-      !Get atomic density on the radial grid
+      is = geo%species_idx(iat)      
 
       !Convert the radial density to the cartesian grid
+      call grid%radial_function(geo%species(iat)%rho, 0, 0, geo%xyz(:,iat), atomicden)
 
-      !We do not need the radial density anymore
-      deallocate(radial)
+      call integrate(grid, atomicden, norm)
+      call yaml_map("Norm", norm)
 
       !Summing up to the total density
       forall (ip = 1:grid%np)
@@ -86,6 +87,8 @@ contains
     end do
 
     deallocate(atomicden)
+
+    call yaml_mapping_close()
 
   end subroutine guess
 
