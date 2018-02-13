@@ -13,13 +13,3 @@ test:debian:
   stage: build
   script:
     - sh utils/debian-gcc-openmpi.sh
-
-pages:
-  image: drfaustroll/esl:debian
-  stage: deploy
-  script:
-    - sh utils/debian-doc.sh
-  artifacts:
-      paths:
-        - public
-
