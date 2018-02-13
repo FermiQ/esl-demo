@@ -5,6 +5,6 @@ module use $HOME/modules
 module load esl/openmpi/0.0.1
 mkdir build
 cd build
-FFLAGS="-g -frecord-gcc-switches -O0 -std=f2008 -pedantic -fbacktrace -fcheck=all -finit-integer=snan -finit-real=snan -finit-logical=true -finit-character=42 -finit-derived -ffpe-trap=invalid,zero,overflow -fdump-core
-" cmake ../
+export FC=gfortran
+FFLAGS="-g -O0 -std=f2008 -pedantic -fbacktrace -Wall -fcheck=all -finit-integer=snan -finit-real=snan -finit-logical=true -finit-character=42  -ffpe-trap=invalid,zero,overflow " cmake ../
 make -j VERBOSE=1
