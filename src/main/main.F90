@@ -64,7 +64,7 @@ contains
     nspin = 1
     nel = 1
     !---------------------------------------
-    call states%init(nstates, nspin, 1, .false., system%basis%size, nel)
+    call states%init(nstates, nspin, 1, .true., system%basis%size, nel)
     call states%summary()
 
     ! TODO Nstep should probably be read from another entity
@@ -83,7 +83,7 @@ contains
       ! This initializes all variables that
       call next_step_setup(system)
 
-      call hamiltonian%init(system%basis%grid, system%geo, states, system%basis, periodic=.false.)
+      call hamiltonian%init(system%basis%grid, system%geo, states, periodic=.false.)
       call scf%init()
       call smear%init()
 

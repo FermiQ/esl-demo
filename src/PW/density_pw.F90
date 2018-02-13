@@ -7,6 +7,7 @@ module esl_density_pw_m
   use esl_message_m
   use esl_states_m
   use esl_utils_pw_m
+  use yaml_output
 
   implicit none
 
@@ -25,6 +26,7 @@ module esl_density_pw_m
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
+    procedure, public :: residue
     procedure, public :: get_den
     procedure, public :: set_den
     final  :: cleanup
@@ -53,39 +55,43 @@ contains
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
   subroutine guess(this, geo, grid)
+    use esl_constants_m, only : PI
     class(density_pw_t), intent(inout) :: this
     type(geometry_t), intent(in) :: geo
     type(grid_t),     intent(in) :: grid
     
-    real(dp), allocatable :: radial(:)
     real(dp), allocatable :: atomicden(:)
-    integer :: iat, np_radial, ip
+    integer :: iat, ip, is
+    real(dp):: norm, coef
 
     this%density(1:grid%np) = 0.d0
+
+    !We have to remove the factor 1/sqrt(4*pi) that comes form Y_{0,0}
+    coef = sqrt(4.d0*PI)
 
     allocate(atomicden(1:grid%np))
     atomicden(1:grid%np) = 0.d0
 
+    call yaml_mapping_open("Guess atomic density")
+
     ! We expect only atoms to contain initial density
     do iat = 1, geo%n_atoms
-      
-      !Get the number of points in the radial grid
-      np_radial = 1
-      allocate(radial(1:np_radial))
-      !Get atomic density on the radial grid
+      is = geo%species_idx(iat)      
 
       !Convert the radial density to the cartesian grid
-
-      !We do not need the radial density anymore
-      deallocate(radial)
+      call grid%radial_function(geo%species(is)%rho, 0, 0, geo%xyz(:,iat), atomicden)
+      
+      call integrate(grid, atomicden, norm)
+      call yaml_map("Norm", norm*coef)
 
       !Summing up to the total density
       forall (ip = 1:grid%np)
-        this%density(ip) = this%density(ip) + atomicden(ip)
+        this%density(ip) = this%density(ip) + atomicden(ip)*coef
       end forall
     end do
-
     deallocate(atomicden)
+
+    call yaml_mapping_close()
 
   end subroutine guess
 
@@ -115,8 +121,10 @@ contains
 
     this%density(:) = 0.d0
 
+
     ! Density should be calculated from states
     do ik = 1, states%nkpt
+      kpt(1:3) = 0.d0
       do isp = 1, states%nspin
         do ist = 1, states%nstates
           !TODO: Here we should have a gmap for each k-point
@@ -136,6 +144,30 @@ contains
 
   end subroutine calculate
 
+  !Residue
+  !---------------------------------------------------
+  function residue(this, grid, nel, other) result(res)
+    class(density_pw_t), intent(in) :: this
+    type(grid_t),        intent(in) :: grid
+    integer,             intent(in) :: nel
+    type(density_pw_t),  intent(in) :: other
+
+    real(kind=dp), allocatable :: diff(:)
+    real(kind=dp) :: res
+    integer :: ip
+
+    allocate(diff(1:grid%np)) 
+
+    !We use rhonew to compute the relative density
+    do ip = 1, this%np
+      diff(ip) = abs(other%density(ip) - this%density(ip))
+    end do
+    call integrate(grid, diff, res)
+    res = res/real(nel)
+
+    deallocate(diff)
+
+  end function residue
 
   !Copy the density to an array
   !----------------------------------------------------

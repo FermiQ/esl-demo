@@ -56,8 +56,8 @@ contains
     real(dp), intent(in) :: cell(3,3)
 
     integer :: idim, ix, iy, iz, ip
-    integer :: n, twice
-    complex(dp),         allocatable :: arr(:,:,:)
+    integer :: twice
+    complex(dp),         allocatable :: rin(:,:,:), cout(:,:,:)
 
     this%ndims = ndims
 
@@ -88,15 +88,17 @@ contains
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
 
     ! Initialization for FFT and IFFT
-    allocate(arr(this%ndims(1), this%ndims(2), this%ndims(3)))
-
+    allocate(rin(this%ndims(1), this%ndims(2), this%ndims(3)))
+    allocate(cout(this%ndims(1)/2+1, this%ndims(2), this%ndims(3)))
     this%fftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
-      arr, arr, FFTW_FORWARD, FFTW_ESTIMATE)
+      rin, cout, FFTW_FORWARD, FFTW_ESTIMATE)
+    deallocate(rin,cout)
 
+    allocate(rin(this%ndims(1)/2+1, this%ndims(2), this%ndims(3)))
+    allocate(cout(this%ndims(1), this%ndims(2), this%ndims(3)))
     this%ifftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
-      arr, arr, FFTW_BACKWARD, FFTW_ESTIMATE)
-
-    deallocate(arr)
+      rin, cout, FFTW_BACKWARD, FFTW_ESTIMATE)
+    deallocate(rin,cout)
 
     ndims = this%ndims
   end subroutine init
@@ -147,7 +149,11 @@ contains
       x = this%r(1,ip) - r_center(1)
       y = this%r(2,ip) - r_center(2)
       z = this%r(3,ip) - r_center(3)
-      call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
+      if (present(gfunc)) then
+        call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
+      else
+        call grylmr(x, y, z, ll, mm, func(ip))
+      end if
 
       r = sqrt(x**2 + y**2 + z**2)
       fr = pspiof_meshfunc_eval(rfunc, r)
@@ -185,7 +191,7 @@ contains
 
     integer :: ip
 
-    int_ff = cmplx(0.d0,0.d0)
+    int_ff = cmplx(0.d0,0.d0, kind=dp)
     do ip = 1,grid%np
        int_ff = int_ff + ff(ip)
     end do

@@ -65,8 +65,6 @@ contains
     use yaml_output
     class(energy_t) :: this
 
-    integer :: i
-
     call yaml_mapping_open("Energy")
     call yaml_map("Total", this%total)
     call yaml_map("Eigenvalues", this%eigenvalues)
