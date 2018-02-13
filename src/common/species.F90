@@ -98,14 +98,16 @@ contains
   end subroutine summary
 
   
-  subroutine get_orbital(this, io, orbital, ll)
+  subroutine get_orbital(this, io, orbital, ll, occ)
     class(species_t) :: this
     integer,                 intent(in)  :: io
     type(pspiof_meshfunc_t), intent(out) :: orbital
     integer,                 intent(out) :: ll
-
+    real(dp),                intent(out) :: occ
+    
     orbital = pspiof_state_get_wf(this%orbitals(io))
     ll = pspiof_qn_get_l(pspiof_state_get_qn(this%orbitals(io)))
+    occ = pspiof_state_get_occ(this%orbitals(io))
 
   end subroutine get_orbital
   
