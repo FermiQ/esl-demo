@@ -55,15 +55,19 @@ contains
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
   subroutine guess(this, geo, grid)
+    use esl_constants_m, only : PI
     class(density_pw_t), intent(inout) :: this
     type(geometry_t), intent(in) :: geo
     type(grid_t),     intent(in) :: grid
     
     real(dp), allocatable :: atomicden(:)
     integer :: iat, ip, is
-    real(dp):: norm
+    real(dp):: norm, coef
 
     this%density(1:grid%np) = 0.d0
+
+    !We have to remove the factor 1/sqrt(4*pi) that comes form Y_{0,0}
+    coef = sqrt(4.d0*PI)
 
     allocate(atomicden(1:grid%np))
     atomicden(1:grid%np) = 0.d0
@@ -76,16 +80,15 @@ contains
 
       !Convert the radial density to the cartesian grid
       call grid%radial_function(geo%species(is)%rho, 0, 0, geo%xyz(:,iat), atomicden)
-
+      
       call integrate(grid, atomicden, norm)
-      call yaml_map("Norm", norm)
+      call yaml_map("Norm", norm*coef)
 
       !Summing up to the total density
       forall (ip = 1:grid%np)
-        this%density(ip) = this%density(ip) + atomicden(ip)
+        this%density(ip) = this%density(ip) + atomicden(ip)*coef
       end forall
     end do
-
     deallocate(atomicden)
 
     call yaml_mapping_close()
