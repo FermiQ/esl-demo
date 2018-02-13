@@ -276,9 +276,6 @@ contains
       ! A copy of cols before we insert it.
       integer(ii_), allocatable :: cols(:)
 
-#ifdef __GFORTRAN__
-      call backtrace()
-#endif
       stop 'currently not implemented'
 
     end subroutine complex_add
