@@ -25,7 +25,7 @@ module esl_species_m
   contains
     private
     procedure, public :: init
-    procedure, public :: get_orbital
+    procedure, public :: get_radial_orbital
     procedure, public :: summary
     final :: cleanup
   end type species_t
@@ -117,7 +117,7 @@ contains
   end subroutine summary
 
   
-  subroutine get_orbital(this, io, ll, orbital, occ)
+  subroutine get_radial_orbital(this, io, ll, orbital, occ)
     class(species_t) :: this
     integer,                           intent(in)  :: io
     integer,                 optional, intent(out) :: ll
@@ -134,7 +134,7 @@ contains
       occ = pspiof_state_get_occ(this%orbitals(io))
     end if
 
-  end subroutine get_orbital
+  end subroutine get_radial_orbital
   
   !----------------------------------------------------
   !Private routines
