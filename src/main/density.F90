@@ -51,7 +51,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
       
-      call this%density_pw%init(grid)
+      call this%density_pw%init(grid, basis%pw)
       
     case ( ATOMCENTERED )
       
