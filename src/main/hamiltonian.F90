@@ -42,7 +42,7 @@ contains
     logical,          intent(in) :: periodic
 
     call this%energy%init()
-    call this%potentials%init(grid, states, periodic)
+    call this%potentials%init(grid, states, geo, periodic)
     call this%force%init(geo%n_atoms)
     call this%ion_inter%init()
 
