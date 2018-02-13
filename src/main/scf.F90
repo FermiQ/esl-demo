@@ -9,6 +9,7 @@ module esl_scf_m
   use esl_hamiltonian_m
   use esl_mixing_m
   use esl_potential_m
+  use esl_states_m
   use esl_system_m
 
   implicit none
@@ -29,7 +30,7 @@ module esl_scf_m
     type(density_t) :: rho_in, rho_out
 
     !< Hamiltonian/Potential in/out
-    type(hamiltonian_t) :: H_in, H_out
+    type(hamiltonian_t) :: H
 
   contains
     private
@@ -46,12 +47,22 @@ contains
 
   !Initialize density and wfn
   !----------------------------------------------------
-  subroutine init(this)
-    class(scf_t)  :: this
+  subroutine init(this, system, states)
+    class(scf_t)  :: this 
+    type(system_t),         intent(in) :: system
+    type(states_t),         intent(in) :: states
 
     this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
     this%max_iter    = fdf_get('SCFMaxIterations', 100)
-    !Parse here the data for the SCF
+
+    call this%mixer%init()
+
+    select case (system%basis%type)
+    case ( PLANEWAVES )
+      call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+    case( ATOMCENTERED )
+      call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+    end select
 
   end subroutine init
 
@@ -86,6 +97,9 @@ contains
     ! Perform initial guess on the density
     call this%rho_in%guess(system%basis, system%geo)
 
+    !Randomize the states
+    call states%randomize()
+
     call yaml_mapping_open("SCF cycle")
 
     loop_scf: do iter = 1, this%max_iter
@@ -101,10 +115,15 @@ contains
       call this%rho_in%calculate(system%basis, states, out=this%rho_out)
       
       !Calc. potentials
-!      call this%H_in%potentials%calculate(this%rho_out, this%H_in%energy)
+      select case (system%basis%type)
+      case ( PLANEWAVES )
+        call this%H%potentials%calculate(this%rho_out%density_pw%density, this%H%energy)
+      case( ATOMCENTERED )
+        !TODO
+      end select
 
       !Calc. energies
-      call this%H_in%energy%calculate()  
+      call this%H%energy%calculate()  
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density
@@ -131,7 +150,7 @@ contains
     
     call yaml_mapping_close()
 
-    call this%H_out%energy%display()
+    call this%H%energy%display()
 
   end subroutine loop
   
@@ -140,14 +159,17 @@ contains
   subroutine mix(this, basis, rho_in, rho_out)
     class(scf_t) :: this
     type(basis_t),  intent(in)   :: basis
-    type(density_t), intent(out) :: rho_in, rho_out 
+    type(density_t), intent(in) :: rho_in, rho_out 
 
     real(kind=dp), allocatable :: rhonew(:)
+    integer :: np
+
+    np = rho_in%np
 
     select case (basis%type)
     case ( PLANEWAVES )  
-      allocate(rhonew(1:rho_in%np))
-      call this%mixer%linear(rho_in%np, rho_in%density_pw%density, rho_out%density_pw%density, rhonew)
+      allocate(rhonew(1:np))
+      call this%mixer%linear(np, rho_in%density_pw%density(1:np), rho_out%density_pw%density(1:np), rhonew(1:np))
       call rho_in%density_pw%set_den(rhonew)
       deallocate(rhonew)
     case ( ATOMCENTERED )

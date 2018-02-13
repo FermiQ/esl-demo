@@ -26,3 +26,15 @@ debian-paranoid:
   stage: build
   script:
     - sh utils/debian-paranoid.sh
+pages:
+  image: drfaustroll/esl:tumbleweed
+  stage: deploy
+  script:
+    - sh utils/opensuse-docs.sh
+    - ls && pwd
+    - cp -r doc/developers/source/* public/developers/
+    - cp -r doc/manual/_build/html/* public/
+  artifacts:
+      paths:
+        - public/* 
+
