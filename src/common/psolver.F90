@@ -62,7 +62,7 @@ contains
 
     class(psolver_t), intent(inout) :: ps
     real(gp),         intent(inout) :: hartree(*) !< On input should hold the density. On output it will contain the Hartree potential
-    real(gp),         intent(out)   :: ionicPot(*)
+    real(gp),         intent(inout) :: ionicPot(*)
     real(gp),         intent(in)    :: ionicOffset
     real(gp),         intent(out)   :: ehartree
 

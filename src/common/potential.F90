@@ -83,7 +83,7 @@ contains
   !----------------------------------------------------
   subroutine calculate(pot, density, energy)
     class(potential_t), intent(inout) :: pot
-    real(dp),           intent(in)    :: density(*)
+    real(dp),           intent(in)    :: density(:)
     type(energy_t),     intent(inout) :: energy
 
     integer :: i
@@ -103,24 +103,29 @@ contains
   !Compute the local part of the external potential
   !----------------------------------------------------
   subroutine compute_ext_loc(pot, grid, geo)
+    use esl_constants_m, only : PI
     class(potential_t), intent(inout) :: pot
     type(grid_t),       intent(in)    :: grid
     type(geometry_t),   intent(in)    :: geo
 
-    integer :: ia, ip, is
+    integer :: iat, ip, is
     real(kind=dp), allocatable :: extloc(:)
+    real(kind=dp) :: coef
 
     allocate(extloc(1:pot%np)) 
-
     pot%external(1:pot%np) = 0.d0
  
-    do ia = 1, geo%n_atoms
-      is = geo%species_idx(ia)
+    !We have to remove the factor 1/sqrt(4*pi) that comes form Y_{0,0}
+    coef = sqrt(4.d0*PI)
 
-      !Hre we need to get the potential for the species
+    do iat = 1, geo%n_atoms
+      is = geo%species_idx(iat)
 
+      !Convert the radial density to the cartesian grid
+      call grid%radial_function(geo%species(is)%vlocal, 0, 0, geo%xyz(:,iat), extloc)
+      
       do ip=1, pot%np
-        pot%external(ip) = pot%external(ip) + extloc(ip)
+        pot%external(ip) = pot%external(ip) + extloc(ip)*coef
       end do
     end do
 

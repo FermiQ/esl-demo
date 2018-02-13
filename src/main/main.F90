@@ -38,7 +38,6 @@ contains
     use elsi_wrapper_esl, only : elsi_t
     use esl_next_step_m, only: next_step_setup
 
-    type(hamiltonian_t) :: hamiltonian
     type(system_t)      :: system
     type(scf_t)         :: scf
     type(smear_t)       :: smear
@@ -46,7 +45,7 @@ contains
     type(elsi_t)        :: elsi
 
     !--------------TEMP --------------------
-    integer :: nstates, nspin, nel
+    integer :: nspin
     !--------------------------------------
 
     ! Steps
@@ -60,11 +59,9 @@ contains
 #endif
 
     !--------------TEMP --------------------
-    nstates = 1
     nspin = 1
-    nel = 1
     !---------------------------------------
-    call states%init(nstates, nspin, 1, .true., system%basis%size, nel)
+    call states%init(system%geo, nspin, 1, .true., system%basis%size)
     call states%summary()
 
     ! TODO Nstep should probably be read from another entity
@@ -83,8 +80,7 @@ contains
       ! This initializes all variables that
       call next_step_setup(system)
 
-      call hamiltonian%init(system%basis%grid, system%geo, states, periodic=.false.)
-      call scf%init()
+      call scf%init(system, states)
       call smear%init()
 
       !SCF loop

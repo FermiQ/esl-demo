@@ -114,7 +114,7 @@ contains
     integer :: ik, isp, ist, ip
     complex(kind=dp), allocatable :: coef_rs(:)
  
-    real(kind=dp) :: kpt(3)
+    real(kind=dp) :: kpt(3), weight
 
     !Coefficient in real space
     allocate(coef_rs(1:this%np))
@@ -132,9 +132,10 @@ contains
           call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%npw, &
                                states%states(ik,isp,ist)%zcoef, coef_rs)
  
+          weight = states%occ_numbers(ik,isp,ist)/states%k_weights(ik)
           !We accumulate the density
           do ip = 1, this%np
-            this%density(ip) = this%density(ip) + real(coef_rs(ip)*conjg(coef_rs(ip)),kind=dp)
+            this%density(ip) = this%density(ip) + weight*real(coef_rs(ip)*conjg(coef_rs(ip)),kind=dp)
           end do
         end do
       end do
@@ -163,7 +164,9 @@ contains
       diff(ip) = abs(other%density(ip) - this%density(ip))
     end do
     call integrate(grid, diff, res)
-    res = res/real(nel)
+    if(nel>0) then
+      res = res/real(nel)
+    end if
 
     deallocate(diff)
 
