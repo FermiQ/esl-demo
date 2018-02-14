@@ -96,6 +96,8 @@ contains
     call add_density_matrix(grid, basis, DM_atom, rho_atom)
     call DM_atom%delete()
 
+    print *, ' DEBUG rho-atom sum', grid%integrate(rho_atom)
+
     ! 1. Start by calculating the density from the DM on the grid
     call add_density_matrix(grid, basis, this%DM, rho)
 

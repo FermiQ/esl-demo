@@ -81,7 +81,7 @@ contains
       !Convert the radial density to the cartesian grid
       call grid%radial_function(geo%species(is)%rho, 0, 0, geo%xyz(:,iat), atomicden)
       
-      call integrate(grid, atomicden, norm)
+      norm = grid%integrate(atomicden)
       call yaml_map("Norm", norm*coef)
 
       !Summing up to the total density
@@ -163,9 +163,9 @@ contains
     do ip = 1, this%np
       diff(ip) = abs(other%density(ip) - this%density(ip))
     end do
-    call integrate(grid, diff, res)
-    if(nel>0) then
-      res = res/real(nel)
+    res = grid%integrate(diff)
+    if ( nel > 0 ) then
+      res = res / real(nel, dp)
     end if
 
     deallocate(diff)
