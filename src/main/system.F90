@@ -35,11 +35,12 @@ module esl_system_m
 
     ! LO dependent variables
     type(sparse_pattern_t):: sparse_pattern
+    ! Perhaps these should be transferred to the basis_ac type.
+    ! However, they could be defined higher level since the basis
+    ! does not necessarily use the overlap matrix
     type(sparse_matrix_t) :: S ! always 1D
-    type(sparse_matrix_t), allocatable :: H(:) ! one per spin
-    type(sparse_matrix_t), allocatable :: DM(:) ! one per spin
 
-    real(dp) :: nElectrons
+    real(dp) :: nElectrons = 0._dp
   contains
     private
     procedure, public :: init

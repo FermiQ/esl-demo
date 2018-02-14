@@ -7,6 +7,7 @@ module esl_density_m
   use esl_geometry_m
   use esl_mixing_m
   use esl_states_m
+  use esl_system_m
 
   implicit none
 
@@ -36,24 +37,23 @@ module esl_density_m
 
 contains
 
-  !Initialize the density
-  !----------------------------------------------------
-  subroutine init(this, basis)
+  !< Initialize density objects
+  subroutine init(this, system)
     class(density_t), intent(inout) :: this
-    type(basis_t),    intent(in) :: basis
+    type(system_t), intent(in) :: system
 
-    allocate(this%rho(1:basis%grid%np))
-    this%rho(1:basis%grid%np) = 0.d0
-    this%np = basis%grid%np
+    allocate(this%rho(1:system%basis%grid%np))
+    this%rho(1:system%basis%grid%np) = 0.d0
+    this%np = system%basis%grid%np
 
-    select case ( basis%type )
+    select case ( system%basis%type )
     case ( PLANEWAVES )
       
-      call this%density_pw%init(basis%grid, basis%pw)
+      call this%density_pw%init(system%basis%grid, system%basis%pw)
       
     case ( ATOMCENTERED )
       
-      call this%ac%init()
+      call this%ac%init(system%sparse_pattern)
       
     end select
 
@@ -61,21 +61,20 @@ contains
 
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
-  subroutine guess(this, basis, geo)
+  subroutine guess(this, system)
     class(density_t), intent(inout) :: this
-    type(basis_t),    intent(in) :: basis
-    type(geometry_t), intent(in) :: geo
+    type(system_t), intent(in) :: system
    
-    select case ( basis%type )
+    select case ( system%basis%type )
     case ( PLANEWAVES )
 
       ! TODO fix interface 
-      call this%density_pw%guess(geo, basis%grid)
+      call this%density_pw%guess(system%geo, system%basis%grid)
       
     case ( ATOMCENTERED )
 
       ! Guess the initial density from the atomic fillings
-      call this%ac%guess(basis%ac)
+      call this%ac%guess(system%basis%ac)
       
     end select
 
@@ -94,14 +93,14 @@ contains
 
   ! Calculate output density from an input density
   !----------------------------------------------------
-  subroutine calculate(this, basis, states, out)
+  subroutine calculate(this, system, states, out)
     class(density_t),   intent(inout) :: this
-    type(basis_t),       intent(in) :: basis
+    type(system_t), intent(in) :: system
     type(states_t),      intent(in) :: states
     type(density_t),  intent(inout) ::  out
 
     ! Calculate density on the grid
-    select case (basis%type)
+    select case ( system%basis%type )
     case ( PLANEWAVES )
 
       ! Calculate density
@@ -110,7 +109,7 @@ contains
     case ( ATOMCENTERED )
 
       ! Calculate the density on the grid
-      call this%ac%calculate(basis%grid, basis%ac, this%rho, out%ac)
+      call this%ac%calculate(system%basis%grid, system%basis%ac, system%S, this%rho, out%ac)
       
     end select
 
