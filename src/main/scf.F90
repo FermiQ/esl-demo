@@ -12,6 +12,12 @@ module esl_scf_m
   use esl_states_m
   use esl_system_m
 
+  ! AC-related functions
+  use esl_sparse_pattern_m, only: sparse_pattern_t
+  use esl_create_sparse_pattern_ac_m, only: create_sparse_pattern_ac_create
+  use esl_overlap_matrix_ac_m, only: overlap_matrix_ac_calculate
+  use esl_density_matrix_ac_m, only: density_matrix_ac_next
+
   implicit none
   private
 
@@ -45,12 +51,19 @@ module esl_scf_m
 contains
 
 
-  !Initialize density and wfn
-  !----------------------------------------------------
+  !< Initialize density and wfn
+  !<
+  !< Atomic-Centered orbitals does the following things:
+  !< 1. Initialize the sparse pattern by determining couplings based
+  !<    purely on the inter-orbital ranges. There will only be
+  !<    matrix elements if the distance between two atomic centered
+  !<    orbitals are within the sum of their cutoff radius.
+  !< 2. Once the sparse pattern has been created we calculate the overlap
+  !<    matrix which is fixed for the entirety of the SCF loop.
   subroutine init(this, system, states)
-    class(scf_t)  :: this 
-    type(system_t),         intent(in) :: system
-    type(states_t),         intent(in) :: states
+    class(scf_t) :: this 
+    type(system_t), intent(inout) :: system
+    type(states_t), intent(in) :: states
 
     this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
     this%max_iter    = fdf_get('SCFMaxIterations', 100)
@@ -61,8 +74,23 @@ contains
     case ( PLANEWAVES )
       call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
     case( ATOMCENTERED )
+
       call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+
+      ! Initialization of the SCF step is done here.
+      call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
+
+      ! Calculate the overlap matrix for this SCF cycle
+      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
+          system%sparse_pattern, system%S)
+
     end select
+
+    ! Finally we can initialize the densities
+    ! This *has* to be done in the end because the density matrices
+    ! for AC requires the sparse pattern to be updated.!
+    call this%rho_in%init(system)
+    call this%rho_out%init(system)
 
   end subroutine init
 
@@ -83,19 +111,15 @@ contains
 
     class(scf_t),         intent(inout) :: this
     type(elsi_t), intent(inout) :: elsi
-    type(system_t),         intent(in) :: system
-    type(states_t),         intent(in) :: states
+    type(system_t), intent(in) :: system
+    type(states_t), intent(in) :: states
     type(smear_t), intent(inout) :: smear
 
     integer :: iter !< Interation
     real(dp) :: res
 
-    ! Initialize the densities
-    call this%rho_in%init(system%basis)
-    call this%rho_out%init(system%basis)
-
     ! Perform initial guess on the density
-    call this%rho_in%guess(system%basis, system%geo)
+    call this%rho_in%guess(system)
 
     !Randomize the states
     call states%randomize()
@@ -111,7 +135,7 @@ contains
       call smear_calc_fermi_and_occ(smear, elsi, states)
 
       ! Calculate density
-      call this%rho_in%calculate(system%basis, states, out=this%rho_out)
+      call this%rho_in%calculate(system, states, out=this%rho_out)
       
       !Calc. potentials
       select case (system%basis%type)

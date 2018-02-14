@@ -10,6 +10,8 @@ module esl_mulliken_ac_m
 
   private
 
+  public :: mulliken_ac_summary
+
 contains
 
   !< Calculate and print-out the Mulliken charges
@@ -17,10 +19,10 @@ contains
     use yaml_output
 
     type(basis_ac_t), intent(in) :: basis
-    type(sparse_matrix_t), intent(in) :: S, DM(:)
+    type(sparse_matrix_t), intent(in) :: S, DM
 
     ! Local variables for calculating the Mulliken charges
-    integer :: is, ia, io, ind
+    integer :: ia, io, ind
     integer :: io1, io2
 
     type(sparse_pattern_t), pointer :: sp
@@ -44,9 +46,7 @@ contains
         F(io) = 0._dp
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
 
-          do is = 1, size(DM)
-            F(io) = F(io) + S%M(ind) * DM(is)%M(ind)
-          end do
+          F(io) = F(io) + S%M(ind) * DM%M(ind)
           
         end do
 

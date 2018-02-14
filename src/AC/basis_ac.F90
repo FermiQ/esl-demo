@@ -323,6 +323,11 @@ contains
       ! density on grids etc.
       call init()
       
+    else
+
+      ! Retrieve local pointer
+      sp => DM%sp
+      
     end if
 
     ! Initialize everything to 0

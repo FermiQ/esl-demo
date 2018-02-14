@@ -3,8 +3,10 @@ module esl_density_ac_m
   use prec, only : dp
   use esl_basis_ac_m
   use esl_grid_m
+  use esl_mulliken_ac_m
   use esl_sparse_pattern_m
   use esl_sparse_matrix_m
+  use esl_hamiltonian_ac_m
 
   implicit none
 
@@ -36,10 +38,14 @@ module esl_density_ac_m
 
 contains
 
-  !Initialize the density. Allocate the full grid
-  !----------------------------------------------------
-  subroutine init(this)
+  !< Initialize the density matrices for this object
+  subroutine init(this, sp)
     class(density_ac_t), intent(inout) :: this
+    type(sparse_pattern_t), target, intent(in) :: sp
+
+    ! Initialize the sparse matrices
+    call this%DM%init(sp)
+    call this%EDM%init(sp)
 
   end subroutine init
 
@@ -68,12 +74,14 @@ contains
   end subroutine guess
 
   !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, grid, basis, rho, out)
+  subroutine calculate(this, grid, basis, S, rho, out)
     class(density_ac_t), intent(inout) :: this
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
     !< Atomic orbital basis
     class(basis_ac_t), intent(in) :: basis
+    !< The overlap matrix (has to be pre-calculated on entry)
+    type(sparse_matrix_t) :: S
     !< Real-space grid on which to calculate the (total) density from the DM
     real(dp), intent(inout) :: rho(:)
     !< Output density
@@ -81,13 +89,19 @@ contains
 
     !< Real-space grid on which to retain the atomic filled density
     real(dp), allocatable :: rho_atom(:)
+
     !< Create the initial DM
     type(sparse_matrix_t) :: DM_atom
 
+    ! Currently we contain the Hamiltonian here.
+    ! However, since it is needed elsewhere we should decide where to place it.
+    type(sparse_matrix_t) :: H
+
     ! TODO logic for calculating the output density from an input
     ! density.
-
     allocate(rho_atom(grid%np))
+    ! Initialize
+    rho_atom(:) = 0._dp
     
     ! Calculate the atomic density
     call basis%atomic_density_matrix(DM_atom)
@@ -96,16 +110,28 @@ contains
     call add_density_matrix(grid, basis, DM_atom, rho_atom)
     call DM_atom%delete()
 
-    print *, ' DEBUG rho-atom sum', grid%integrate(rho_atom)
+    print *, 'DEBUG rho-atom sum', grid%integrate(rho_atom)
 
     ! 1. Start by calculating the density from the DM on the grid
     call add_density_matrix(grid, basis, this%DM, rho)
 
+    ! Now begin by calculating the Laplacian for the Hamiltonian
+    call H%init(S%sp)
+    
+    ! Initialize the Hamiltonian to 0
+    H%M(:) = 0._dp
+
+    ! Add the Laplacian to the Hamiltonian
+    call hamiltonian_ac_laplacian(basis, grid, H)
+
     ! Now we are in a position to calculate Hartree potential from
     ! rho and/or rho_atom
+    
 
     ! 2. Calculate matrix elements for the Hamiltonian
-    
+
+    call mulliken_ac_summary(basis, S, this%DM)
+
   end subroutine calculate
     
 
