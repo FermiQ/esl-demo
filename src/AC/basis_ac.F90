@@ -30,6 +30,7 @@ module esl_basis_ac_m
   type orbital_ac_t
     
     integer :: l = 0, m = 0
+    real(dp) :: r_cut = 0._dp
     real(dp) :: occ = 0._dp
     !< Radial function of psi [R(r) Y_l^m(r) == psi(r)]
     type(pspiof_meshfunc_t), pointer :: R => null()
@@ -41,8 +42,11 @@ module esl_basis_ac_m
   ! I.e. n_orbital is the actual total number of basis-orbitals on that
   ! site.
   type state_ac_t
-    
+
+    ! Number of orbitals
     integer :: n_orbital = 0
+    ! Maximum r_cut for all orbitals on this state
+    real(dp) :: r_cut = 0._dp
     type(orbital_ac_t), pointer :: orb(:) => null()
     
   end type state_ac_t
@@ -97,7 +101,7 @@ contains
     type(pspiof_meshfunc_t), pointer :: mesh_R => null()
     integer :: is, no, io, isite
     integer :: l, m
-    real(dp) :: occ
+    real(dp) :: occ, r_cut
 
     ! Construct the basis functions
 
@@ -157,6 +161,7 @@ contains
       !   l=1,m=0
       !   l=1,m=1
       this%state(is)%n_orbital = no
+      this%state(is)%r_cut = 0._dp
       allocate( this%state(is)%orb(no) )
 
       ! Loop and create the things
@@ -169,21 +174,26 @@ contains
 
         ! Get all radial orbital information
         call geo%species(is)%get_radial_orbital(io, l, mesh_r, occ)
+        r_cut = geo%species(is)%get_radial_orbital_rmax(io, 0.0001_dp)
+        this%state(is)%r_cut = max( this%state(is)%r_cut, r_cut )
 
-        do m = -l, l
+        do m = -l , l
+          
           ! Populate the orbital
           no = no + 1
           this%state(is)%orb(no)%l = l
           this%state(is)%orb(no)%m = m
           this%state(is)%orb(no)%R => mesh_r
           this%state(is)%orb(no)%occ = occ / (l * 2 + 1)
+          this%state(is)%orb(no)%r_cut = r_cut
+
         end do
 
         ! Nullify to retain only the references within the orbital lists
         nullify(mesh_r)
 
       end do
-      
+
     end do
 
     ! Calculate total number of orbitals
@@ -312,6 +322,11 @@ contains
       ! ill-adviced for anything but initial Mulliken, initial
       ! density on grids etc.
       call init()
+      
+    else
+
+      ! Retrieve local pointer
+      sp => DM%sp
       
     end if
 
@@ -476,6 +491,12 @@ contains
         d1(io) = this%state(is)%orb(io)%occ
       end do
       call yaml_map("Q0", d1)
+
+      do io = 1, no
+        d1(io) = this%state(is)%orb(io)%r_cut
+      end do
+      call yaml_map("Cutoff Radius", d1)
+
       deallocate(d1)
       
       call yaml_mapping_close()

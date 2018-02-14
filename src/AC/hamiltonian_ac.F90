@@ -1,39 +1,40 @@
-!< This routine handles the calculation of the overlap matrix
+!< This routine handles the calculation of various parts of the sparse Hamiltonian matrix
 !<
-!< It expects a pre-allocated sparse pattern which is used as the
-!< pre-cursor for when two orbitals are overlapping.
-!< This also allows one to "play" with shrinking sparse matrices
-!< in certain cases.
-module esl_overlap_matrix_ac_m
+!< The input sparse matrix *must* be pre-allocated.
+module esl_hamiltonian_ac_m
 
   implicit none
 
-  public :: overlap_matrix_ac_calculate
+  public :: hamiltonian_ac_laplacian
 
 contains
 
-  subroutine overlap_matrix_ac_calculate(basis, grid, sp, S)
+  subroutine hamiltonian_ac_laplacian(basis, grid, H)
     use prec, only: dp
     use esl_basis_ac_m, only: basis_ac_t
     use esl_grid_m, only: grid_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
     use esl_sparse_matrix_m, only: sparse_matrix_t
 
-    class(basis_ac_t), intent(inout) :: basis
+    class(basis_ac_t), intent(in) :: basis
     type(grid_t), intent(in) :: grid
-    type(sparse_pattern_t), intent(in) :: sp
-    type(sparse_matrix_t), intent(inout) :: S
+    type(sparse_matrix_t), intent(inout) :: H
 
     integer :: ia, is, io, iio, ind, jo, ja, js, jjo
-    real(dp), allocatable :: iao(:), jao(:)
+    real(dp), allocatable :: iT(:,:), jT(:,:)
     real(dp) :: ixyz(3), ir_max, jxyz(3), jr_max
     integer :: il, im, jl, jm
 
-    allocate(iao(1:grid%np))
-    allocate(jao(1:grid%np))
+    type(sparse_pattern_t), pointer :: sp
 
-    ! Re-initialize the sparse matrix
-    call S%init(sp)
+    ! Immediately return, if not needed
+    if ( .not. H%initialized() ) return
+
+    sp => H%sp
+
+    ! Allocate the Laplacian matrices
+    allocate(iT(3,grid%np))
+    allocate(jT(3,grid%np))
 
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
@@ -49,7 +50,7 @@ contains
         ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        call grid%radial_function(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iao)
+        call grid%radial_function_gradient(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iT)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -68,15 +69,13 @@ contains
           jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          call grid%radial_function(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jao)
+          call grid%radial_function_gradient(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jT)
 
-          S%M(ind) = &
-              grid%overlap(ixyz(:), iao, ir_max, jxyz(:), jao, jr_max)
+          H%M(ind) = matrix_T(iT, jT) * grid%volelem
 
           ! DEBUG print
           if ( ia == ja .and. iio == jjo ) &
-              print *,' Diagonal overlap matrix: ', ia, iio, S%M(ind)
-          !print *,' Calculing overlap matrix: ', ia, iio, ja, jjo, S%M(ind)
+              print *,' Diagonal kinetic matrix: ', ia, iio, H%M(ind)
 
         end do
 
@@ -84,8 +83,24 @@ contains
 
     end do
 
-    deallocate(iao,jao)
+    deallocate(iT, jT)
 
-  end subroutine overlap_matrix_ac_calculate
+  contains
 
-end module esl_overlap_matrix_ac_m
+    function matrix_T(iT, jT) result(T)
+      real(dp), intent(in) :: iT(:,:), jT(:,:)
+      real(dp) :: T
+      integer :: ip
+
+      T = 0._dp
+      do ip = 1, grid%np
+        T = T + iT(1,ip) * jT(1,ip) + &
+            iT(2,ip) * jT(2,ip) + &
+            iT(3,ip) * jT(3,ip)
+      end do
+      
+    end function matrix_T
+
+  end subroutine hamiltonian_ac_laplacian
+
+end module esl_hamiltonian_ac_m

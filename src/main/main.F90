@@ -81,13 +81,15 @@ contains
       call flook_if_call(LUA, LUA_INIT_STEP)
 #endif
 
-      ! This initializes all variables that
+      ! Prepare the next step for the system
       call next_step_setup(system)
 
+      ! Initialize the SCF type to be able to perform the SCF-loop
       call scf%init(system, states)
+      
       call smear%init()
 
-      !SCF loop
+      ! Perform SCF loop
       call scf%loop(elsi, system, states, smear)
 
 #ifdef WITH_FLOOK
