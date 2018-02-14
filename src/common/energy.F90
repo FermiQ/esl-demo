@@ -68,7 +68,7 @@ contains
     call yaml_mapping_open("Energy")
     call yaml_map("Total", this%total)
     call yaml_map("Eigenvalues", this%eigenvalues)
-    call yaml_map("Hatree", this%hartree)
+    call yaml_map("Hartree", this%hartree)
     call yaml_map("Ion-ion", this%ionion)
     call yaml_map("Extern", this%extern)
     call yaml_map("Int_nvxc", this%int_nvxc)

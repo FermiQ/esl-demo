@@ -31,12 +31,14 @@ contains
     subroutine next_atomicorbs()
 
       ! add content for the initialization for a new plane-wave step
+      call system%update(periodic=.false.)
 
     end subroutine next_atomicorbs
 
     subroutine next_planewave()
 
       ! add content for the initialization for a new plane-wave step
+      call system%update(periodic=.false.)
 
     end subroutine next_planewave
 

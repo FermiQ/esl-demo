@@ -2,6 +2,7 @@ module esl_density_ac_m
 
   use prec, only : dp
   use esl_basis_ac_m
+  use esl_energy_m
   use esl_grid_m
   use esl_mulliken_ac_m
   use esl_sparse_pattern_m
@@ -70,11 +71,12 @@ contains
 
     ! Create the atomic density matrix
     call basis%atomic_density_matrix(this%DM)
+    this%EDM%M(:) = 0._dp
 
   end subroutine guess
 
   !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, grid, basis, S, rho, out)
+  subroutine calculate(this, grid, basis, S, rho, energy, out)
     class(density_ac_t), intent(inout) :: this
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
@@ -84,6 +86,8 @@ contains
     type(sparse_matrix_t) :: S
     !< Real-space grid on which to calculate the (total) density from the DM
     real(dp), intent(inout) :: rho(:)
+    !< Energy type to contain all energies
+    type(energy_t), intent(inout) :: energy
     !< Output density
     type(density_ac_t), intent(inout) :: out
 
@@ -115,22 +119,26 @@ contains
     ! 1. Start by calculating the density from the DM on the grid
     call add_density_matrix(grid, basis, this%DM, rho)
 
-    ! Now begin by calculating the Laplacian for the Hamiltonian
-    call H%init(S%sp)
-    
     ! Initialize the Hamiltonian to 0
+    call H%init(S%sp)
     H%M(:) = 0._dp
 
-    ! Add the Laplacian to the Hamiltonian
+    ! First step for any SCF step is to setup the
+    ! correct Hamiltonian
+
+    !  1. Add the Laplacian to the Hamiltonian
     call hamiltonian_ac_laplacian(basis, grid, H)
+    energy%kinetic = sum(H%M * this%DM%M)
 
-    ! Now we are in a position to calculate Hartree potential from
-    ! rho and/or rho_atom
-    
+    !  2. Add Hartree potential
+    ! ...
 
-    ! 2. Calculate matrix elements for the Hamiltonian
+    ! X. Calculate output density matrix elements from the Hamiltonian
+    ! TODO add elsi calls
+    out%DM%M(:) = this%DM%M(:)
 
-    call mulliken_ac_summary(basis, S, this%DM)
+    ! Final, output Mulliken charges
+    call mulliken_ac_summary(basis, S, out%DM)
 
   end subroutine calculate
     
