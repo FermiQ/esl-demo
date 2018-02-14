@@ -95,7 +95,7 @@ contains
   !----------------------------------------------------
   subroutine calculate(this, system, states, out)
     class(density_t),   intent(inout) :: this
-    type(system_t), intent(in) :: system
+    type(system_t), intent(inout) :: system
     type(states_t),      intent(in) :: states
     type(density_t),  intent(inout) ::  out
 
@@ -109,7 +109,8 @@ contains
     case ( ATOMCENTERED )
 
       ! Calculate the density on the grid
-      call this%ac%calculate(system%basis%grid, system%basis%ac, system%S, this%rho, out%ac)
+      call this%ac%calculate(system%basis%grid, system%basis%ac, system%S, this%rho, &
+          system%energy, out%ac)
       
     end select
 

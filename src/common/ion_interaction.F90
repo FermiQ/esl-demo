@@ -1,5 +1,6 @@
 module esl_ion_interaction_m
   use prec, only : dp
+  use fdf, only: fdf_get
   use esl_constants_m
   use esl_geometry_m
 
@@ -10,7 +11,7 @@ module esl_ion_interaction_m
 
   !Data structure for the ion interaction
   type ion_interaction_t
-    real(dp) :: alpha !< Ewald sum parameter
+    real(dp) :: alpha = 1._dp !< Ewald sum parameter
   contains
     procedure, public :: init
     procedure, public :: calculate_periodic
@@ -24,6 +25,8 @@ contains
   !----------------------------------------------------
   subroutine init(this)
     class(ion_interaction_t), intent(inout) :: this
+
+    this%alpha = fdf_get('Ewald.Alpha', 1._dp)
 
   end subroutine init
 
