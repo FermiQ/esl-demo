@@ -45,7 +45,7 @@ contains
 
   !Calc the xc potential from the density
   !----------------------------------------------------
-  subroutine calculate(this, cell, density, edata, vxc)
+  subroutine calculate(this, density, edata, vxc)
     class(xc_t), intent(in)  :: this
     real(dp),    intent(in)  :: cell(3,3)
     real(dp),    intent(in)  :: density(:,:,:,:)
