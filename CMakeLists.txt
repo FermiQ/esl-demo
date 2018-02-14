@@ -36,6 +36,7 @@ pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
 pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
 pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
 pkg_check_modules(GSL REQUIRED gsl>=2.0)
+pkg_check_modules(GRIDXC REQUIRED libgridxc>=0.8.0.1)
 
 message(STATUS "Found FDF support!")
 include_directories(${FDF_INCLUDE_DIRS})
@@ -56,6 +57,10 @@ link_directories(${GSL_LIBRARY_DIRS})
 message(STATUS "Found FFTW support!")
 include_directories(${FFTW_PREFIX}/include)
 link_directories(${FFTW_LIBRARY_DIRS})
+
+message(STATUS "Found GRIDXC support!")
+include_directories(${GRIDXC_INCLUDE_DIRS})
+link_directories(${GRIDXC_LIBRARY_DIRS})
 
 if(WITH_FLOOK)
   pkg_check_modules(FLOOK REQUIRED flook)
@@ -85,7 +90,7 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES})
+target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${GRIDXC_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES})
 if(WITH_MPI)
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()
