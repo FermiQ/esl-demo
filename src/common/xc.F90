@@ -45,7 +45,7 @@ contains
 
   !Calc the xc potential from the density
   !----------------------------------------------------
-  subroutine calculate(this, density, edata, vxc)
+  subroutine calculate(this, cell, density, edata, vxc)
     class(xc_t), intent(in)  :: this
     real(dp),    intent(in)  :: cell(3,3)
     real(dp),    intent(in)  :: density(:,:,:,:)
@@ -73,7 +73,7 @@ contains
     nspin = size(density, 4)
 
     ! Let GridXC build the potential from the density
-    call cellXC(0, cell, ntm, n_mesh, ub1, lb2, ub2, lb3, ub3, nspin, &
+    call cellXC(0, cell, n_mesh, lb1, ub1, lb2, ub2, lb3, ub3, nspin, &
 &     density, ex, ec, dx, dc, stress_xc, vxc)
 
     ! Populate energy terms, with necessary arithmetics
