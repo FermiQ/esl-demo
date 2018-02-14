@@ -52,7 +52,7 @@ contains
 
     select case (basis%type)
     case ( PLANEWAVES )
-      call this%hm_pw%init(states, mpicomm)
+      call this%hm_pw%init(this%potentials, mpicomm)
     case ( ATOMCENTERED )
     !TODO
     end select
@@ -76,7 +76,7 @@ contains
 
     select case (basis%type)
     case ( PLANEWAVES )
-      call this%hm_pw%eigensolver(states)
+      call this%hm_pw%eigensolver(states, basis%pw)
     case ( ATOMCENTERED )
     !TODO
     end select

@@ -152,7 +152,7 @@ contains
       end select
 
       !Calc. energies
-      call system%energy%calculate()
+      call this%H%energy%calculate(states)  
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density

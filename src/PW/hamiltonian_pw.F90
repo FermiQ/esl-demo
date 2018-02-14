@@ -6,8 +6,11 @@ module esl_hamiltonian_pw_m
   use elsi_rci_omm
   use elsi_rci_precision, only:r8, i4
 
+  use esl_basis_pw_m
+  use esl_grid_m
   use esl_potential_m
   use esl_states_m
+  use esl_utils_pw_m
 
   use mpi_dist
 #ifdef WITH_MPI
@@ -23,10 +26,16 @@ module esl_hamiltonian_pw_m
       hamiltonian_pw_apply,            &
       hamiltonian_pw_apply_local
 
+  type work_matrix_t
+    complex(kind=dp), allocatable :: mat(:,:)
+  end type work_matrix_t
+
   !Data structure for the Hamiltonian
   type hamiltonian_pw_t
     type(elsi_handle)    :: e_h
     type(mpi_dist_t)     :: dist
+
+    type(potential_t), pointer :: pot
   contains
     private
     procedure, public :: init
@@ -34,28 +43,20 @@ module esl_hamiltonian_pw_m
     final :: cleanup
   end type hamiltonian_pw_t
 
-  interface hamiltonian_pw_apply
-    module procedure hamiltonian_pw_dapply, hamiltonian_pw_zapply
-  end interface hamiltonian_pw_apply
-
-  interface hamiltonian_pw_apply_local
-    module procedure hamiltonian_pw_dapply_local, hamiltonian_pw_zapply_local
-  end interface hamiltonian_pw_apply_local
-
 contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-  subroutine init(this, states, comm)
+  subroutine init(this, pot, comm)
     class(hamiltonian_pw_t) :: this
-    type(states_t), intent(in) :: states
+    type(potential_t), target, intent(in) :: pot
     integer,        intent(in) :: comm
 
-    integer(kind=i4) :: solver, matrix_size
+    this%pot => pot
 
-    call this%dist%init_(comm, 1)
+    !call this%dist%init_(comm, 1)
 
-    call elsi_init(this%e_h, solver, 1, 0, matrix_size, real(states%nel,kind=dp), states%nstates)
+    !call elsi_init(this%e_h, solver, 1, 0, matrix_size, real(states%nel,kind=dp), states%nstates)
 
   end subroutine init
 
@@ -64,19 +65,20 @@ contains
   subroutine cleanup(this)
     type(hamiltonian_pw_t) :: this
 
-    ! Finalize ELSI
-    call elsi_finalize(this%e_h)
+!    call this%dist%delete_()
 
-    call this%dist%delete_()
+    nullify(this%pot)
 
   end subroutine cleanup
 
   !Eigensolver
   !----------------------------------------------------
-  subroutine eigensolver(this, states)
+  subroutine eigensolver(this, states, pw)
     class(hamiltonian_pw_t) :: this
     type(states_t), intent(inout) :: states
-   
+    type(basis_pw_t), intent(in)    :: pw
+
+    integer :: ii, jj 
     real(kind=r8), allocatable :: result_in(:)
     type(rci_instr)      :: iS
     integer(kind=i4) :: task, m, n, ijob
@@ -84,6 +86,27 @@ contains
     real(kind=r8) :: cg_tol = 0.0001_r8
     integer(kind=i4) :: max_iter = 100
     logical :: long_out = .false.
+    type(work_matrix_t), allocatable :: work(:)
+    complex(kind=dp), external :: zdotc
+
+
+    m = pw%npw 
+    n = states%nstates
+
+    !OMM needs 28 matrices
+    allocate(work(1:28))
+    do ii = 1, 11
+      allocate(work(ii)%mat(1:m,1:n))
+    end do
+    do ii = 21, 28
+      allocate(work(ii)%mat(1:n,1:n))
+    end do
+
+    !We copy the states in work(1)
+    !TODO support spin and kpoint
+    do ii=1,n
+      work(1)%mat(1:pw%npw, ii) = states%states(1,1,ii)%zcoef(1:pw%npw)
+    end do
 
     allocate (result_in(1))
     ijob = -1
@@ -96,105 +119,125 @@ contains
         case (ELSI_RCI_CONVERGE)
             exit
         case (ELSI_RCI_H_MULTI)
-   !         call mm_multiply(H, iS%TrH, Work(iS%Aidx), &
-   !                          'n', Work(iS%Bidx), 1.0_r8, 0.0_r8, &
-   !                          m_operation)
+            do ii = 1,iS%n
+              call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:m,ii),  work(iS%Bidx)%mat(1:m,ii))
+            end do
         case (ELSI_RCI_S_MULTI)
-   !         call mm_multiply(S, iS%TrS, Work(iS%Aidx), &
-   !                          'n', Work(iS%Bidx), 1.0_r8, 0.0_r8, &
-   !                          m_operation)
+            !No overlap matrix
+            work(iS%Bidx)%mat(1:m,1:n) = work(iS%Aidx)%mat(1:m,1:n)
         case (ELSI_RCI_P_MULTI)
             ! No preconditioner
-   !         call m_add(Work(iS%Aidx), 'n', Work(iS%Bidx), 1.0_r8, &
-   !                    0.0_r8, m_operation)
+            work(iS%Bidx)%mat(1:m,1:n) = work(iS%Aidx)%mat(1:m,1:n) 
         case (ELSI_RCI_GEMM)
-   !         call mm_multiply(Work(iS%Aidx), iS%TrA, Work(iS%Bidx), &
-   !                          iS%TrB, Work(iS%Cidx), iS%alpha, iS%beta, &
-   !                          m_operation)
+             call zgemm(iS%TrA, iS%TrB, iS%m, iS%n, iS%k,iS%alpha,     &
+               work(iS%Aidx)%mat(1,1), size(work(iS%Aidx)%mat,1), &
+               work(iS%Bidx)%mat(1,1), size(work(iS%Bidx)%mat,1), &
+               iS%beta, work(iS%Bidx)%mat(1,1), iS%m)
         case (ELSI_RCI_AXPY)
-   !         call m_add(Work(iS%Aidx), 'n', Work(iS%Bidx), iS%alpha, &
-   !                    1.0_r8, m_operation)
+          do ii = 1,iS%n
+            call zaxpy(iS%m, iS%alpha, work(iS%Aidx)%mat(1,ii), 1, work(iS%Bidx)%mat(1,ii),1)
+          end do
         case (ELSI_RCI_COPY)
-   !         call m_add(Work(iS%Aidx), iS%TrA, Work(iS%Bidx), 1.0_r8, &
-   !                    0.0_r8, m_operation)
+          if(iS%TrA == 'N') then
+            work(iS%Bidx)%mat(1:m,1:n) = work(iS%Aidx)%mat(1:m,1:n)
+          end if
+          if(iS%TrA == 'T') then
+            do ii = 1, iS%m
+              do jj = 1, iS%n
+                work(iS%Bidx)%mat(ii,jj) = work(iS%Aidx)%mat(jj,ii)
+              end do
+            end do
+          end if 
+          if(iS%TrA == 'C') then
+            do ii = 1, iS%m
+              do jj = 1, iS%n
+                work(iS%Bidx)%mat(ii,jj) = conjg(work(iS%Aidx)%mat(jj,ii))
+              end do
+            end do
+          end if
         case (ELSI_RCI_TRACE)
-   !         call m_trace(Work(iS%Aidx), result_in(1), m_operation)
+          result_in(1) = 0.d0
+          do ii = 1, iS%n
+            result_in(1) = result_in(1) + real(work(iS%Aidx)%mat(ii,ii),kind=dp)
+          end do
         case (ELSI_RCI_DOT)
-   !         call mm_trace(Work(iS%Aidx), Work(iS%Bidx), result_in(1), &
-   !                       m_operation)
+          result_in(1) = 0.d0
+          do ii = 1, iS%m
+            do jj = 1, iS%n
+              result_in(1) = real(work(iS%Aidx)%mat(ii,jj)*work(iS%Bidx)%mat(ii,jj),kind=dp)
+            end do
+          end do
         case (ELSI_RCI_SCALE)
-   !         call m_scale(Work(iS%Aidx), iS%alpha, m_operation)
+          do ii = 1,iS%n
+            call zscal(iS%m, iS%alpha, work(iS%Aidx)%mat(1,ii), 1)
+          end do
         case default
         end select
-
     end do
 
+    !We copy the states back from work(1)
+    !Work(2) contains H|\psi>
+    !TODO support spin and kpoint
+    do ii=1,n
+      states%states(1,1,ii)%zcoef(1:pw%npw) = work(1)%mat(1:pw%npw, ii)
+      states%eigenvalues(1,1,ii) = real(zdotc(pw%npw, work(1)%mat(1:pw%npw, ii), 1,  work(2)%mat(1:pw%npw, ii),1),kind=dp)
+    end do
+
+
     deallocate (result_in)
+    do ii = 1, 28
+      deallocate(work(ii)%mat)
+    end do
+    deallocate(work)
 
   end subroutine eigensolver
 
 
   !Apply the Hamiltonian matrix
   !----------------------------------------------------
-  subroutine hamiltonian_pw_dapply(pot, psi, hpsi)
+  subroutine hamiltonian_pw_apply(pot, pw, psi, hpsi)
     type(potential_t),  intent(in)    :: pot
-    real(dp),       intent(in)        :: psi(:)
-    real(dp),       intent(inout)     :: hpsi(:)
-
-    !TODO: Here perform FFT-1
-    call hamiltonian_pw_dapply_local(pot, psi,hpsi)
-    !TODO: Here perform FFT
-
-  end subroutine hamiltonian_pw_dapply
-
-  !Apply the Hamiltonian matrix
-  !----------------------------------------------------
-  subroutine hamiltonian_pw_zapply(pot, psi, hpsi)
-    type(potential_t),  intent(in)    :: pot
+    type(basis_pw_t),   intent(in)    :: pw
     complex(dp),      intent(in)      :: psi(:)
     complex(dp),      intent(inout)   :: hpsi(:)
 
-    !TODO: Here perform FFT-1
-    call hamiltonian_pw_zapply_local(pot, psi, hpsi)
-    !TODO: Here perform FFT
+    integer :: ic
 
-  end subroutine hamiltonian_pw_zapply
+    !We apply the Laplacian
+    do ic = 1,pw%npw
+      hpsi(ic) = -0.5d0*psi(ic)*pw%gmod2(ic)
+    end do
 
-  !Apply the local part of the Hamitonian to a wavefunction
-  !----------------------------------------------------
-  subroutine hamiltonian_pw_dapply_local(pot, psi, hpsi)
-    type(potential_t),  intent(in)    :: pot
-    real(dp),           intent(in)    :: psi(:)
-    real(dp),           intent(inout) :: hpsi(:)
+    call hamiltonian_pw_apply_local(pw, pot, psi, hpsi)
 
-    integer :: ip
-
-    !TODO: Here there is no spin
-
-    !Note that hartree contains the external potential (from PSolver)
-    forall(ip = 1:pot%np)
-      hpsi(ip) = hpsi(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi(ip)
-    end forall
-
-  end subroutine hamiltonian_pw_dapply_local
-
+  end subroutine hamiltonian_pw_apply
 
   !Apply the local part of the Hamitonian to a wavefunction
   !----------------------------------------------------
-  subroutine hamiltonian_pw_zapply_local(pot, psi, hpsi)
-    type(potential_t),   intent(in)    :: pot
+  subroutine hamiltonian_pw_apply_local(pw, pot, psi, hpsi)
+    type(basis_pw_t),       intent(in)    :: pw
+    type(potential_t),      intent(in)    :: pot
     complex(dp),            intent(in)    :: psi(:)
     complex(dp),            intent(inout) :: hpsi(:)
 
     integer :: ip
+    complex(kind=dp), allocatable :: psi_rs(:), vpsi_rs(:)
 
     !TODO: Here there is no spin
- 
+
+    allocate(psi_rs(1:pw%grid%np))
+    allocate(vpsi_rs(1:pw%grid%np))
+
+    call pw2grid(pw%grid, pw%gmap, pw%ndims, pw%npw, psi, psi_rs) 
     !Note that hartree contains the external potential (from PSolver)
     forall(ip = 1:pot%np)
-      hpsi(ip) = hpsi(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi(ip)
+      vpsi_rs(ip) = vpsi_rs(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi_rs(ip)
     end forall
+    call grid2pw(pw%grid, pw%gmap, pw%ndims, pw%npw, vpsi_rs, hpsi, .true.)
 
-  end subroutine hamiltonian_pw_zapply_local
+    deallocate(psi_rs)
+    deallocate(vpsi_rs)
+
+  end subroutine hamiltonian_pw_apply_local
 
 end module esl_hamiltonian_pw_m

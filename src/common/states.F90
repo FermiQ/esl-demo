@@ -29,6 +29,7 @@ module esl_states_m
      type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
      real(dp), allocatable :: occ_numbers(:,:,:)
      real(dp), allocatable :: k_weights(:)
+     real(dp), allocatable :: eigenvalues(:,:,:)
    contains
      private
      procedure, public :: init
