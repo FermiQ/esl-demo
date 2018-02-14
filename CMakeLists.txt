@@ -27,7 +27,6 @@ if(WITH_MPI)
   add_definitions(${MPI_Fortran_COMPILE_FLAGS})
   include_directories(${MPI_Fortran_INCLUDE_PATH})
   link_directories(${MPI_Fortran_LIBRARIES})
-  add_definitions("-DWITH_MPI")
   message(STATUS "Build with MPI support!")
 else()
   message(STATUS "Build without MPI support!")
@@ -39,6 +38,7 @@ pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
 pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
 pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
 pkg_check_modules(GSL REQUIRED gsl>=2.0)
+pkg_check_modules(ELSI REQUIRED libelsi>=0.0)
 find_package(BLAS REQUIRED)
 
 message(STATUS "Found FDF support!")
@@ -61,11 +61,14 @@ message(STATUS "Found FFTW support!")
 include_directories(${FFTW_PREFIX}/include)
 link_directories(${FFTW_LIBRARY_DIRS})
 
+message(STATUS "Found ELSI support!")
+include_directories(${ELSI_INCLUDE_DIRS})
+link_directories(${ELSI_LIBRARY_DIRS})
+
 if(WITH_FLOOK)
   pkg_check_modules(FLOOK REQUIRED flook)
   include_directories(${FLOOK_Fortran_INCLUDE_PATH})
   message(STATUS "Build with flook library and Lua-interface support!")
-  add_definitions("-DWITH_FLOOK")
 else()
   message(STATUS "Build without flook library (no Lua-interface support)!")
 endif()
@@ -73,13 +76,12 @@ endif()
 
 include_directories(${PROJECT_BINARY_DIR}/src/common)
 include_directories(${PROJECT_BINARY_DIR}/src/AC)
-include_directories(${PROJECT_BINARY_DIR}/src/elsi_rci)
 include_directories(${PROJECT_BINARY_DIR}/src/PW)
 
 add_subdirectory(${src_dir}/PW)
-add_subdirectory(${src_dir}/elsi_rci)
 add_subdirectory(${src_dir}/AC)
 add_subdirectory(${src_dir}/common)
+add_subdirectory(${src_dir}/elsi_rci)
 
 
 add_executable(${target_name}
@@ -91,8 +93,13 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ac pw elsi_rci common elsi OMM MatrixSwitch elpa ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES})
+
+if (WITH_FLOOK)
+  set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_FLOCK")
+endif()
+target_link_libraries(${target_name} common ac pw ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES}  ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if(WITH_MPI)
+  set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()
 
