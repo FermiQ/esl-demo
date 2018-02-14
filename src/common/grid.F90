@@ -29,8 +29,13 @@ module esl_grid_m
     private
     procedure, public :: init
     procedure, public :: radial_function
+    procedure, public :: radial_function_gradient
     procedure, public :: overlap
     procedure, public :: summary
+    
+    procedure, private :: dintegrate, zintegrate
+    generic, public :: integrate => dintegrate, zintegrate
+    
     final  :: cleanup
   end type grid_t
 
@@ -181,39 +186,68 @@ contains
      
   end subroutine radial_function
 
+  !Evaluate only the radial gradient an atomic orbital on the real-space grid
+  !----------------------------------------------------
+  subroutine radial_function_gradient(this, rfunc, ll, mm, r_center, gfunc)
+    use esl_numeric_m, only: grylmr
+    class(grid_t) :: this
+    type(pspiof_meshfunc_t), intent(in)  :: rfunc
+    integer,                 intent(in)  :: ll
+    integer,                 intent(in)  :: mm
+    real(dp),                intent(in)  :: r_center(3)
+    real(dp),                intent(out) :: gfunc(:,:)
+
+    integer :: ip
+    real(dp) :: x, y, z, r, fr, f
+
+    do ip = 1, this%np
+      
+      x = this%r(1,ip) - r_center(1)
+      y = this%r(2,ip) - r_center(2)
+      z = this%r(3,ip) - r_center(3)
+      call grylmr(x, y, z, ll, mm, f, gfunc(1:3,ip)) 
+      
+      r = sqrt(x**2 + y**2 + z**2)
+      fr = pspiof_meshfunc_eval(rfunc, r)
+      gfunc(1:3, ip) = fr*(f*pspiof_meshfunc_eval_deriv(rfunc, r) + gfunc(1:3, ip))
+        
+    end do
+     
+  end subroutine radial_function_gradient
+
   !Integrate a function over the real-space grid
   !----------------------------------------------------
-  subroutine dintegrate(grid, ff, int_ff)
-    type(grid_t),    intent(in) :: grid
-    real(dp),   intent(in) :: ff(:)
-    real(dp),  intent(out) :: int_ff
+  function dintegrate(grid, ff) result(int)
+    class(grid_t), intent(in) :: grid
+    real(dp), intent(in) :: ff(:)
+    real(dp) :: int
 
     integer :: ip
 
-    int_ff = 0.d0
-    do ip=1,grid%np
-       int_ff = int_ff + ff(ip)
+    int = 0._dp
+    do ip = 1 , grid%np
+      int = int + ff(ip)
     end do
-    int_ff = int_ff*grid%volelem
+    int = int*grid%volelem
+    
+  end function dintegrate
 
-  end subroutine dintegrate
-
-  !Integrate a function over the real-space grid
+  !Integrate a function over a complex-space grid
   !----------------------------------------------------
-  subroutine zintegrate(grid, ff, int_ff)
-    type(grid_t),       intent(in) :: grid
-    complex(dp),   intent(in) :: ff(:)
-    complex(dp),  intent(out) :: int_ff
+  function zintegrate(grid, ff) result(int)
+    class(grid_t), intent(in) :: grid
+    complex(dp), intent(in) :: ff(:)
+    complex(dp) :: int
 
     integer :: ip
 
-    int_ff = cmplx(0.d0,0.d0, kind=dp)
-    do ip = 1,grid%np
-       int_ff = int_ff + ff(ip)
+    int = cmplx(0._dp, 0._dp, dp)
+    do ip = 1 , grid%np
+       int = int + ff(ip)
     end do
-    int_ff = int_ff*grid%volelem
-
-  end subroutine zintegrate
+    int = int*grid%volelem
+    
+  end function zintegrate
 
 
   !Overlap
