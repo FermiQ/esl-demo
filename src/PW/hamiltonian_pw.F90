@@ -9,6 +9,12 @@ module esl_hamiltonian_pw_m
   use esl_potential_m
   use esl_states_m
 
+  use mpi_dist
+#ifdef WITH_MPI
+  use mpi
+#endif
+
+
   implicit none
   private
 
@@ -20,6 +26,7 @@ module esl_hamiltonian_pw_m
   !Data structure for the Hamiltonian
   type hamiltonian_pw_t
     type(elsi_handle)    :: e_h
+    type(mpi_dist_t)     :: dist
   contains
     private
     procedure, public :: init
@@ -39,11 +46,14 @@ contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-  subroutine init(this, states)
+  subroutine init(this, states, comm)
     class(hamiltonian_pw_t) :: this
     type(states_t), intent(in) :: states
+    integer,        intent(in) :: comm
 
     integer(kind=i4) :: solver, matrix_size
+
+    call this%dist%init_(comm, 1)
 
     call elsi_init(this%e_h, solver, 1, 0, matrix_size, real(states%nel,kind=dp), states%nstates)
 
@@ -56,6 +66,8 @@ contains
 
     ! Finalize ELSI
     call elsi_finalize(this%e_h)
+
+    call this%dist%delete_()
 
   end subroutine cleanup
 

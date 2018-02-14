@@ -5,4 +5,8 @@ add_library(pw
   utils_pw.F90
   )
 
-target_link_libraries(pw elsi_rci common)
+if(WITH_MPI)
+  target_link_libraries(pw elsi_rci common esldmpi)
+else()
+  target_link_libraries(pw elsi_rci common)
+endif()
