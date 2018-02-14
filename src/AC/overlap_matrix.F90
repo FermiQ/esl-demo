@@ -46,11 +46,9 @@ contains
         ! Orbital index on atom
         iio = io - basis%site_orbital_start(ia) + 1
 
-        ! TODO get correct rmax
-        ir_max = 14._dp
+        ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        iao = 0._dp
         call grid%radial_function(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iao)
 
         ! Loop entries in the sparse pattern
@@ -67,19 +65,18 @@ contains
           ! We are now in a position to calculate the
           ! overlap matrix. I.e. we know the atom, the
           ! orbital indices and their positions
-
-          ! TODO get correct rmax
-          jr_max = 14._dp
+          jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          jao = 0._dp
           call grid%radial_function(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jao)
 
           S%M(ind) = &
               grid%overlap(ixyz(:), iao, ir_max, jxyz(:), jao, jr_max)
 
           ! DEBUG print
-          print *,' Calculing overlap matrix: ', ia, iio, ja, jjo, S%M(ind)
+          if ( ia == ja .and. iio == jjo ) &
+              print *,' Diagonal overlap matrix: ', ia, iio, S%M(ind)
+          !print *,' Calculing overlap matrix: ', ia, iio, ja, jjo, S%M(ind)
 
         end do
 

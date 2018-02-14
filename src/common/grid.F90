@@ -146,23 +146,38 @@ contains
     integer :: ip
     real(dp) :: x, y, z, r, fr
 
-    do ip = 1, this%np
-      x = this%r(1,ip) - r_center(1)
-      y = this%r(2,ip) - r_center(2)
-      z = this%r(3,ip) - r_center(3)
-      if (present(gfunc)) then
+    if ( present(gfunc) ) then
+      
+      do ip = 1, this%np
+        
+        x = this%r(1,ip) - r_center(1)
+        y = this%r(2,ip) - r_center(2)
+        z = this%r(3,ip) - r_center(3)
         call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
-      else
-        call grylmr(x, y, z, ll, mm, func(ip))
-      end if
-
-      r = sqrt(x**2 + y**2 + z**2)
-      fr = pspiof_meshfunc_eval(rfunc, r)
-      func(ip) = func(ip)*fr
-      if (present(gfunc)) then
+        
+        r = sqrt(x**2 + y**2 + z**2)
+        fr = pspiof_meshfunc_eval(rfunc, r)
+        func(ip) = func(ip)*fr
         gfunc(1:3, ip) = func(ip)*pspiof_meshfunc_eval_deriv(rfunc, r) + gfunc(1:3, ip)*fr
-      end if
-    end do
+        
+      end do
+      
+    else
+      
+      do ip = 1, this%np
+        
+        x = this%r(1,ip) - r_center(1)
+        y = this%r(2,ip) - r_center(2)
+        z = this%r(3,ip) - r_center(3)
+        call grylmr(x, y, z, ll, mm, func(ip))
+
+        r = sqrt(x**2 + y**2 + z**2)
+        fr = pspiof_meshfunc_eval(rfunc, r)
+        func(ip) = func(ip)*fr
+        
+      end do
+      
+    end if
      
   end subroutine radial_function
 

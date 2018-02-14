@@ -275,8 +275,40 @@ contains
     subroutine complex_add()
       ! A copy of cols before we insert it.
       integer(ii_), allocatable :: cols(:)
+      integer(ii_), parameter :: N_INCREMENT = 20_ii_
+      integer(ii_) :: row, i, rptr
 
-      stop 'currently not implemented'
+      ! First copy all columns
+      call move_alloc(this%column, cols)
+
+      ! Re-allocate
+      this%nt = this%nt + N_INCREMENT
+      allocate( this%column(this%nt) )
+
+      do row = ONE, ir
+        do i = this%rptr(row), this%rptr(row) + this%nrow(row) - ONE
+          this%column(i) = cols(i)
+        end do
+      end do
+
+      ! Now we should add elements in the middle
+      do row = ir + ONE, this%nr
+        do i = this%rptr(row), this%rptr(row) + this%nrow(row) - ONE
+          this%column(i + N_INCREMENT) = cols(i)
+        end do
+
+        ! Increment pointer position to the new location
+        this%rptr(row) = this%rptr(row) + N_INCREMENT
+        
+      end do
+      this%rptr(this%nr + ONE) = this%rptr(this%nr + ONE) + N_INCREMENT
+
+      if ( .not. simple_add() ) then
+        stop 'Failure in implementation'
+      end if
+
+      ! Clean-up
+      deallocate(cols)
 
     end subroutine complex_add
 
