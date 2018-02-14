@@ -7,6 +7,11 @@ module esl_hamiltonian_m
   use esl_potential_m
   use esl_states_m
 
+#ifdef WITH_MPI
+  use mpi
+#endif
+
+
   implicit none
   private
 
@@ -34,13 +39,20 @@ contains
     type(geometry_t), intent(in) :: geo
     type(states_t),   intent(in) :: states
     logical,          intent(in) :: periodic
+ 
+    integer mpicomm
 
     call this%energy%init()
     call this%potentials%init(basis%grid, states, geo, periodic)
 
+    mpicomm = 0
+#ifdef WITH_MPI
+    mpicomm = MPI_COMM_WORLD
+#endif
+
     select case (basis%type)
     case ( PLANEWAVES )
-      call this%hm_pw%init(states)
+      call this%hm_pw%init(states, mpicomm)
     case ( ATOMCENTERED )
     !TODO
     end select

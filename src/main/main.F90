@@ -6,6 +6,10 @@ program esl_demo
   use esl_flook_if_m
 #endif
 
+#ifdef WITH_MPI
+  use mpi
+#endif
+
   implicit none
 
   ! Input-file
@@ -112,8 +116,12 @@ contains
     use esl_info_m, only : about
 
     character(len=256) :: echo_file, output_file
+    integer :: mpierr
 
     !Init MPI
+#ifdef WITH_MPI
+    call MPI_Init(mpierr)
+#endif
 
     !Init data basis strucutes 
 
@@ -154,6 +162,8 @@ contains
   subroutine esl_end()
     use fdf, only : fdf_shutdown
 
+    integer :: mpierr
+
     !Release memory
     ! which is not released in final procedure for different types
     call f_lib_finalize()
@@ -163,6 +173,10 @@ contains
     call fdf_shutdown()
 
     close(out_unit)
+
+#ifdef WITH_MPI
+    call MPI_Finalize(mpierr)
+#endif
 
   end subroutine esl_end
 
