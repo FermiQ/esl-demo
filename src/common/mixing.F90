@@ -27,7 +27,7 @@ contains
     class(mixing_t) :: this
 
     ! For the moment we read this from SCF.Mix.alpha
-    this%alpha = fdf_get('SCF.Mix.alpha', 0.3_dp)
+    this%alpha = fdf_get('SCF.Mix.alpha', 0.1_dp)
 
   end subroutine init
 
@@ -45,7 +45,7 @@ contains
     integer, intent(in) :: np
     real(dp), intent(in) :: in(:)
     real(dp), intent(in) :: out(:)
-    real(dp), intent(out) :: next(:)
+    real(dp), intent(inout) :: next(:)
 
     integer :: ip
 

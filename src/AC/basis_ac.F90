@@ -353,7 +353,7 @@ contains
 
         ! Check for the diagonal part
         if ( sp%column(ind) == io ) then
-          
+
           ! Ok, we have a diagonal entry.
           DM%M(ind) = occ
           
