@@ -1,5 +1,6 @@
 module esl_basis_ac_m
   use prec
+  use fdf, only: fdf_get
   use yaml_output
   use pspiof_m
 
@@ -101,9 +102,15 @@ contains
     type(pspiof_meshfunc_t), pointer :: mesh_R => null()
     integer :: is, no, io, isite
     integer :: l, m
-    real(dp) :: occ, r_cut
+    real(dp) :: occ, r_cut, cut_off
 
     ! Construct the basis functions
+    ! The option for constructing the basis is
+    ! determined by the cutoff radius for the basis functions
+    ! In this case we limit the basis-orbitals to the
+    ! cutoff value where the smallest R value where:
+    !    r_max @ abs(F(R) * R) < CutOff
+    cut_off = fdf_get('Basis.AC.FR.Cutoff', 0.0001_dp)
 
     ! First copy over the Cartesian coordinates
     this%n_site = geo%n_atoms
@@ -174,7 +181,7 @@ contains
 
         ! Get all radial orbital information
         call geo%species(is)%get_radial_orbital(io, l, mesh_r, occ)
-        r_cut = geo%species(is)%get_radial_orbital_rmax(io, 0.0001_dp)
+        r_cut = geo%species(is)%get_radial_orbital_rmax(io, cut_off)
         this%state(is)%r_cut = max( this%state(is)%r_cut, r_cut )
 
         do m = -l , l
