@@ -120,14 +120,14 @@ contains
             exit
         case (ELSI_RCI_H_MULTI)
             do ii = 1,iS%n
-              call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:m,ii),  work(iS%Bidx)%mat(1:m,ii))
+              call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m,ii),  work(iS%Bidx)%mat(1:iS%m,ii))
             end do
         case (ELSI_RCI_S_MULTI)
             !No overlap matrix
-            work(iS%Bidx)%mat(1:m,1:n) = work(iS%Aidx)%mat(1:m,1:n)
+            work(iS%Bidx)%mat(1:iS%m,1:iS%n) = work(iS%Aidx)%mat(1:iS%m,1:iS%n)
         case (ELSI_RCI_P_MULTI)
             ! No preconditioner
-            work(iS%Bidx)%mat(1:m,1:n) = work(iS%Aidx)%mat(1:m,1:n) 
+            work(iS%Bidx)%mat(1:iS%m,1:iS%n) = work(iS%Aidx)%mat(1:iS%m,1:iS%n) 
         case (ELSI_RCI_GEMM)
              call zgemm(iS%TrA, iS%TrB, iS%m, iS%n, iS%k,iS%alpha,     &
                work(iS%Aidx)%mat(1,1), size(work(iS%Aidx)%mat,1), &
@@ -139,7 +139,7 @@ contains
           end do
         case (ELSI_RCI_COPY)
           if(iS%TrA == 'N') then
-            work(iS%Bidx)%mat(1:m,1:n) = work(iS%Aidx)%mat(1:m,1:n)
+            work(iS%Bidx)%mat(1:iS%m,1:iS%n) = work(iS%Aidx)%mat(1:iS%m,1:iS%n)
           end if
           if(iS%TrA == 'T') then
             do ii = 1, iS%m
