@@ -50,7 +50,7 @@ contains
         ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        call grid%radial_function_gradient(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iT)
+        call grid%radial_function_ylm_gradient(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iT)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -69,7 +69,7 @@ contains
           jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          call grid%radial_function_gradient(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jT)
+          call grid%radial_function_ylm_gradient(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jT)
 
           H%M(ind) = matrix_T(iT, jT) * grid%volelem
 
