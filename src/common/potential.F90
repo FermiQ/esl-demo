@@ -113,22 +113,18 @@ contains
 
     integer :: iat, ip, is
     real(kind=dp), allocatable :: extloc(:)
-    real(kind=dp) :: coef
 
     allocate(extloc(1:pot%np)) 
     pot%external(1:pot%np) = 0.d0
  
-    !We have to remove the factor 1/sqrt(4*pi) that comes form Y_{0,0}
-    coef = sqrt(4.d0*PI)
-
     do iat = 1, geo%n_atoms
       is = geo%species_idx(iat)
 
       !Convert the radial density to the cartesian grid
-      call grid%radial_function(geo%species(is)%vlocal, 0, 0, geo%xyz(:,iat), extloc)
+      call grid%radial_function(geo%species(is)%vlocal, geo%xyz(:,iat), func=extloc)
       
       do ip=1, pot%np
-        pot%external(ip) = pot%external(ip) + extloc(ip)*coef
+        pot%external(ip) = pot%external(ip) + extloc(ip)
       end do
     end do
 

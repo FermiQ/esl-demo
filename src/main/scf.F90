@@ -74,8 +74,6 @@ contains
     case ( PLANEWAVES )
       call this%H%init(system%basis, system%geo, states, periodic=.false.)
     case( ATOMCENTERED )
-      call this%H%init(system%basis, system%geo, states, periodic=.false.)
-
       ! Initialization of the SCF step is done here.
       call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
 
@@ -110,7 +108,7 @@ contains
 
     class(scf_t),  intent(inout) :: this
     type(elsi_t),  intent(inout) :: elsi
-    type(system_t),   intent(in) :: system
+    type(system_t),intent(inout) :: system
     type(states_t),intent(inout) :: states
     type(smear_t), intent(inout) :: smear
 
@@ -122,12 +120,16 @@ contains
     !Calc. potentials from guess density
     select case (system%basis%type)
     case ( PLANEWAVES )
-      call this%H%potentials%calculate(this%rho_in%density_pw%density, this%H%energy)
+      call this%H%potentials%calculate(this%rho_in%density_pw%density, system%energy)
     case( ATOMCENTERED )
       !TODO
     end select
 
-    !Randomize the states
+    ! TODO 
+    ! Randomize the states
+    ! Generally these are not needed for AC since we diagonalize
+    ! the Hamiltonian. However, when AC is using order-N methods one
+    ! does require initial guesses for the states.
     call states%randomize()
 
     call yaml_mapping_open("SCF cycle")
@@ -136,7 +138,7 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
-      call this%H%eigensolver(system%basis, states)
+  !    call this%H%eigensolver(system%basis, states)
 
       ! Update occupations
       call smear_calc_fermi_and_occ(smear, elsi, states)
@@ -144,16 +146,20 @@ contains
       ! Calculate density
       call this%rho_in%calculate(system, states, out=this%rho_out)
       
-      !Calc. potentials
+      ! Calculate necessary potentials
       select case (system%basis%type)
       case ( PLANEWAVES )
-        call this%H%potentials%calculate(this%rho_out%density_pw%density, this%H%energy)
+        
+        call this%H%potentials%calculate(this%rho_out%density_pw%density, system%energy)
+        
       case( ATOMCENTERED )
-        !TODO
+
+        !TODO, are any potentials required here...
+        
       end select
 
       !Calc. energies
-      call this%H%energy%calculate(states)  
+      call system%energy%calculate(states)  
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density
@@ -180,32 +186,37 @@ contains
     
     call yaml_mapping_close()
 
-    call this%H%energy%display()
+    call system%energy%display()
 
   end subroutine loop
   
   ! Perform mixing step
   !----------------------------------------------------
-  subroutine mix(this, basis, rho_in, rho_out)
+  subroutine mix(this, basis, in, out)
     class(scf_t) :: this
     type(basis_t),  intent(in)   :: basis
-    type(density_t), intent(in) :: rho_in, rho_out 
+    type(density_t), intent(inout) :: in, out 
 
-    real(kind=dp), allocatable :: rhonew(:)
+    real(kind=dp), allocatable :: next(:)
     integer :: np
 
-    np = rho_in%np
+    np = in%np
 
-    select case (basis%type)
-    case ( PLANEWAVES )  
-      allocate(rhonew(1:np))
-      call this%mixer%linear(np, rho_in%density_pw%density(1:np), rho_out%density_pw%density(1:np), rhonew(1:np))
-      call rho_in%density_pw%set_den(rhonew)
-      deallocate(rhonew)
+    select case ( basis%type )
+    case ( PLANEWAVES )
+      
+      allocate(next(1:np))
+      call this%mixer%linear(np, in%density_pw%density(1:np), out%density_pw%density(1:np), next(1:np))
+      call in%density_pw%set_den(next)
+      deallocate(next)
+      
     case ( ATOMCENTERED )
-    !TODO
-!!$      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
-!!$      call this%ac%set_den(this%rhonew)
+
+      ! Since the linear mixing does not do look-ahead calls we can alias
+      ! the same array
+      !TODO: Fix warning here
+      call this%mixer%linear(in%ac%DM%sp%nz, in%ac%DM%M, out%ac%DM%M, in%ac%DM%M)
+      
     end select
 
   end subroutine mix

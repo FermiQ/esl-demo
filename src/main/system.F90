@@ -12,6 +12,10 @@ module esl_system_m
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
   use esl_basis_m
+  use esl_energy_m
+  use esl_force_m
+  use esl_ion_interaction_m
+
   use esl_smear_m
   use esl_states_m
   use esl_species_m
@@ -25,9 +29,17 @@ module esl_system_m
 
   !Data structure for the system
   type system_t
-    type(basis_t)    :: basis
+    !< Container for PW and AC basis
+    type(basis_t) :: basis
+    !< All system related energies
+    type(energy_t) :: energy
+    !< Geometry information
     type(geometry_t) :: geo
-    
+    !< Force inforamtion (connected to geo)
+    type(force_t) :: force
+    !< Ion-ion interaction (connected to geo)
+    type(ion_interaction_t) :: ion_inter
+
     ! TODO decide whether the system should be inherited for the LO/PW
     ! case. It may make the system a lot easier to figure out.
     ! However, it will prohibit switching from PW/LO -> LO/PW within the same
@@ -44,7 +56,9 @@ module esl_system_m
   contains
     private
     procedure, public :: init
+    procedure, public :: update
     procedure, public :: summary
+
     final  :: cleanup
   end type system_t
 
@@ -52,18 +66,31 @@ contains
 
   !Initialize the physical system
   !----------------------------------------------------
-  subroutine init(sys)
-    class(system_t) :: sys
+  subroutine init(this)
+    class(system_t), intent(inout) :: this
 
-    integer :: nstates, nspin
+    call this%energy%init()
+    call this%geo%init()
+    call this%basis%init(this%geo)
+    call this%force%init(this%geo%n_atoms)
+    call this%ion_inter%init()
+    call this%energy%init()
 
-    call sys%geo%init()
-    
-    call sys%basis%init(sys%geo)
-
-    call sys%summary()
+    call this%summary()
 
   end subroutine init
+
+  subroutine update(this, periodic)
+    class(system_t), intent(inout) :: this
+    logical, intent(in) :: periodic
+
+    if ( periodic ) then
+      call this%ion_inter%calculate_periodic(this%geo, this%force%ionion, this%energy%ionion)
+    else
+      call this%ion_inter%calculate_isolated(this%geo, this%force%ionion, this%energy%ionion)
+    end if
+    
+  end subroutine update
 
   !Release
   !----------------------------------------------------

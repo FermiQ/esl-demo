@@ -1,4 +1,5 @@
 module esl_grid_m
+  use esl_numeric_m, only: grylmr
   use prec, only : dp,lp
   use iso_c_binding
   use module_fft_sg
@@ -31,6 +32,8 @@ module esl_grid_m
     procedure, public :: init
     procedure, public :: radial_function
     procedure, public :: radial_function_gradient
+    procedure, public :: radial_function_ylm_gradient
+    procedure, public :: radial_function_ylm
     procedure, public :: overlap
     procedure, public :: summary
     
@@ -137,60 +140,77 @@ contains
 
   end subroutine summary
 
-  !Evaluate an atomic orbital on the real-space grid
+  ! Evaluate a radial function on the real-space grid
   !----------------------------------------------------
-  subroutine radial_function(this, rfunc, ll, mm, r_center, func, gfunc)
-    use esl_numeric_m, only: grylmr
+  subroutine radial_function(this, rfunc, r_center, func)
+
+    class(grid_t) :: this
+    type(pspiof_meshfunc_t), intent(in)  :: rfunc
+    real(dp),                intent(in)  :: r_center(3)
+    real(dp),                intent(out) :: func(:)
+
+    integer :: ip
+    real(dp) :: xyz(3), r
+
+    do ip = 1, this%np
+        
+      xyz(:) = this%r(:,ip) - r_center(:)
+      r = sqrt(sum(xyz**2))
+      func(ip) = pspiof_meshfunc_eval(rfunc, r)
+        
+    end do
+
+  end subroutine radial_function
+
+  ! Evaluate the gradient of a radial function on the real-space grid
+  !----------------------------------------------------
+  subroutine radial_function_gradient(this, rfunc, r_center, gfunc)
+    class(grid_t) :: this
+    type(pspiof_meshfunc_t), intent(in)  :: rfunc
+    real(dp),                intent(in)  :: r_center(3)
+    real(dp),                intent(out) :: gfunc(:,:)
+
+    integer :: ip
+    real(dp) :: xyz(3), r
+      
+    do ip = 1, this%np
+
+      xyz(:) = this%r(:,ip) - r_center(:)
+      r = sqrt(sum(xyz**2))
+      gfunc(1:3, ip) = pspiof_meshfunc_eval_deriv(rfunc, r)
+        
+    end do
+
+  end subroutine radial_function_gradient
+
+  ! Evaluate a radial function times a spherical harmonic on the real-space grid
+  !----------------------------------------------------
+  subroutine radial_function_ylm(this, rfunc, ll, mm, r_center, func)
     class(grid_t) :: this
     type(pspiof_meshfunc_t), intent(in)  :: rfunc
     integer,                 intent(in)  :: ll
     integer,                 intent(in)  :: mm
     real(dp),                intent(in)  :: r_center(3)
     real(dp),                intent(out) :: func(:)
-    real(dp), optional,      intent(out) :: gfunc(:,:)
 
     integer :: ip
-    real(dp) :: x, y, z, r, fr
+    real(dp) :: xyz(3), r
+      
+    do ip = 1, this%np
+      
+      xyz(:) = this%r(:,ip) - r_center(:)
+      call grylmr(xyz(1), xyz(2), xyz(3), ll, mm, func(ip))
 
-    if ( present(gfunc) ) then
-      
-      do ip = 1, this%np
+      r = sqrt(sum(xyz**2))
+      func(ip) = func(ip)*pspiof_meshfunc_eval(rfunc, r)
         
-        x = this%r(1,ip) - r_center(1)
-        y = this%r(2,ip) - r_center(2)
-        z = this%r(3,ip) - r_center(3)
-        call grylmr(x, y, z, ll, mm, func(ip), gfunc(1:3,ip)) 
-        
-        r = sqrt(x**2 + y**2 + z**2)
-        fr = pspiof_meshfunc_eval(rfunc, r)
-        func(ip) = func(ip)*fr
-        gfunc(1:3, ip) = func(ip)*pspiof_meshfunc_eval_deriv(rfunc, r) + gfunc(1:3, ip)*fr
-        
-      end do
-      
-    else
-      
-      do ip = 1, this%np
-        
-        x = this%r(1,ip) - r_center(1)
-        y = this%r(2,ip) - r_center(2)
-        z = this%r(3,ip) - r_center(3)
-        call grylmr(x, y, z, ll, mm, func(ip))
-
-        r = sqrt(x**2 + y**2 + z**2)
-        fr = pspiof_meshfunc_eval(rfunc, r)
-        func(ip) = func(ip)*fr
-        
-      end do
-      
-    end if
+    end do
      
-  end subroutine radial_function
+  end subroutine radial_function_ylm
 
-  !Evaluate only the radial gradient an atomic orbital on the real-space grid
+  ! Evaluate the gradient of a radial function times a spherical harmonic on the real-space grid
   !----------------------------------------------------
-  subroutine radial_function_gradient(this, rfunc, ll, mm, r_center, gfunc)
-    use esl_numeric_m, only: grylmr
+  subroutine radial_function_ylm_gradient(this, rfunc, ll, mm, r_center, gfunc)
     class(grid_t) :: this
     type(pspiof_meshfunc_t), intent(in)  :: rfunc
     integer,                 intent(in)  :: ll
@@ -199,22 +219,20 @@ contains
     real(dp),                intent(out) :: gfunc(:,:)
 
     integer :: ip
-    real(dp) :: x, y, z, r, fr, f
+    real(dp) :: xyz(3), r, f
 
     do ip = 1, this%np
-      
-      x = this%r(1,ip) - r_center(1)
-      y = this%r(2,ip) - r_center(2)
-      z = this%r(3,ip) - r_center(3)
-      call grylmr(x, y, z, ll, mm, f, gfunc(1:3,ip)) 
-      
-      r = sqrt(x**2 + y**2 + z**2)
-      fr = pspiof_meshfunc_eval(rfunc, r)
-      gfunc(1:3, ip) = fr*(f*pspiof_meshfunc_eval_deriv(rfunc, r) + gfunc(1:3, ip))
+
+      xyz(:) = this%r(:,ip) - r_center(:)
+      call grylmr(xyz(1), xyz(3), xyz(3), ll, mm, f, gfunc(1:3,ip)) 
+
+      r = sqrt(sum(xyz**2))
+      gfunc(1:3, ip) = f*pspiof_meshfunc_eval_deriv(rfunc, r) + &
+        gfunc(1:3, ip)*pspiof_meshfunc_eval(rfunc, r)
         
     end do
      
-  end subroutine radial_function_gradient
+  end subroutine radial_function_ylm_gradient
 
   !Integrate a function over the real-space grid
   !----------------------------------------------------
@@ -266,17 +284,13 @@ contains
     real(dp) :: dist
     
     dist = sqrt(sum( (xyz1 - xyz2) ** 2 ))
+    overlap = 0._dp
     if ( dist < r1 + r2 ) then
 
       do ip = 1 , grid%np
         overlap = overlap + ao1(ip)*ao2(ip)
       end do
       overlap = overlap*grid%volelem
-
-    else
-      
-      overlap = 0._dp
-      
     end if
 
   end function overlap
