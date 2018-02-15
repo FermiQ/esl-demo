@@ -102,7 +102,7 @@ add_executable(${target_name}
   )
 target_link_libraries(${target_name} ac pw elsi_rci common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${GRIDXC_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if (WITH_FLOOK)
-  set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_FLOCK")
+  set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_FLOOK")
 endif()
 target_link_libraries(${target_name} common ac pw ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES}  ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if(WITH_MPI)
