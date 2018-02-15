@@ -170,16 +170,20 @@ contains
     print *, 'DEBUG V sum', grid%integrate(rho_atom)
     call hamiltonian_ac_potential(basis, grid, rho_atom, H)
 
+    ! Calculate the eigenvalue energy
+    energy%eigenvalues = sum(H%M * this%DM%M)
+
     ! X. Calculate output density matrix elements from the Hamiltonian
-    call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
-    call calc_density_matrix_ac(elsi, H, S, out%DM, energy%fermi)
+!    call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
+!    call calc_density_matrix_ac(elsi, H, S, out%DM, energy%fermi)
 
     call dist%delete()
 
-!    call my_check()
+    call my_check()
 
     ! Final, output Mulliken charges
     call mulliken_ac_summary(basis, S, out%DM)
+    call energy%display()
 
   contains
 
@@ -187,7 +191,6 @@ contains
 
       real(dp), allocatable :: eig(:)
       real(dp), allocatable :: B(:), work(:)
-      real(dp) :: Ef
       integer :: n, info
       integer :: io, jo, ib, ind
 
@@ -207,7 +210,7 @@ contains
 
       N_Ef = nint( basis%Q )
       energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
-      print *, 'DEBUG fermi level: ', Ef
+      print *, 'DEBUG fermi level: ', energy%fermi, eig
 
       ! Re-construct the DM
       out%DM%M(:) = 0._dp

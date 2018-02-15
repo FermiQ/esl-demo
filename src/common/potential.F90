@@ -117,7 +117,7 @@ contains
     do iat = 1, geo%n_atoms
       is = geo%species_idx(iat)
 
-      !Convert the radial density to the cartesian grid
+      ! Convert the radial density to the cartesian grid
       call grid%radial_function(geo%species(is)%vlocal, geo%xyz(:,iat), func=extloc)
       
       do ip=1, pot%np
