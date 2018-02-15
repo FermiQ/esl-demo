@@ -59,6 +59,7 @@ include_directories(${FFTW_PREFIX}/include)
 link_directories(${FFTW_LIBRARY_DIRS})
 
 message(STATUS "Found GRIDXC support!")
+include_directories(${GRIDXC_INCLUDEDIR})
 include_directories(${GRIDXC_INCLUDE_DIRS})
 link_directories(${GRIDXC_LIBRARY_DIRS})
 
