@@ -69,9 +69,9 @@ contains
   subroutine calc_fermi_occ(this, elsic, states)
     use esl_states_m, only: states_t
     use esl_elsi_m, only: elsi_t
-    use elsi, only: elsi_set_mu_broaden_scheme, &
-                    elsi_set_mu_broaden_width, &
-                    elsi_compute_mu_and_occ
+ !   use elsi, only: elsi_set_mu_broaden_scheme, &
+ !                   elsi_set_mu_broaden_width, &
+ !                   elsi_compute_mu_and_occ
 
     class(smear_t), intent(inout) :: this
     type(elsi_t),   intent(inout) :: elsic

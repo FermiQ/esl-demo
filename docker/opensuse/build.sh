@@ -2,4 +2,4 @@
 
 set -x
 
-docker build -t opensuse-esl:full . 
+docker build --no-cache  -t opensuse-esl:full . 

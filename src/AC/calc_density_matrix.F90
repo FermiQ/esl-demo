@@ -2,6 +2,7 @@
 !> and energy-weighted density matrix.
 !> TODO: Unify naming scheme.
 module esl_calc_density_matrix_ac_m
+#ifdef WITH_ELSI
 
   use prec, only: ip, dp
   use esl_elsi_m, only: elsi_t

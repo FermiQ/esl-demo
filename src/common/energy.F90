@@ -1,6 +1,8 @@
 module esl_energy_m
   use prec, only : dp
 
+  use esl_states_m
+
   implicit none
   private
 
@@ -53,8 +55,11 @@ contains
 
   !Compute the total energy
   !----------------------------------------------------
-  subroutine calculate(this)
+  subroutine calculate(this, states)
     class(energy_t) :: this
+    type(states_t), intent(in) :: states
+
+    this%eigenvalues=sum(states%eigenvalues)
 
     this%total = this%ionion +  this%eigenvalues  + this%extern &
                  -this%hartree + this%exchange + this%correlation + this%kinetic - this%int_nvxc

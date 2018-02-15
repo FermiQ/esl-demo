@@ -72,15 +72,12 @@ contains
 
     ! This is necessary for both AC and PW
     ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
-    call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+    call this%H%init(system%basis, system%geo, states, periodic=.false.)
 
     select case (system%basis%type)
     case ( PLANEWAVES )
-
       ! TODO anything syecific to SCF initialization
-      
     case( ATOMCENTERED )
-
       ! Initialization of the SCF step is done here.
       call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
 
@@ -124,6 +121,13 @@ contains
 
     ! Perform initial guess on the density
     call this%rho_in%guess(system)
+    !Calc. potentials from guess density
+    select case (system%basis%type)
+    case ( PLANEWAVES )
+      call this%H%potential%calculate(this%rho_in%density_pw%density, system%energy)
+    case( ATOMCENTERED )
+      !TODO
+    end select
 
     ! TODO 
     ! Randomize the states
@@ -138,6 +142,7 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
+      call this%H%eigensolver(system%basis, states)
 
       ! Update occupations
       call smear%calc_fermi_occ(elsi, states)
@@ -160,7 +165,7 @@ contains
       end select
 
       !Calc. energies
-      call system%energy%calculate()
+      call system%energy%calculate(states)  
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density

@@ -29,6 +29,7 @@ module esl_states_m
      type(wfn_t), allocatable :: states(:,:,:)  !nstates, nspin, nkpt
      real(dp), allocatable :: occ_numbers(:,:,:)
      real(dp), allocatable :: k_weights(:)
+     real(dp), allocatable :: eigenvalues(:,:,:)
    contains
      private
      procedure, public :: init
@@ -63,6 +64,9 @@ contains
     allocate(this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt))
     this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt) = 0._dp
     this%occ_numbers(1:this%nel,  1:nspin, 1:nkpt) = 1.d0
+
+    allocate(this%eigenvalues(1:this%nstates, 1:nspin, 1:nkpt))
+    this%eigenvalues(1:this%nstates, 1:nspin, 1:nkpt) = 0._dp    
 
     allocate(this%k_weights(1:nkpt))
     this%k_weights(:) = 1.d0/this%nkpt
@@ -108,7 +112,9 @@ contains
       end do
       deallocate(this%states)
     end if
+
     if(allocated(this%occ_numbers)) deallocate(this%occ_numbers)
+    if(allocated(this%eigenvalues)) deallocate(this%eigenvalues)
     if(allocated(this%k_weights)) deallocate(this%k_weights)
 
   end subroutine cleanup
