@@ -175,7 +175,7 @@ contains
         result_in(1) = real(result_in_comp, kind=dp)
 
       case (ELSI_RCI_SCALE) ! A = alpha * A
-        work(iS%Aidx)%mat = iS%alpha*work(iS%Aidx)%mat
+        work(iS%Aidx)%mat = complex(iS%alpha,0.d0)*work(iS%Aidx)%mat
 
       case default
         print *, 'Unsupported RCI operation ', task
@@ -190,7 +190,7 @@ contains
     allocate (Worktmp(lWorktmp))
     allocate (RWorktmp(max(1, 3*n - 2)))
     lda = size(Work(21)%Mat, 1)
-    call dsyev('V', 'L', n, &
+    call zheev('V', 'L', n, &
                Work(21)%Mat, lda, result_in, &
                Worktmp, lWorktmp, RWorktmp, info)
     deallocate(Worktmp)
