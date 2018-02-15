@@ -2,6 +2,12 @@ module esl_scf_m
 
   use prec, only : dp,ip
   use fdf, only : fdf_get
+#ifdef WITH_FLOOK
+  use esl_flook_global_m, only: LUA
+  use dictionary
+  use esl_dict_m
+  use esl_flook_if_m
+#endif
 
   use esl_basis_m
   use esl_density_m
@@ -87,6 +93,15 @@ contains
     call this%rho_in%init(system)
     call this%rho_out%init(system)
 
+#ifdef WITH_FLOOK
+    esl_options = esl_options // &
+        ('SCF.Mixer.Alpha'.kvp.this%mixer%alpha)
+    esl_options = esl_options // &
+        ('SCF.Iter.Max'.kvp.this%max_iter)
+    esl_options = esl_options // &
+        ('SCF.Tolerance'.kvp.this%tol_reldens)
+#endif
+
   end subroutine init
 
   !Cleaning up
@@ -112,6 +127,10 @@ contains
 
     integer :: iter !< Interation
     real(dp) :: res
+
+#ifdef WITH_FLOOK
+    call esl_dict_var_add('SCF.Residue', res)
+#endif
 
     ! Perform initial guess on the density
     call this%rho_in%guess(system)
@@ -168,6 +187,13 @@ contains
       !      For now I don't do this...
       res = this%rho_in%residue(system%basis, this%rho_out, states)
       call yaml_map("Residue", res)
+
+#ifdef WITH_FLOOK
+      ! Exchange data with Lua, so
+      ! Call lua just before we are to initialize a new step.
+      call flook_if_call(LUA, LUA_SCF_LOOP)
+#endif
+
 !      call yaml_map("Rel. Density", reldens)
       if ( res <= this%tol_reldens ) then
         

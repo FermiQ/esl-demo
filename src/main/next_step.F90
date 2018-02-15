@@ -5,6 +5,11 @@
 !<  3. change of XXX
 module esl_next_step_m
 
+#ifdef WITH_FLOOK
+  use esl_flook_global_m
+  use esl_flook_if_m
+#endif
+  
   implicit none
 
   public :: next_step_setup
@@ -18,6 +23,9 @@ contains
     type(system_t), intent(inout) :: system
 
     ! Move quantities required for a move
+#ifdef WITH_FLOOK
+    call flook_if_call(LUA, LUA_INIT_STEP)
+#endif
 
     select case ( system%basis%type )
     case ( PLANEWAVES )
