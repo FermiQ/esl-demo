@@ -77,7 +77,7 @@ contains
     type(states_t), intent(inout) :: states
     type(basis_pw_t), intent(in)  :: pw
 
-    integer :: ii, jj
+    integer :: ii, jj, lda, ldb, ldc
     real(kind=r8), allocatable :: result_in(:)
     type(rci_instr)      :: iS
     integer(kind=i4) :: task, m, n, ijob
@@ -112,7 +112,8 @@ contains
       work(1)%mat(1:pw%npw, ii) = states%states(ii, 1, 1)%zcoef(1:pw%npw)
     end do
 
-    allocate (result_in(1))
+    !result_in is also used for computing the eigenvalues
+    allocate (result_in(n))
     ijob = -1
     do
       call rci_omm(ijob, iS, task, result_in, m, n, &
@@ -122,11 +123,13 @@ contains
       case (ELSI_RCI_NULL)
       case (ELSI_RCI_CONVERGE)
         exit
+      case(ELSI_RCI_STOP)
+        print *, "ELSI RCI did not converged."
+        exit
       case (ELSI_RCI_H_MULTI) ! B = H^(trH) * A
-        !           do ii = 1,iS%n
-        !             call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m,ii),  work(iS%Bidx)%mat(1:iS%m,ii))
-        !           end do
-        work(iS%Bidx)%mat = work(iS%Aidx)%mat
+        do ii = 1,iS%n
+          call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m,ii),  work(iS%Bidx)%mat(1:iS%m,ii))
+        end do
       case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
         !No overlap matrix
         work(iS%Bidx)%mat = work(iS%Aidx)%mat
@@ -162,9 +165,9 @@ contains
           result_in(1) = result_in(1) &
                          + real(work(iS%Aidx)%mat(ii, ii), kind=dp)
         end do
-
+        print *, result_in(1)
       case (ELSI_RCI_DOT) ! res = trace(A * B)
-        result_in_comp = 0.d0
+        result_in_comp = cmplx(0.d0,0.d0)
         do ii = 1, iS%m
           do jj = 1, iS%n
             result_in_comp = result_in_comp &
@@ -190,7 +193,7 @@ contains
     allocate (Worktmp(lWorktmp))
     allocate (RWorktmp(max(1, 3*n - 2)))
     lda = size(Work(21)%Mat, 1)
-    call dsyev('V', 'L', n, &
+    call zheev('V', 'L', n, &
                Work(21)%Mat, lda, result_in, &
                Worktmp, lWorktmp, RWorktmp, info)
     deallocate(Worktmp)
