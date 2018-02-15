@@ -2,6 +2,7 @@ module esl_density_m
 
   use prec, only : dp
   use esl_basis_m
+  use esl_elsi_m
   use esl_density_ac_m
   use esl_density_pw_m
   use esl_geometry_m
@@ -94,8 +95,9 @@ contains
 
   ! Calculate output density from an input density
   !----------------------------------------------------
-  subroutine calculate(this, system, potential, states, out)
+  subroutine calculate(this, elsi, system, potential, states, out)
     class(density_t),   intent(inout) :: this
+    type(elsi_t), intent(inout) :: elsi
     type(system_t), intent(inout) :: system
     !< This seems only necessary for the AC part
     type(potential_t), intent(inout) :: potential
@@ -113,7 +115,7 @@ contains
     case ( ATOMCENTERED )
 
       ! Calculate the density on the grid
-      call this%ac%calculate(system%basis%grid, potential, &
+      call this%ac%calculate(elsi, system%basis%grid, potential, &
           system%basis%ac, system%S, this%rho, &
           system%energy, out%ac)
       
