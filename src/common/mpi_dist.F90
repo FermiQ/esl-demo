@@ -5,7 +5,7 @@
 !<
 !< The distribution function may be used to figure out
 !< localities of linear quantities, i.e. 1D problems.
-module mpi_dist
+module mpi_dist_m
 
 #ifdef WITH_MPI
   use mpi
@@ -37,38 +37,38 @@ module mpi_dist
   !   local_N
   type :: mpi_dist_t
 
-     !< Associated communicator with this distribution.
-     integer(im_) :: comm = -1
+    !< Associated communicator with this distribution.
+    integer(im_) :: comm = -1
 
-     ! Note that rank and size are kept in the same precision
-     ! as global_N because it allows "faster" arithmetic due to
-     ! less casting. Or at least ideally...
+    ! Note that rank and size are kept in the same precision
+    ! as global_N because it allows "faster" arithmetic due to
+    ! less casting. Or at least ideally...
 
-     !< The MPI rank (MPI_Comm_rank(rank)) (i.e. 0-based)
-     integer(ii_) :: rank = 0
+    !< The MPI rank (MPI_Comm_rank(rank)) (i.e. 0-based)
+    integer(ii_) :: rank = 0
 
-     !< The MPI communicator size (MPI_Comm_size(size))
-     integer(ii_) :: size = 1
+    !< The MPI communicator size (MPI_Comm_size(size))
+    integer(ii_) :: size = 1
 
-     !< Total number of elements to distribute
-     integer(ii_) :: global_N = 0
+    !< Total number of elements to distribute
+    integer(ii_) :: global_N = 0
 
-   contains
+  contains
 
-     ! Sadly creating public procedures (or generic procedures)
-     ! forces the interfaces to be *exactly* the same.
-     ! Perhaps I am missing something?
-     ! I.e. sub-classed types should call %mpi_dist_t%init_(..)
-     ! for correct interaction.
-     ! This may propagate further by introducing problems when
-     ! inheriting sub-classed distributions where the interface
-     ! may be required to change.
+    ! Sadly creating public procedures (or generic procedures)
+    ! forces the interfaces to be *exactly* the same.
+    ! Perhaps I am missing something?
+    ! I.e. sub-classed types should call %mpi_dist_t%init_(..)
+    ! for correct interaction.
+    ! This may propagate further by introducing problems when
+    ! inheriting sub-classed distributions where the interface
+    ! may be required to change.
 
-     !< Initialize a new MPI distribution
-     procedure, public, non_overridable :: init_
+    !< Initialize a new MPI distribution
+    procedure, public, non_overridable :: init_
 
-     !< Delete this object (it does NOT disconnect the communicator)
-     procedure, public, non_overridable :: delete_
+    !< Delete this object (it does NOT disconnect the communicator)
+    procedure, public, non_overridable :: delete_
 
   end type mpi_dist_t
 
@@ -106,4 +106,4 @@ contains
 
   end subroutine delete_
 
-end module mpi_dist
+end module mpi_dist_m

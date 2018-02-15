@@ -10,6 +10,11 @@ module esl_density_ac_m
   use esl_sparse_matrix_m
   use esl_hamiltonian_ac_m
 
+  use mpi_dist_block_cyclic_m
+  use esl_elsi_m, only: elsi_t
+  use esl_calc_density_matrix_ac_m
+  
+
   implicit none
 
   private
@@ -77,8 +82,11 @@ contains
   end subroutine guess
 
   !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, grid, pot, basis, S, rho, energy, out)
+  subroutine calculate(this, elsi, grid, pot, basis, S, rho, energy, out)
+    use mpi, only: mpi_comm_world
     class(density_ac_t), intent(inout) :: this
+    !< ELSI handler
+    class(elsi_t), intent(inout) :: elsi
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
     !< Potential container which calculates Hartree and XC
@@ -103,6 +111,10 @@ contains
     ! Currently we contain the Hamiltonian here.
     ! However, since it is needed elsewhere we should decide where to place it.
     type(sparse_matrix_t) :: H
+    type(mpi_dist_block_cyclic_t) :: dist
+
+    ! Initialize the distribution
+    call dist%init(MPI_COMM_World, this%DM%sp%nr, this%DM%sp%nr)
 
     ! TODO logic for calculating the output density from an input
     ! density.
@@ -159,10 +171,12 @@ contains
     call hamiltonian_ac_potential(basis, grid, rho_atom, H)
 
     ! X. Calculate output density matrix elements from the Hamiltonian
-    ! TODO add elsi calls
-    out%DM%M(:) = this%DM%M(:)
-    
-    call my_check()
+    call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
+    call calc_density_matrix_ac(elsi, H, S, out%DM, energy%fermi)
+
+    call dist%delete()
+
+!    call my_check()
 
     ! Final, output Mulliken charges
     call mulliken_ac_summary(basis, S, out%DM)
