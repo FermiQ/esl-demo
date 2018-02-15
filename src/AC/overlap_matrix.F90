@@ -75,8 +75,8 @@ contains
 
           ! DEBUG print
 !          if ( ia == ja .and. iio == jjo ) &
-!              print *,' Diagonal overlap matrix: ', ia, iio, S%M(ind)
-          !print *,' Calculing overlap matrix: ', ia, iio, ja, jjo, S%M(ind)
+!              print *,'# Diagonal overlap matrix: ', ia, iio, S%M(ind)
+          !print *,'# Calculing overlap matrix: ', ia, iio, ja, jjo, S%M(ind)
 
         end do
 

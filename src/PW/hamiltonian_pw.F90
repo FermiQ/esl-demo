@@ -12,7 +12,6 @@ module esl_hamiltonian_pw_m
   use esl_states_m
   use esl_utils_pw_m
 
-  use mpi_dist
 #ifdef WITH_MPI
   use mpi
 #endif
@@ -32,8 +31,6 @@ module esl_hamiltonian_pw_m
   !Data structure for the Hamiltonian
   type hamiltonian_pw_t
     type(elsi_handle)    :: e_h
-    type(mpi_dist_t)     :: dist
-
     type(potential_t), pointer :: pot
   contains
     private

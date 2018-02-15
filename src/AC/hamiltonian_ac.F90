@@ -76,7 +76,7 @@ contains
 
           ! DEBUG print
 !          if ( ia == ja .and. iio == jjo ) &
-!              print *,' Diagonal kinetic matrix: ', ia, iio, H%M(ind)
+!              print *,'# Diagonal kinetic matrix: ', ia, iio, H%M(ind)
 
         end do
 
@@ -176,7 +176,7 @@ contains
 
           ! DEBUG print
 !          if ( ia == ja .and. iio == jjo ) &
-!              print *,' Diagonal potential matrix: ', ia, iio, H%M(ind)
+!              print *,'# Diagonal potential matrix: ', ia, iio, H%M(ind)
 
         end do
 

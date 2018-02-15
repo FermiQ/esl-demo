@@ -128,14 +128,14 @@ contains
 !    call add_density_matrix(grid, basis, DM_atom, rho_atom)
 !    call DM_atom%delete()
 
-!    print *, 'DEBUG rho-atom sum', grid%integrate(rho_atom)
+!    print *, '# DEBUG rho-atom sum', grid%integrate(rho_atom)
 
     
     ! 1. Start by calculating the density from the DM on the grid
     rho(:) = 0._dp
     call add_density_matrix(grid, basis, this%DM, rho)
 
-!    print *, 'DEBUG dRho sum', grid%integrate(rho_atom)
+!    print *, '# DEBUG dRho sum', grid%integrate(rho_atom)
 
     ! Initialize the Hamiltonian to 0
     call H%init(S%sp)
@@ -153,7 +153,7 @@ contains
     ! Now we are in a position to calculate Hartree potential from
     ! rho
 
-    print *, 'DEBUG Rho sum', grid%integrate(rho)
+    print *, '# DEBUG Rho sum', grid%integrate(rho)
 
     ! Now call the potentials_t%calculate which does:
     !   1. Calculate the XC potential.
@@ -166,7 +166,7 @@ contains
     ! Re-use rho-atom as the sum of potentials.
     ! I.e. after this line we cannot use rho_atom anymore!
     rho_atom(:) = pot%hartree(:) + pot%vxc(:) + pot%external(:)
-    print *, 'DEBUG V sum', grid%integrate(rho_atom)
+    print *, '# DEBUG V sum', grid%integrate(rho_atom)
     call hamiltonian_ac_potential(basis, grid, rho_atom, H)
 
     ! X. Calculate output density matrix elements from the Hamiltonian
@@ -210,7 +210,7 @@ contains
 
       N_Ef = nint( basis%Q )
       energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
-      print *, 'DEBUG fermi level: ', energy%fermi, eig
+      print *, '# DEBUG fermi level: ', energy%fermi, eig
 
       ! Re-construct the DM
       out%DM%M(:) = 0._dp
