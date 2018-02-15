@@ -70,9 +70,13 @@ contains
 
     call this%mixer%init()
 
+    ! This is necessary for both AC and PW
+    ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
+    call this%H%init(system%basis, system%geo, states, periodic=.false.)
+
     select case (system%basis%type)
     case ( PLANEWAVES )
-      call this%H%init(system%basis, system%geo, states, periodic=.false.)
+      ! TODO anything syecific to SCF initialization
     case( ATOMCENTERED )
       ! Initialization of the SCF step is done here.
       call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
@@ -104,7 +108,7 @@ contains
     use yaml_output
     use esl_smear_m
     use esl_states_m
-    use elsi_wrapper_esl
+    use esl_elsi_m
 
     class(scf_t),  intent(inout) :: this
     type(elsi_t),  intent(inout) :: elsi
@@ -120,7 +124,7 @@ contains
     !Calc. potentials from guess density
     select case (system%basis%type)
     case ( PLANEWAVES )
-      call this%H%potentials%calculate(this%rho_in%density_pw%density, system%energy)
+      call this%H%potential%calculate(this%rho_in%density_pw%density, system%energy)
     case( ATOMCENTERED )
       !TODO
     end select
@@ -138,23 +142,25 @@ contains
       call yaml_map("Iteration", iter)
 
       ! Diagonalization (ELSI/KSsolver)
-      call this%H%eigensolver(system%basis, states)
+  !    call this%H%eigensolver(system%basis, states)
 
       ! Update occupations
-      call smear_calc_fermi_and_occ(smear, elsi, states)
+      call smear%calc_fermi_occ(elsi, states)
 
       ! Calculate density
-      call this%rho_in%calculate(system, states, out=this%rho_out)
+      call this%rho_in%calculate(system, this%H%potential, states, out=this%rho_out)
       
       ! Calculate necessary potentials
       select case (system%basis%type)
       case ( PLANEWAVES )
-        
-        call this%H%potentials%calculate(this%rho_out%density_pw%density, system%energy)
+
+        call this%H%potential%calculate(this%rho_out%density_pw%density, system%energy)
         
       case( ATOMCENTERED )
 
-        !TODO, are any potentials required here...
+        ! TODO, clarify intent here. The potentials are required to calculate the
+        ! output density. As such the potential type is required in the density_ac%calculate
+        ! routine.
         
       end select
 
@@ -177,7 +183,7 @@ contains
         
       end if
 
-      ! Perform mixing
+      ! Perform mixing (in/out)
       call this%mix(system%basis, this%rho_in, this%rho_out)
 
       !Update Hamiltonian matrix
@@ -200,11 +206,11 @@ contains
     real(kind=dp), allocatable :: next(:)
     integer :: np
 
-    np = in%np
-
     select case ( basis%type )
     case ( PLANEWAVES )
-      
+
+      np = in%np
+
       allocate(next(1:np))
       call this%mixer%linear(np, in%density_pw%density(1:np), out%density_pw%density(1:np), next(1:np))
       call in%density_pw%set_den(next)
@@ -214,8 +220,8 @@ contains
 
       ! Since the linear mixing does not do look-ahead calls we can alias
       ! the same array
-      !TODO: Fix warning here
-      call this%mixer%linear(in%ac%DM%sp%nz, in%ac%DM%M, out%ac%DM%M, in%ac%DM%M)
+      np = in%ac%DM%sp%nz
+      call this%mixer%linear(np, in%ac%DM%M, out%ac%DM%M, in%ac%DM%M)
       
     end select
 

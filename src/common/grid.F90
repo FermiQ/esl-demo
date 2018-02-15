@@ -13,8 +13,7 @@ module esl_grid_m
             integrate,   &
             rs_cube2grid,&
             rs_grid2cube,&
-            overlap,     &
-            matrixelem
+            overlap
 
   !Data structure for the real space grid
   type grid_t
@@ -35,6 +34,7 @@ module esl_grid_m
     procedure, public :: radial_function_ylm_gradient
     procedure, public :: radial_function_ylm
     procedure, public :: overlap
+    procedure, public :: matrix_elem
     procedure, public :: summary
     
     procedure, private :: dintegrate, zintegrate
@@ -295,33 +295,34 @@ contains
 
   end function overlap
 
-  !Matrix element
+  !Matrix element <AO-1 | pot | AO-2 >
   !----------------------------------------------------
-  real(dp) function matrixelem(grid, xyz1, ao1, r1, xyz2, ao2, r2, pot)
-    type(grid_t),    intent(in) :: grid
-    real(dp),   intent(in) :: xyz1(3)
-    real(dp),   intent(in) :: ao1(:)
-    real(dp),   intent(in) :: r1
-    real(dp),   intent(in) :: xyz2(3)
-    real(dp),   intent(in) :: ao2(:)
-    real(dp),   intent(in) :: r2
-    real(dp),   intent(in) :: pot(:)
+  function matrix_elem(grid, xyz1, ao1, r1, pot, xyz2, ao2, r2) result(M)
+    class(grid_t), intent(in) :: grid
+    real(dp), intent(in) :: xyz1(3)
+    real(dp), intent(in) :: ao1(:)
+    real(dp), intent(in) :: r1
+    real(dp), intent(in) :: pot(:)
+    real(dp), intent(in) :: xyz2(3)
+    real(dp), intent(in) :: ao2(:)
+    real(dp), intent(in) :: r2
+    real(dp) :: M
 
     integer :: ip
     real(dp) :: dist
 
     dist = sqrt(sum( (xyz1 - xyz2) ** 2 ))
-    matrixelem = 0._dp
+    M = 0._dp
     if ( dist < r1 + r2 ) then
 
        do ip = 1 , grid%np
-          matrixelem = matrixelem + ao1(ip)*ao2(ip)*pot(ip)
+         M = M + ao1(ip) * pot(ip) * ao2(ip)
        end do
-       matrixelem = matrixelem*grid%volelem
-
+       M = M*grid%volelem
+       
     end if
 
-  end function matrixelem
+  end function matrix_elem
 
 
   subroutine zrs_cube2grid(this, ff_cube, ff_grid)

@@ -58,13 +58,14 @@ contains
 
     ! Produce YAML output
     call yaml_mapping_open("Mulliken")
+    call yaml_map('Total', sum(M))
     call yaml_comment("Q", hfill = "-")
     do ia = 1, basis%n_site
 
       write(str, '(i0)') ia
       call yaml_mapping_open(trim(str))
-      str = 'StillNotCreated' !basis%species(basis%site_state_idx(ia))%label
-      call yaml_map('Label', trim(str))
+      !str = 'StillNotCreated' !basis%species(basis%site_state_idx(ia))%label
+      !call yaml_map('Label', trim(str))
       call yaml_map('Sum', M(ia))
       io1 = basis%site_orbital_start(ia)
       io2 = basis%site_orbital_start(ia + 1) - 1
@@ -72,6 +73,7 @@ contains
       call yaml_mapping_close()
       
     end do
+
     call yaml_mapping_close()
 
     deallocate(M, F)

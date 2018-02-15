@@ -20,7 +20,7 @@ module esl_hamiltonian_m
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
-    type(potential_t)       :: potentials
+    type(potential_t)       :: potential
     type(hamiltonian_pw_t)  :: hm_pw
   contains
     private
@@ -42,7 +42,7 @@ contains
  
     integer mpicomm
 
-    call this%potentials%init(basis%grid, states, geo, periodic)
+    call this%potential%init(basis%grid, states, geo, periodic)
 
     mpicomm = 0
 #ifdef WITH_MPI
@@ -51,12 +51,11 @@ contains
 
     select case (basis%type)
     case ( PLANEWAVES )
-      call this%hm_pw%init(this%potentials, mpicomm)
+      call this%hm_pw%init(this%potential, mpicomm)
     case ( ATOMCENTERED )
     !TODO
     end select
  
-
   end subroutine init
 
   !Release

@@ -11,7 +11,7 @@ module esl_ion_interaction_m
 
   !Data structure for the ion interaction
   type ion_interaction_t
-    real(dp) :: alpha = 1._dp !< Ewald sum parameter
+    real(dp) :: alpha = 0.21d0 !< Ewald sum parameter
   contains
     procedure, public :: init
     procedure, public :: calculate_periodic
@@ -26,7 +26,7 @@ contains
   subroutine init(this)
     class(ion_interaction_t), intent(inout) :: this
 
-    this%alpha = fdf_get('Ewald.Alpha', 1._dp)
+    this%alpha = fdf_get('Ewald.Alpha', 0.21d0)
 
   end subroutine init
 
@@ -56,7 +56,6 @@ contains
 
     !We have to perform an Ewald summation due to the periodic copies
     rcut = 6.0d0/this%alpha
-
 
     !We start with the short range part of the Ewald summation
     do ia = 1, geo%n_atoms
@@ -89,14 +88,21 @@ contains
           r(1:3) = rcopy(1:3) - geo%xyz(1:3,ja)
           dist = sum(r(1:3) ** 2) ** 0.5_dp
 
+          if(dist < 1.0e-5) cycle
+ 
           erfc = 1.d0 - erf(this%alpha*dist)
-
-          !the force
-          forces(1:3,ia) = forces(1:3,ia) &
-              - zi*zj*r(1:3)*(erfc/dist + 2.d0*this%alpha/sqrt(PI)*exp(-(this%alpha*dist)**2))/dist**2
 
           !energy
           eii = eii + 0.5d0*zi*zj*erfc/dist
+
+          if( -(this%alpha*dist)**2 > -36 ) then
+            !the force
+            forces(1:3,ia) = forces(1:3,ia) &
+              - zi*zj*r(1:3)*(erfc/dist + 2.d0*this%alpha/sqrt(PI)*exp(-(this%alpha*dist)**2))/dist**2
+          else
+             !the force
+            forces(1:3,ia) = forces(1:3,ia) - zi*zj*r(1:3)*erfc/dist/dist**2
+          end if
         end do
       end do
     end do

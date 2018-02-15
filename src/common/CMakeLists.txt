@@ -1,7 +1,6 @@
 add_library(common
   constants.F90
   elsi_wrapper.F90
-  elsi_fake.F90
   energy.F90
   esl_dict.F90
   flook_if.F90

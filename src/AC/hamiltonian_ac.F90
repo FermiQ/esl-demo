@@ -6,6 +6,7 @@ module esl_hamiltonian_ac_m
   implicit none
 
   public :: hamiltonian_ac_laplacian
+  public :: hamiltonian_ac_potential
 
 contains
 
@@ -71,11 +72,11 @@ contains
           jm = basis%state(js)%orb(jjo)%m
           call grid%radial_function_ylm_gradient(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jT)
 
-          H%M(ind) = matrix_T(iT, jT) * grid%volelem
+          H%M(ind) = H%M(ind) + matrix_T(iT, jT)
 
           ! DEBUG print
-          if ( ia == ja .and. iio == jjo ) &
-              print *,' Diagonal kinetic matrix: ', ia, iio, H%M(ind)
+!          if ( ia == ja .and. iio == jjo ) &
+!              print *,' Diagonal kinetic matrix: ', ia, iio, H%M(ind)
 
         end do
 
@@ -94,13 +95,97 @@ contains
 
       T = 0._dp
       do ip = 1, grid%np
-        T = T + iT(1,ip) * jT(1,ip) + &
-            iT(2,ip) * jT(2,ip) + &
-            iT(3,ip) * jT(3,ip)
+        T = T + iT(1,ip) * jT(1,ip) + iT(2,ip) * jT(2,ip) + iT(3,ip) * jT(3,ip)
       end do
+      T = T * grid%volelem
       
     end function matrix_T
 
   end subroutine hamiltonian_ac_laplacian
+
+
+  subroutine hamiltonian_ac_potential(basis, grid, pot, H)
+    use prec, only: dp
+    use esl_basis_ac_m, only: basis_ac_t
+    use esl_grid_m, only: grid_t
+    use esl_sparse_pattern_m, only: sparse_pattern_t
+    use esl_sparse_matrix_m, only: sparse_matrix_t
+
+    !< AC basis used
+    class(basis_ac_t), intent(in) :: basis
+    !< Current grid information
+    type(grid_t), intent(in) :: grid
+    !< Potential of which to add the matrix elements to the Hamiltonian
+    real(dp), intent(in) :: pot(:)
+    !< Hamiltonian to add the matrix elements too
+    type(sparse_matrix_t), intent(inout) :: H
+
+    integer :: ia, is, io, iio, ind, jo, ja, js, jjo
+    real(dp), allocatable :: ipsi(:), jpsi(:)
+    real(dp) :: ixyz(3), ir_max, jxyz(3), jr_max
+    integer :: il, im, jl, jm
+
+    type(sparse_pattern_t), pointer :: sp
+
+    ! Immediately return, if not needed
+    if ( .not. H%initialized() ) return
+
+    sp => H%sp
+
+    ! Allocate the Laplacian matrices
+    allocate(ipsi(grid%np))
+    allocate(jpsi(grid%np))
+
+    ! Loop over all orbital connections in the sparse pattern and
+    ! calculate the overlap matrix for each of them
+    do ia = 1, basis%n_site
+      is = basis%site_state_idx(ia)
+      ixyz = basis%xyz(:, ia)
+
+      ! Loop on orbitals
+      do io = basis%site_orbital_start(ia), basis%site_orbital_start(ia + 1) - 1
+        ! Orbital index on atom
+        iio = io - basis%site_orbital_start(ia) + 1
+
+        ir_max = basis%state(is)%orb(iio)%r_cut
+        il = basis%state(is)%orb(iio)%l
+        im = basis%state(is)%orb(iio)%m
+        call grid%radial_function_ylm(basis%state(is)%orb(iio)%R, il, im, ixyz, ipsi)
+
+        ! Loop entries in the sparse pattern
+        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+
+          ! Figure out which atom this orbital belongs too
+          jo = sp%column(ind)
+          ! Figure out the atomic index of the orbital
+          ja = basis%orbital_site(jo)
+          jxyz = basis%xyz(:, ja)
+          js = basis%site_state_idx(ja)
+          jjo = jo - basis%site_orbital_start(ja) + 1
+
+          ! We are now in a position to calculate the
+          ! overlap matrix. I.e. we know the atom, the
+          ! orbital indices and their positions
+          jr_max = basis%state(js)%orb(jjo)%r_cut
+          jl = basis%state(js)%orb(jjo)%l
+          jm = basis%state(js)%orb(jjo)%m
+          call grid%radial_function_ylm(basis%state(js)%orb(jjo)%R, jl, jm, jxyz, jpsi)
+
+          H%M(ind) = H%M(ind) + &
+              grid%matrix_elem(ixyz, ipsi, ir_max, pot, jxyz, jpsi, jr_max)
+
+          ! DEBUG print
+!          if ( ia == ja .and. iio == jjo ) &
+!              print *,' Diagonal potential matrix: ', ia, iio, H%M(ind)
+
+        end do
+
+      end do
+
+    end do
+
+    deallocate(ipsi, jpsi)
+
+  end subroutine hamiltonian_ac_potential
 
 end module esl_hamiltonian_ac_m
