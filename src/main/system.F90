@@ -88,7 +88,7 @@ contains
     call esl_dict_var_add('Geometry.xyz', this%geo%xyz)
     call esl_dict_var_add('Geometry.cell', this%geo%cell)
     call esl_dict_var_add('Geometry.Force.Total', this%force%total)
-    call esl_dict_var_add('Geometry.Force.Local', this%force%Local)
+    call esl_dict_var_add('Geometry.Force.Local', this%force%loc)
     call esl_dict_var_add('Geometry.Force.NonLocal', this%force%nl)
     call esl_dict_var_add('Geometry.Force.IonIon', this%force%ionion)
     call esl_dict_var_add('IonIon.Ewald.Alpha', this%ion_inter%alpha)
