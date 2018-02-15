@@ -83,7 +83,10 @@ contains
 
   !< Calculate the density from the hosted density matrix in this object
   subroutine calculate(this, elsi, grid, pot, basis, S, rho, energy, out)
+#ifdef WITH_MPI
     use mpi, only: mpi_comm_world
+!    include 'mpif.h'
+#endif
     class(density_ac_t), intent(inout) :: this
     !< ELSI handler
     class(elsi_t), intent(inout) :: elsi
@@ -172,7 +175,7 @@ contains
 
     ! X. Calculate output density matrix elements from the Hamiltonian
     call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
-    call calc_density_matrix_ac(elsi, H, S, out%DM, energy%fermi)
+    call calc_density_matrix_ac(elsi, H, S, out%DM)
 
     call dist%delete()
 
