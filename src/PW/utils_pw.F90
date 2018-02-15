@@ -44,14 +44,14 @@ contains
 
   end function get_number_of_pw  
 
-  subroutine construct_mod_map_tables(ndims, ecut, gmet, kpt, gmod, gmap)
+  subroutine construct_mod_map_tables(ndims, ecut, gmet, kpt, gmod2, gmap)
     use esl_constants_m, only: pi
 
     integer,          intent(in) :: ndims(3)
     real(dp),         intent(in) :: ecut
     real(dp),         intent(in) :: gmet(3, 3)
     real(dp),         intent(in) :: kpt(3)
-    real(dp),        intent(out) :: gmod(:)
+    real(dp),        intent(out) :: gmod2(:)
     integer,         intent(out) :: gmap(:,:)
 
     integer :: i1, i2, i3, npw
@@ -65,7 +65,7 @@ contains
              tmp_gmod = dsq(gmet, kpt, i1, i2, i3)
              if (tmp_gmod <= threshold) then
                npw = npw + 1
-               gmod(npw) = tmp_gmod
+               gmod2(npw) = tmp_gmod
                gmap(1,npw) = i1 + ndims(1)/2 + 1
                gmap(2,npw) = i2 + ndims(2)/2 + 1
                gmap(3,npw) = i3 + ndims(3)/2 + 1
@@ -102,6 +102,8 @@ contains
 
     complex(kind=dp), allocatable :: fourier_cube(:,:,:)
     complex(kind=dp), allocatable :: rs_cube(:,:,:)
+
+    real(kind=dp) :: Nglobal
     
     allocate(fourier_cube(1:ndims(1),1:ndims(2),1:ndims(3)))
     allocate(rs_cube(1:ndims(1),1:ndims(2),1:ndims(3)))
@@ -111,19 +113,23 @@ contains
     ! FFT-1
     call fftw_execute_dft(grid%iFFTplan, fourier_cube(:,:,:), rs_cube(:,:,:))
 
+    !Normalization
+    rs_cube(1:ndims(1),1:ndims(2),1:ndims(3)) = rs_cube(1:ndims(1),1:ndims(2),1:ndims(3))/grid%volume
+
     call rs_cube2grid(grid, rs_cube, coef_rs)
 
     deallocate(fourier_cube, rs_cube)
 
   end subroutine pw2grid
 
-  subroutine grid2pw(grid, gmap, ndims, npw, coef_rs, coef_pw)
+  subroutine grid2pw(grid, gmap, ndims, npw, coef_rs, coef_pw, accumulate)
     type(grid_t),          intent(in) :: grid
     integer,               intent(in) :: gmap(:,:)
     integer,               intent(in) :: ndims(3)
     integer,               intent(in) :: npw
-    complex(kind=dp),     intent(out) :: coef_pw(:) !(pw%npw)
+    complex(kind=dp),   intent(inout) :: coef_pw(:) !(pw%npw)
     complex(kind=dp),      intent(in) :: coef_rs(:) !(np)
+    logical, optional,     intent(in) :: accumulate
 
     complex(kind=dp), allocatable :: fourier_cube(:,:,:)
     complex(kind=dp), allocatable :: rs_cube(:,:,:)
@@ -136,7 +142,7 @@ contains
     ! FFT
     call fftw_execute_dft(grid%FFTplan, rs_cube(:,:,:), fourier_cube(:,:,:))
 
-    call fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw)
+    call fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw, accumulate)
 
     deallocate(fourier_cube, rs_cube)
 
@@ -153,27 +159,37 @@ contains
     integer :: ipw
 
     fourier_cube(1:ndims(1), 1:ndims(2), 1:ndims(3)) = cmplx(0.d0,0.d0,kind=dp)
-
+ 
     do ipw = 1, npw
       fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw)) = coef_pw(ipw)
     end do    
 
   end subroutine fourier_sphere2cube
 
-  subroutine fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw)
+  subroutine fourier_cube2sphere(gmap, npw, fourier_cube, coef_pw, accumulate)
     integer,               intent(in) :: gmap(:,:)
     integer,               intent(in) :: npw
-    complex(kind=dp),     intent(out) :: coef_pw(:) !(pw%npw)
+    complex(kind=dp),   intent(inout) :: coef_pw(:) !(pw%npw)
     complex(kind=dp),      intent(in) :: fourier_cube(:,:,:)
+    logical, optional,     intent(in) :: accumulate
 
     integer :: ipw
+    logical :: acc
 
-    coef_pw(1:npw) = cmplx(0.d0,0.d0,kind=dp)
+    acc = .false.
+    if(present(accumulate)) acc = accumulate 
+
+    if(.not.acc) then
+      coef_pw(1:npw) = cmplx(0.d0,0.d0,kind=dp)
  
-    do ipw = 1, npw
-      coef_pw(ipw) = fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw))
-    end do
-
+      do ipw = 1, npw
+        coef_pw(ipw) = fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw))
+      end do
+    else
+      do ipw = 1, npw
+        coef_pw(ipw) = coef_pw(ipw) + fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw))
+      end do
+    end if
 
   end subroutine fourier_cube2sphere
 

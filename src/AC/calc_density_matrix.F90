@@ -1,6 +1,7 @@
 !> This module interfaces with ELSI to compute (currently) the density matrix,
 !> and energy-weighted density matrix.
 module esl_calc_density_matrix_ac_m
+#ifdef WITH_ELSI
 
   use prec, only: ip, dp
   use esl_elsi_m, only: elsi_t
@@ -72,5 +73,5 @@ contains
     call elsi_get_edm_real_sparse(elsi_ac%e_h, mat_EDM%M)
 
   end subroutine calc_energy_density_matrix_ac
-
+#endif
 end module esl_calc_density_matrix_ac_m
