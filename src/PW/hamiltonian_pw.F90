@@ -178,7 +178,7 @@ contains
         result_in(1) = real(result_in_comp, kind=dp)
 
       case (ELSI_RCI_SCALE) ! A = alpha * A
-        work(iS%Aidx)%mat = iS%alpha*work(iS%Aidx)%mat
+        work(iS%Aidx)%mat = complex(iS%alpha,0.d0)*work(iS%Aidx)%mat
 
       case default
         print *, 'Unsupported RCI operation ', task
