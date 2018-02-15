@@ -59,6 +59,7 @@ include_directories(${FFTW_PREFIX}/include)
 link_directories(${FFTW_LIBRARY_DIRS})
 
 message(STATUS "Found ELSI support!")
+include_directories(${ELSI_INCLUDEDIR})
 include_directories(${ELSI_INCLUDE_DIRS})
 link_directories(${ELSI_LIBRARY_DIRS})
 
