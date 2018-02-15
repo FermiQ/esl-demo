@@ -80,8 +80,8 @@ contains
     type(rci_instr)      :: iS
     integer(kind=i4) :: task, m, n, ijob
     real(kind=r8) :: e_min = 0.0_r8
-    real(kind=r8) :: cg_tol = 0.001_r8
-    integer(kind=i4) :: max_iter = 20
+    real(kind=r8) :: cg_tol = 0.00001_r8
+    integer(kind=i4) :: max_iter = 100
     logical :: long_out = .true.
     type(work_matrix_t), allocatable :: work(:)
 
@@ -128,13 +128,19 @@ contains
         do ii = 1, iS%n
           call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m, ii), work(iS%Bidx)%mat(1:iS%m, ii))
         end do
+
       case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
         !No overlap matrix
         work(iS%Bidx)%mat = work(iS%Aidx)%mat
 
       case (ELSI_RCI_P_MULTI) ! B = P^(trP) * A
-        ! No preconditioner
-        work(iS%Bidx)%mat = work(iS%Aidx)%mat
+!work(iS%Bidx)%mat = work(iS%Aidx)%mat
+
+
+        !No overlap matrix
+        do ii = 1, iS%n
+          call hamiltonian_preconditioner(pw, work(iS%Aidx)%mat(1:iS%m, ii), work(iS%Bidx)%mat(1:iS%m, ii))
+        end do
 
       case (ELSI_RCI_GEMM) ! C = alpha * A^(trA) * B^(trB) + beta * C
         lda = size(work(iS%Aidx)%mat, 1)
@@ -167,7 +173,6 @@ contains
           result_in(1) = result_in(1) &
                          + real(work(iS%Aidx)%mat(ii, ii), kind=dp)
         end do
-        print *, result_in(1)
       case (ELSI_RCI_DOT) ! res = trace(A * B)
         result_in(1) = 0.d0
         do ii = 1, iS%m
@@ -234,12 +239,29 @@ contains
 
     !We apply the Laplacian
     do ic = 1, pw%npw
-      hpsi(ic) = 0.5d0*psi(ic)*pw%gmod2(ic)
+      hpsi(ic) = -0.5d0*psi(ic)*pw%gmod2(ic)
     end do
 
-    !call hamiltonian_pw_apply_local(pw, pot, psi, hpsi)
+    call hamiltonian_pw_apply_local(pw, pot, psi, hpsi)
 
   end subroutine hamiltonian_pw_apply
+
+  !Preconditioning
+  !----------------------------------------------------
+  subroutine hamiltonian_preconditioner(pw, psi, hpsi)
+    type(basis_pw_t), intent(in)    :: pw
+    complex(dp), intent(in)      :: psi(:)
+    complex(dp), intent(inout)   :: hpsi(:)
+
+    integer :: ic
+
+    !We apply the Laplacian
+    do ic = 1, pw%npw
+      hpsi(ic) = 2.0d0*psi(ic)/(pw%gmod2(ic)+1.0e-08)
+    end do
+
+  end subroutine hamiltonian_preconditioner
+
 
   !Apply the local part of the Hamitonian to a wavefunction
   !----------------------------------------------------
@@ -256,6 +278,7 @@ contains
 
     allocate (psi_rs(1:pw%grid%np))
     allocate (vpsi_rs(1:pw%grid%np))
+    vpsi_rs(1:pw%grid%np) = 0.d0
 
     call pw2grid(pw%grid, pw%gmap, pw%ndims, pw%npw, psi, psi_rs)
     !Note that hartree contains the external potential (from PSolver)
@@ -263,6 +286,7 @@ contains
       vpsi_rs(ip) = vpsi_rs(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi_rs(ip)
     end do
     call grid2pw(pw%grid, pw%gmap, pw%ndims, pw%npw, vpsi_rs, hpsi, .true.)
+
 
     deallocate (psi_rs)
     deallocate (vpsi_rs)

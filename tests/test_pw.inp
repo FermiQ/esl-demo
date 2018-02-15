@@ -17,6 +17,7 @@ H H.UPF
 Smearing COLD
 
 BasisSet Planewaves
-cut-off 0.1 Ha
+cut-off 5 Ha
 
-SCFMaxIterations 5
+SCFMaxIterations 200
+SCF.Mix.alpha = 0.3
