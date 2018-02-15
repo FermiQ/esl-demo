@@ -2,7 +2,7 @@
 
 . /etc/profile.d/lmod.sh
 module use $HOME/modules
-module load esl/openmpi/0.0.1
+module load esl/openmpi/0.1.0
 mkdir build-paranoid
 cd build-paranoid
 export FC=gfortran
