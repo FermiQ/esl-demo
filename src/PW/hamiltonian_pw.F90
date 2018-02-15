@@ -167,18 +167,16 @@ contains
         end do
         print *, result_in(1)
       case (ELSI_RCI_DOT) ! res = trace(A * B)
-        result_in_comp = cmplx(0.d0,0.d0)
         do ii = 1, iS%m
           do jj = 1, iS%n
-            result_in_comp = result_in_comp &
-                             + conjg(work(iS%Aidx)%mat(ii, jj)) &
-                             *work(iS%Bidx)%mat(ii, jj)
+            result_in(1) = result_in(1) &
+                             + real(conjg(work(iS%Aidx)%mat(ii, jj)) &
+                             *work(iS%Bidx)%mat(ii, jj),kind=dp)
           end do
         end do
-        result_in(1) = real(result_in_comp, kind=dp)
 
       case (ELSI_RCI_SCALE) ! A = alpha * A
-        work(iS%Aidx)%mat = complex(iS%alpha,0.d0)*work(iS%Aidx)%mat
+        work(iS%Aidx)%mat = cmplx(iS%alpha,0.d0)*work(iS%Aidx)%mat
 
       case default
         print *, 'Unsupported RCI operation ', task
