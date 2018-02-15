@@ -4,7 +4,7 @@
 ##
 set pkg esl
 set version 0.1.0
-set comp openmpi
+set comp serial
 proc ModulesHelp {} {
         global version
         puts stderr "\n\tesl$pkg $version"

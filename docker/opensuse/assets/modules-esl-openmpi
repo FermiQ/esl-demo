@@ -8,7 +8,7 @@ set comp openmpi
 proc ModulesHelp {} {
         global version
         puts stderr "\n\tesl$pkg $version"
-        puts stderr "\tCompiled with $comp"
+        puts stderr "\tCompiled with gcc $comp"
         puts stderr "\tVersion $version\n"
 }
 
