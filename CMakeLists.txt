@@ -39,7 +39,7 @@ pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
 pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
 find_package(BLAS REQUIRED)
 pkg_check_modules(GSL REQUIRED gsl>=1.16)
-pkg_check_modules(ELSI REQUIRED libelsi>=0.0)
+pkg_check_modules(ELSI REQUIRED elsi>=0.0)
 
 message(STATUS "Found FDF support!")
 include_directories(${FDF_INCLUDE_DIRS})
