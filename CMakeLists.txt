@@ -72,6 +72,12 @@ if(WITH_FLOOK)
   link_directories(${FLOOK_LIBRARY_DIRS})
   message(STATUS "Build with flook library and Lua-interface support!")
   add_definitions("-DWITH_FLOOK")
+
+  # Also add requirement of fdict
+  pkg_check_modules(FDICT REQUIRED)
+  include_directories(${FDICT_Fortran_INCLUDE_PATH})
+  link_directories(${FDICT_LIBRARY_DIRS})
+
 else()
   message(STATUS "Build without flook library (no Lua-interface support)!")
 endif()
@@ -103,7 +109,7 @@ if(WITH_MPI)
 endif()
 if(WITH_FLOOK)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_FLOOK")
-  target_link_libraries(${target_name} ${FLOOK_LIBRARIES})
+  target_link_libraries(${target_name} ${FLOOK_LIBRARIES} ${FDICT_LIBRARIES})
 endif()
 
 if(WITH_DOC)
