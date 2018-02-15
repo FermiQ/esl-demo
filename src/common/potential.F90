@@ -48,8 +48,11 @@ contains
     pot%np = grid%np
 
     allocate(pot%hartree(1:pot%np))
+    pot%hartree(1:pot%np) = 0.d0
     allocate(pot%external(1:pot%np))
+    pot%external(1:pot%np) = 0.d0
     allocate(pot%vxc(1:pot%np))
+    pot%vxc(1:pot%np) = 0.d0
 
     if (periodic) then
       geocode = 'P'

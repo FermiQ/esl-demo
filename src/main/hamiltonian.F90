@@ -7,6 +7,11 @@ module esl_hamiltonian_m
   use esl_potential_m
   use esl_states_m
 
+#ifdef WITH_MPI
+  use mpi
+#endif
+
+
   implicit none
   private
 
@@ -20,6 +25,7 @@ module esl_hamiltonian_m
   contains
     private
     procedure, public :: init
+    procedure, public :: eigensolver
     final :: cleanup
   end type hamiltonian_t
 
@@ -27,15 +33,29 @@ contains
 
   !Initialize the Hamiltonian
   !----------------------------------------------------
-  subroutine init(this, grid, geo, states, periodic)
+  subroutine init(this, basis, geo, states, periodic)
     class(hamiltonian_t) :: this
-    type(grid_t),     intent(in) :: grid
+    type(basis_t),    intent(in) :: basis
     type(geometry_t), intent(in) :: geo
     type(states_t),   intent(in) :: states
     logical,          intent(in) :: periodic
+ 
+    integer mpicomm
 
-    call this%potential%init(grid, states, geo, periodic)
+    call this%potential%init(basis%grid, states, geo, periodic)
 
+    mpicomm = 0
+#ifdef WITH_MPI
+    mpicomm = MPI_COMM_WORLD
+#endif
+
+    select case (basis%type)
+    case ( PLANEWAVES )
+      call this%hm_pw%init(this%potential, mpicomm)
+    case ( ATOMCENTERED )
+    !TODO
+    end select
+ 
   end subroutine init
 
   !Release
@@ -44,6 +64,23 @@ contains
     type(hamiltonian_t) :: this
 
   end subroutine cleanup
+
+  !Eigensolver
+  !----------------------------------------------------
+  subroutine eigensolver(this, basis, states)
+    class(hamiltonian_t) :: this
+    type(basis_t),  intent(in)    :: basis
+    type(states_t), intent(inout) :: states
+
+    select case (basis%type)
+    case ( PLANEWAVES )
+      call this%hm_pw%eigensolver(states, basis%pw)
+    case ( ATOMCENTERED )
+    !TODO
+    end select
+
+  end subroutine eigensolver
+
 
   
 end module esl_hamiltonian_m

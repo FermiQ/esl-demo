@@ -3,7 +3,7 @@
 module esl_elsi_m
 
   use prec, only: ip, dp
-  use elsi, only: elsi_handle, elsi_init, elsi_finalize
+!  use elsi , only: elsi_handle, elsi_init, elsi_finalize
 
   implicit none
   private
@@ -12,7 +12,7 @@ module esl_elsi_m
 
   !Data structure for ELSI
   type elsi_t
-    type(elsi_handle) :: e_h
+!    type(elsi_handle) :: e_h
   contains
     private
     procedure, public :: init
@@ -35,8 +35,8 @@ contains
     integer(ip),   intent(in)    :: n_state
 
     !Initialize an ELSI handle
-    call elsi_init(this%e_h, ELPA, MULTI_PROC, SIESTA_CSR, n_basis, &
-      & real(n_electron, dp), n_state)
+!    call elsi_init(this%e_h, ELPA, MULTI_PROC, SIESTA_CSR, n_basis, &
+!      & real(n_electron, dp), n_state)
 
   end subroutine init
 
@@ -45,7 +45,7 @@ contains
   subroutine cleanup(this)
     type(elsi_t), intent(inout) :: this
 
-    call elsi_finalize(this%e_h)
+!    call elsi_finalize(this%e_h)
 
   end subroutine cleanup
 

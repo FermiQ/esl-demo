@@ -37,3 +37,6 @@ if(WITH_MPI)
     COMPILE_DEFINITIONS "WITH_MPI"
     )
 endif()
+if (WITH_FLOOK)
+  set_target_properties(common PROPERTIES COMPILE_DEFINITIONS "WITH_FLOOK")
+endif()

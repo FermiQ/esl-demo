@@ -24,7 +24,9 @@ set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
 if(WITH_MPI)
   ### if we want MPI check for it and set the internal kitchen
   find_package(MPI REQUIRED)
+  add_definitions(${MPI_Fortran_COMPILE_FLAGS})
   include_directories(${MPI_Fortran_INCLUDE_PATH})
+  link_directories(${MPI_Fortran_LIBRARIES})
   message(STATUS "Build with MPI support!")
 else()
   message(STATUS "Build without MPI support!")
@@ -35,6 +37,7 @@ pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
 pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
 pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
 pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
+find_package(BLAS REQUIRED)
 pkg_check_modules(GSL REQUIRED gsl>=1.16)
 pkg_check_modules(ELSI REQUIRED elsi>=0.0)
 
@@ -80,6 +83,7 @@ include_directories(${PROJECT_BINARY_DIR}/src/PW)
 add_subdirectory(${src_dir}/PW)
 add_subdirectory(${src_dir}/AC)
 add_subdirectory(${src_dir}/common)
+add_subdirectory(${src_dir}/elsi_rci)
 
 
 add_executable(${target_name}
@@ -93,6 +97,7 @@ add_executable(${target_name}
   )
 target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES} ${FLOOK_LIBRARIES})
 if(WITH_MPI)
+  set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
 endif()
 

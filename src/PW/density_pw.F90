@@ -127,12 +127,12 @@ contains
           !TODO: Here we should have a gmap for each k-point
           !From the G vectors to the real space
           call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%npw, &
-                               states%states(ik,isp,ist)%zcoef, coef_rs)
- 
-          weight = states%occ_numbers(ik,isp,ist)/states%k_weights(ik)
-          !We accumulate the density
+                               states%states(ist,isp,ik)%zcoef, coef_rs)
+
+          weight = states%occ_numbers(ist,isp,ik)*states%k_weights(ik)
+          !kWe accumulate the density
           do ip = 1, this%np
-            this%density(ip) = this%density(ip) + weight*real(coef_rs(ip)*conjg(coef_rs(ip)),kind=dp)
+            this%density(ip) = this%density(ip) + weight*abs(coef_rs(ip))**2
           end do
         end do
       end do
