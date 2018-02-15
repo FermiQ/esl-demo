@@ -15,7 +15,7 @@ echo "prefix='/home/drFaustroll/esl/openmpi/0.1.0'" >> rcfiles/opensuse-gcc-open
 popd
 module purge
 unset LIBRARY_PATH
-
+module load gnu/7
 pushd esl-bundle
 mkdir -p /home/drFaustroll/esl-bundle/install/include
 echo "prefix='/home/drFaustroll/esl/serial/0.1.0'" > rcfiles/serial.rc
