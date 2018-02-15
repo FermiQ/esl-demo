@@ -12,3 +12,6 @@ add_library(ac
   )
 
 target_link_libraries(ac common)
+if(WITH_MPI)
+  set_target_properties(common PROPERTIES COMPILE_DEFINITIONS "WITH_MPI" )
+endif()
