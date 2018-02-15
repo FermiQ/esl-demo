@@ -69,6 +69,7 @@ link_directories(${ELSI_LIBRARY_DIRS})
 if(WITH_FLOOK)
   pkg_check_modules(FLOOK REQUIRED flook)
   include_directories(${FLOOK_Fortran_INCLUDE_PATH})
+  link_directories(${FLOOK_LIBRARY_DIRS})
   message(STATUS "Build with flook library and Lua-interface support!")
   add_definitions("-DWITH_FLOOK")
 else()
@@ -95,10 +96,14 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES} ${FLOOK_LIBRARIES})
+target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if(WITH_MPI)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES})
+endif()
+if(WITH_FLOOK)
+  set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_FLOOK")
+  target_link_libraries(${target_name} ${FLOOK_LIBRARIES})
 endif()
 
 if(WITH_DOC)
