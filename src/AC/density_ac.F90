@@ -179,6 +179,8 @@ contains
 
       type(sparse_pattern_t), pointer :: sp
 
+      integer :: N_Ef
+
       sp => H%sp
       n = sp%nr
 
@@ -189,7 +191,8 @@ contains
       
       call dsygv(1, 'V', 'U', n, H%M, n, B, n, eig, work, n ** 2,info)
 
-      Ef = (eig(8) + eig(9)) / 2
+      N_Ef = nint( basis%Q )
+      energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
       print *, 'DEBUG fermi level: ', Ef
 
       ! Re-construct the DM
@@ -203,7 +206,7 @@ contains
           jo = sp%column(ind)
           
           ! Loop bands
-          do ib = 1, 8
+          do ib = 1, N_ef
             
             ! Calculate new DM
             out%DM%M(ind) = out%DM%M(ind) + &

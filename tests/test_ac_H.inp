@@ -1,0 +1,19 @@
+NumberOfAtoms 1
+output test_H.out
+
+cubic 10.0 Ang
+
+%block coordinates
+  H 0. 0. 0.0
+%endblock coordinates
+
+%block species
+ H H.UPF
+%endblock species
+
+Smearing COLD
+
+BasisSet AtomicOrbitals
+
+SCF.Mix.Alpha 0.2
+SCFMaxIterations 100
