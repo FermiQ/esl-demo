@@ -17,9 +17,12 @@ module esl_species_m
     type(pspiof_meshfunc_t) :: rho
     type(pspiof_meshfunc_t) :: vlocal
 
+    integer :: n_projectors
+    type(pspiof_projector_t), allocatable, private :: projectors(:)
+    
     integer :: n_radial_orbitals
     type(pspiof_state_t), allocatable, private :: radial_orbitals(:)
-
+    
     real(dp) :: z_ion = 0._dp !< Ionic charge, real because of mixed species
     real(dp) :: q = 0._dp     !< Electronic charge
   contains
@@ -27,6 +30,7 @@ module esl_species_m
     procedure, public :: init
     procedure, public :: get_radial_orbital
     procedure, public :: get_radial_orbital_rmax
+    procedure, public :: get_projector
     procedure, public :: summary
     final :: cleanup
   end type species_t
@@ -59,8 +63,10 @@ contains
        return
     endif
 
-    ! Store some information
+    ! Store valence density
     this%rho = pspiof_pspdata_get_rho_valence(this%psp)
+
+    ! Store orbitals
     this%n_radial_orbitals = pspiof_pspdata_get_n_states(this%psp)
     if (this%n_radial_orbitals > 0) then
       allocate(this%radial_orbitals(this%n_radial_orbitals))
@@ -69,6 +75,7 @@ contains
       end do
     end if
     
+    ! Store information about ion and electronic charge
     this%z_ion = pspiof_pspdata_get_zvalence(this%psp)
     this%q = pspiof_pspdata_get_nelvalence(this%psp)
 
@@ -85,6 +92,15 @@ contains
     ierr = check_error_pspio(pspiof_meshfunc_init(this%vlocal, mesh, vl))
     deallocate(vl)
 
+    ! Get projectors
+    this%n_projectors = pspiof_pspdata_get_n_projectors(this%psp)
+    if (this%n_projectors > 0) then
+      allocate(this%projectors(this%n_projectors))
+      do io = 1, this%n_projectors
+        this%projectors(io) = pspiof_pspdata_get_projector(this%psp, io)
+      end do
+    end if
+    
   end subroutine init
 
   !Release
@@ -94,14 +110,8 @@ contains
 
     integer :: io
     
-    call pspiof_pspdata_free(this%psp)
-    call pspiof_meshfunc_free(this%rho)
-    if (allocated(this%radial_orbitals)) then
-      do io = 1, this%n_radial_orbitals
-        call pspiof_state_free(this%radial_orbitals(io))
-      end do
-    end if
     call pspiof_meshfunc_free(this%vlocal)
+    call pspiof_pspdata_free(this%psp)
 
   end subroutine cleanup
 
@@ -155,6 +165,34 @@ contains
     end do
     
   end function get_radial_orbital_rmax
+
+  subroutine get_projector(this, ip, projector, energy, l)
+    class(species_t) :: this
+    integer,                 intent(in)  :: ip
+    type(pspiof_meshfunc_t), intent(out) :: projector
+    real(dp),                intent(out) :: energy
+    integer,                 intent(out) :: l
+
+    integer :: ierr, ir
+    real(dp), pointer :: r(:)
+    real(dp), allocatable :: proj(:)
+    type(pspiof_mesh_t) :: mesh
+    
+    l = pspiof_qn_get_l(pspiof_projector_get_qn(this%projectors(ip)))
+    energy = pspiof_projector_get_energy(this%projectors(ip))
+
+    ! At the moment pspio does not have a getter for the meshfunc_t from a projector_t, so we are going to use a workaround
+    mesh = pspiof_pspdata_get_mesh(this%psp)
+    allocate(proj(pspiof_mesh_get_np(mesh)))
+    ierr = check_error_pspio(pspiof_meshfunc_alloc(projector, pspiof_mesh_get_np(mesh)))
+    r => pspiof_mesh_get_r(mesh)
+    do ir = 1, pspiof_mesh_get_np(mesh)
+      proj(ir) = pspiof_projector_eval(this%projectors(ip), r(ir))
+    end do
+    ierr = check_error_pspio(pspiof_meshfunc_init(projector, mesh, proj))
+    deallocate(proj)
+
+  end subroutine get_projector
   
   !----------------------------------------------------
   !Private routines

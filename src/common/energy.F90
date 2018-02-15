@@ -19,6 +19,8 @@ module esl_energy_m
     real(dp) :: int_nvxc
     real(dp) :: kinetic
     real(dp) :: entropy
+    real(dp) :: fermi
+
   contains
     private
     procedure, public :: init
@@ -44,6 +46,7 @@ contains
     this%int_nvxc = 0._dp
     this%kinetic = 0._dp
     this%entropy = 0._dp
+    this%fermi = 0._dp
 
   end subroutine init
 
@@ -73,6 +76,7 @@ contains
     call yaml_map("Extern", this%extern)
     call yaml_map("Int_nvxc", this%int_nvxc)
     call yaml_map("Kinetic", this%kinetic)
+    call yaml_map("Fermi-level", this%fermi)
     call yaml_mapping_close()
 
   end subroutine display
