@@ -117,11 +117,11 @@ contains
     use prec, only : ip
 
     character(len=256) :: echo_file, output_file
-    integer(ip) :: ierr
+    integer(ip) :: mpierr
 
     !Init MPI
 #ifdef WITH_MPI
-    call MPI_Init(ierr)
+    call MPI_Init(mpierr)
 #endif
 
     !Init data basis strucutes 
