@@ -98,14 +98,14 @@ contains
 
   !Perform the self-consistent field calculation
   !----------------------------------------------------
-  subroutine loop(this, elsic, system, states, smear)
+  subroutine loop(this, elsi, system, states, smear)
     use yaml_output
     use esl_smear_m
     use esl_states_m
     use esl_elsi_m
 
     class(scf_t),  intent(inout) :: this
-    type(elsi_t),  intent(inout) :: elsi
+    type(elsi_t), intent(inout) :: elsi
     type(system_t),   intent(in) :: system
     type(states_t),intent(inout) :: states
     type(smear_t), intent(inout) :: smear
@@ -139,10 +139,10 @@ contains
       call this%H%eigensolver(system%basis, states)
 
       ! Update occupations
-      call smear%calc_fermi_occ(elsic, states)
+      call smear%calc_fermi_occ(elsi, states)
 
       ! Calculate density
-      call this%rho_in%calculate(system, this%H%potential, states, out=this%rho_out)
+      call this%rho_in%calculate(elsi, system, this%H%potential, states, out=this%rho_out)
       
       ! Calculate necessary potentials
       select case (system%basis%type)
