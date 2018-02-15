@@ -85,7 +85,6 @@ contains
   subroutine calculate(this, elsi, grid, pot, basis, S, rho, energy, out)
 #ifdef WITH_MPI
     use mpi, only: mpi_comm_world
-!    include 'mpif.h'
 #endif
     class(density_ac_t), intent(inout) :: this
     !< ELSI handler
@@ -116,9 +115,6 @@ contains
     type(sparse_matrix_t) :: H
     type(mpi_dist_block_cyclic_t) :: dist
 
-    ! Initialize the distribution
-    call dist%init(MPI_COMM_World, this%DM%sp%nr, this%DM%sp%nr)
-
     ! TODO logic for calculating the output density from an input
     ! density.
     allocate(rho_atom(grid%np))
@@ -134,11 +130,11 @@ contains
 
 !    print *, 'DEBUG rho-atom sum', grid%integrate(rho_atom)
 
+    
     ! 1. Start by calculating the density from the DM on the grid
     rho(:) = 0._dp
     call add_density_matrix(grid, basis, this%DM, rho)
 
-!    rho_atom = rho - rho_atom
 !    print *, 'DEBUG dRho sum', grid%integrate(rho_atom)
 
     ! Initialize the Hamiltonian to 0
@@ -173,14 +169,15 @@ contains
     print *, 'DEBUG V sum', grid%integrate(rho_atom)
     call hamiltonian_ac_potential(basis, grid, rho_atom, H)
 
-    ! Calculate the eigenvalue energy
-    energy%eigenvalues = sum(H%M * this%DM%M)
-
     ! X. Calculate output density matrix elements from the Hamiltonian
+    ! Initialize the distribution
+!    call dist%init(MPI_COMM_World, this%DM%sp%nr, this%DM%sp%nr)
 !    call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
-!    call calc_density_matrix_ac(elsi, H, S, out%DM, energy%fermi)
+!    call calc_density_matrix_ac(elsi, H, S, out%DM)
+!    call get_energy_results(elsi, energy%eigenvalues, energy%fermi, energy%entropy)
+!    call dist%delete()
 
-    call dist%delete()
+!    call energy%display()
 
     call my_check()
 
@@ -237,7 +234,10 @@ contains
         end do
         
       end do
-      
+
+      ! Calculate the Kohn-Sham energy
+      energy%eigenvalues = sum(H%M * this%DM%M)
+
       deallocate(B,eig,work)
 
     end subroutine my_check
