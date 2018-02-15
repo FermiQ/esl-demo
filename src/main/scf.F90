@@ -119,6 +119,13 @@ contains
 
     ! Perform initial guess on the density
     call this%rho_in%guess(system)
+    !Calc. potentials from guess density
+    select case (system%basis%type)
+    case ( PLANEWAVES )
+      call this%H%potentials%calculate(this%rho_in%density_pw%density, this%H%energy)
+    case( ATOMCENTERED )
+      !TODO
+    end select
 
     !Randomize the states
     call states%randomize()
