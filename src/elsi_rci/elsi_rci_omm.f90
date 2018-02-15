@@ -485,7 +485,7 @@ contains
                 e_min_save = e_min
                 ls_conv = .true.
                 e_diff = 2.0_r8*abs((e_min - e_min_old)/(e_min + e_min_old))
-                write (*, '("E_diff: ",E15.3)') e_diff
+                !write (*, '("E_diff: ",E15.3)') e_diff
                 if (e_diff <= cg_tol_internal) then
                     conv = .true.
                     call rci_converge(iS, task, conv)
