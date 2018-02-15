@@ -49,7 +49,7 @@ contains
     end do
 
     this%npw = get_number_of_pw(ndims, ecut, this%gmet, [0._dp, 0._dp, 0._dp])
-    
+
     !TODO: We should create of these for each k-point
     allocate(this%gmod2(1:this%npw))
     allocate(this%gmap(1:3,1:this%npw))

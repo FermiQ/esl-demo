@@ -22,6 +22,7 @@ module esl_grid_m
     integer  :: np !< Total number of points in the real space grid
     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
     real(dp) :: volelem !<Volume element
+    real(dp) :: volume
 
     type(C_PTR) fftplan !< Forward FFT plan
     type(C_PTR) ifftplan !< Backward FFT (IFFT) plan
@@ -76,7 +77,7 @@ contains
         if (2 * this%ndims(idim) == twice) exit
         call fourier_dim(this%ndims(idim) + 1, this%ndims(idim))
       end do
-      this%hgrid(idim) = cell(idim, idim) / real(this%ndims(idim) + 1, dp)
+      this%hgrid(idim) = cell(idim, idim) / real(this%ndims(idim)+1, dp)
     end do
     this%np = this%ndims(1)*this%ndims(2)*this%ndims(3)
 
@@ -95,16 +96,15 @@ contains
     end do
     !We have a cubic cell
     this%volelem = this%hgrid(1)*this%hgrid(2)*this%hgrid(3)
+    this%volume = cell(1,1)*(cell(2,2)*cell(3,3)-cell(2,3)*cell(3,2)) - &
+          cell(1,2)*(cell(2,1)*cell(3,3)-cell(2,3)*cell(3,1)) + &
+          cell(1,3)*(cell(2,1)*cell(3,2)-cell(2,2)*cell(3,1))
 
     ! Initialization for FFT and IFFT
     allocate(rin(this%ndims(1), this%ndims(2), this%ndims(3)))
-    allocate(cout(this%ndims(1)/2+1, this%ndims(2), this%ndims(3)))
+    allocate(cout(this%ndims(1), this%ndims(2), this%ndims(3)))
     this%fftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
       rin, cout, FFTW_FORWARD, FFTW_ESTIMATE)
-    deallocate(rin,cout)
-
-    allocate(rin(this%ndims(1)/2+1, this%ndims(2), this%ndims(3)))
-    allocate(cout(this%ndims(1), this%ndims(2), this%ndims(3)))
     this%ifftplan = fftw_plan_dft_3d(this%ndims(1), this%ndims(2), this%ndims(3), &
       rin, cout, FFTW_BACKWARD, FFTW_ESTIMATE)
     deallocate(rin,cout)
@@ -135,6 +135,7 @@ contains
     call yaml_map("Spacing", this%hgrid)
     call yaml_map("Ndims", this%ndims)
     call yaml_map("Total number of points", this%np)
+    call yaml_map('Volume element', this%volelem)
     call yaml_mapping_close()
 
   end subroutine summary

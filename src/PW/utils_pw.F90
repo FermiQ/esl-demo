@@ -102,6 +102,8 @@ contains
 
     complex(kind=dp), allocatable :: fourier_cube(:,:,:)
     complex(kind=dp), allocatable :: rs_cube(:,:,:)
+
+    real(kind=dp) :: Nglobal
     
     allocate(fourier_cube(1:ndims(1),1:ndims(2),1:ndims(3)))
     allocate(rs_cube(1:ndims(1),1:ndims(2),1:ndims(3)))
@@ -110,6 +112,9 @@ contains
 
     ! FFT-1
     call fftw_execute_dft(grid%iFFTplan, fourier_cube(:,:,:), rs_cube(:,:,:))
+
+    !Normalization
+    rs_cube(1:ndims(1),1:ndims(2),1:ndims(3)) = rs_cube(1:ndims(1),1:ndims(2),1:ndims(3))/grid%volume
 
     call rs_cube2grid(grid, rs_cube, coef_rs)
 
@@ -154,7 +159,7 @@ contains
     integer :: ipw
 
     fourier_cube(1:ndims(1), 1:ndims(2), 1:ndims(3)) = cmplx(0.d0,0.d0,kind=dp)
-
+ 
     do ipw = 1, npw
       fourier_cube(gmap(1,ipw), gmap(2,ipw), gmap(3,ipw)) = coef_pw(ipw)
     end do    
