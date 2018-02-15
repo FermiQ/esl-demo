@@ -29,6 +29,8 @@ debian-paranoid:
 pages:
   image: drfaustroll/esl:tumbleweed
   stage: deploy
+  only:
+    - master
   script:
     - sh utils/opensuse-docs.sh
     - ls && pwd

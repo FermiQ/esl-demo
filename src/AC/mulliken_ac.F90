@@ -10,6 +10,8 @@ module esl_mulliken_ac_m
 
   private
 
+  public :: mulliken_ac_summary
+
 contains
 
   !< Calculate and print-out the Mulliken charges
@@ -17,10 +19,10 @@ contains
     use yaml_output
 
     type(basis_ac_t), intent(in) :: basis
-    type(sparse_matrix_t), intent(in) :: S, DM(:)
+    type(sparse_matrix_t), intent(in) :: S, DM
 
     ! Local variables for calculating the Mulliken charges
-    integer :: is, ia, io, ind
+    integer :: ia, io, ind
     integer :: io1, io2
 
     type(sparse_pattern_t), pointer :: sp
@@ -44,9 +46,7 @@ contains
         F(io) = 0._dp
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
 
-          do is = 1, size(DM)
-            F(io) = F(io) + S%M(ind) * DM(is)%M(ind)
-          end do
+          F(io) = F(io) + S%M(ind) * DM%M(ind)
           
         end do
 
@@ -58,13 +58,14 @@ contains
 
     ! Produce YAML output
     call yaml_mapping_open("Mulliken")
+    call yaml_map('Total', sum(M))
     call yaml_comment("Q", hfill = "-")
     do ia = 1, basis%n_site
 
       write(str, '(i0)') ia
       call yaml_mapping_open(trim(str))
-      str = 'StillNotCreated' !basis%species(basis%site_state_idx(ia))%label
-      call yaml_map('Label', trim(str))
+      !str = 'StillNotCreated' !basis%species(basis%site_state_idx(ia))%label
+      !call yaml_map('Label', trim(str))
       call yaml_map('Sum', M(ia))
       io1 = basis%site_orbital_start(ia)
       io2 = basis%site_orbital_start(ia + 1) - 1
@@ -72,6 +73,7 @@ contains
       call yaml_mapping_close()
       
     end do
+
     call yaml_mapping_close()
 
     deallocate(M, F)

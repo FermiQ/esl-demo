@@ -269,6 +269,7 @@ contains
 
       this%column(lind) = ic
       this%nrow(ir) = this%nrow(ir) + ONE
+      this%nz = this%nz + ONE
 
     end function simple_add
 

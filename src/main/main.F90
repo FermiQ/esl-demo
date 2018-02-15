@@ -35,14 +35,14 @@ contains
     use esl_states_m, only : states_t
     use esl_system_m, only : system_t
     use esl_smear_m, only : smear_t
-    use elsi_wrapper_esl, only : elsi_t
+    use esl_elsi_m, only : elsi_t
     use esl_next_step_m, only: next_step_setup
 
     type(system_t)      :: system
     type(scf_t)         :: scf
     type(smear_t)       :: smear
     type(states_t)      :: states
-    type(elsi_t)        :: elsi
+    type(elsi_t)        :: elsic
 
     !--------------TEMP --------------------
     integer :: nspin
@@ -77,14 +77,17 @@ contains
       call flook_if_call(LUA, LUA_INIT_STEP)
 #endif
 
-      ! This initializes all variables that
+      ! Prepare the next step for the system
       call next_step_setup(system)
 
+      ! Initialize the SCF type to be able to perform the SCF-loop
       call scf%init(system, states)
+      
       call smear%init()
+      call elsic%init(system%basis%ac%n_orbital, states%nel, states%nstates)
 
-      !SCF loop
-      call scf%loop(elsi, system, states, smear)
+      ! Perform SCF loop
+      call scf%loop(elsic, system, states, smear)
 
 #ifdef WITH_FLOOK
       ! Call lua after the forces has been calculated.

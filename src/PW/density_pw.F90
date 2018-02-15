@@ -62,12 +62,9 @@ contains
     
     real(dp), allocatable :: atomicden(:)
     integer :: iat, ip, is
-    real(dp):: norm, coef
+    real(dp):: norm
 
     this%density(1:grid%np) = 0.d0
-
-    !We have to remove the factor 1/sqrt(4*pi) that comes form Y_{0,0}
-    coef = sqrt(4.d0*PI)
 
     allocate(atomicden(1:grid%np))
     atomicden(1:grid%np) = 0.d0
@@ -79,14 +76,14 @@ contains
       is = geo%species_idx(iat)      
 
       !Convert the radial density to the cartesian grid
-      call grid%radial_function(geo%species(is)%rho, 0, 0, geo%xyz(:,iat), atomicden)
+      call grid%radial_function(geo%species(is)%rho, geo%xyz(:,iat), func=atomicden)
       
-      call integrate(grid, atomicden, norm)
-      call yaml_map("Norm", norm*coef)
+      norm = grid%integrate(atomicden)
+      call yaml_map("Norm", norm)
 
       !Summing up to the total density
       forall (ip = 1:grid%np)
-        this%density(ip) = this%density(ip) + atomicden(ip)*coef
+        this%density(ip) = this%density(ip) + atomicden(ip)
       end forall
     end do
     deallocate(atomicden)
@@ -163,9 +160,9 @@ contains
     do ip = 1, this%np
       diff(ip) = abs(other%density(ip) - this%density(ip))
     end do
-    call integrate(grid, diff, res)
-    if(nel>0) then
-      res = res/real(nel)
+    res = grid%integrate(diff)
+    if ( nel > 0 ) then
+      res = res / real(nel, dp)
     end if
 
     deallocate(diff)

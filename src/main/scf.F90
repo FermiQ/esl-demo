@@ -12,6 +12,12 @@ module esl_scf_m
   use esl_states_m
   use esl_system_m
 
+  ! AC-related functions
+  use esl_sparse_pattern_m, only: sparse_pattern_t
+  use esl_create_sparse_pattern_ac_m, only: create_sparse_pattern_ac_create
+  use esl_overlap_matrix_ac_m, only: overlap_matrix_ac_calculate
+  use esl_density_matrix_ac_m, only: density_matrix_ac_next
+
   implicit none
   private
 
@@ -45,24 +51,50 @@ module esl_scf_m
 contains
 
 
-  !Initialize density and wfn
-  !----------------------------------------------------
+  !< Initialize density and wfn
+  !<
+  !< Atomic-Centered orbitals does the following things:
+  !< 1. Initialize the sparse pattern by determining couplings based
+  !<    purely on the inter-orbital ranges. There will only be
+  !<    matrix elements if the distance between two atomic centered
+  !<    orbitals are within the sum of their cutoff radius.
+  !< 2. Once the sparse pattern has been created we calculate the overlap
+  !<    matrix which is fixed for the entirety of the SCF loop.
   subroutine init(this, system, states)
-    class(scf_t)  :: this 
-    type(system_t),         intent(in) :: system
-    type(states_t),         intent(in) :: states
+    class(scf_t) :: this 
+    type(system_t), intent(inout) :: system
+    type(states_t), intent(in) :: states
 
     this%tol_reldens = fdf_get('SCFTolerance',1.0e-6_dp)
     this%max_iter    = fdf_get('SCFMaxIterations', 100)
 
     call this%mixer%init()
 
+    ! This is necessary for both AC and PW
+    ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
+    call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+
     select case (system%basis%type)
     case ( PLANEWAVES )
-      call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+
+      ! TODO anything syecific to SCF initialization
+      
     case( ATOMCENTERED )
-      call this%H%init(system%basis%grid, system%geo, states, periodic=.false.)
+
+      ! Initialization of the SCF step is done here.
+      call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
+
+      ! Calculate the overlap matrix for this SCF cycle
+      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
+          system%sparse_pattern, system%S)
+
     end select
+
+    ! Finally we can initialize the densities
+    ! This *has* to be done in the end because the density matrices
+    ! for AC requires the sparse pattern to be updated.!
+    call this%rho_in%init(system)
+    call this%rho_out%init(system)
 
   end subroutine init
 
@@ -75,29 +107,29 @@ contains
 
   !Perform the self-consistent field calculation
   !----------------------------------------------------
-  subroutine loop(this, elsi, system, states, smear)
+  subroutine loop(this, elsic, system, states, smear)
     use yaml_output
     use esl_smear_m
     use esl_states_m
-    use elsi_wrapper_esl
+    use esl_elsi_m
 
-    class(scf_t),         intent(inout) :: this
-    type(elsi_t), intent(inout) :: elsi
-    type(system_t),         intent(in) :: system
-    type(states_t),         intent(in) :: states
+    class(scf_t), intent(inout) :: this
+    type(elsi_t), intent(inout) :: elsic
+    type(system_t), intent(inout) :: system
+    type(states_t), intent(inout) :: states
     type(smear_t), intent(inout) :: smear
 
     integer :: iter !< Interation
     real(dp) :: res
 
-    ! Initialize the densities
-    call this%rho_in%init(system%basis)
-    call this%rho_out%init(system%basis)
-
     ! Perform initial guess on the density
-    call this%rho_in%guess(system%basis, system%geo)
+    call this%rho_in%guess(system)
 
-    !Randomize the states
+    ! TODO 
+    ! Randomize the states
+    ! Generally these are not needed for AC since we diagonalize
+    ! the Hamiltonian. However, when AC is using order-N methods one
+    ! does require initial guesses for the states.
     call states%randomize()
 
     call yaml_mapping_open("SCF cycle")
@@ -108,21 +140,27 @@ contains
       ! Diagonalization (ELSI/KSsolver)
 
       ! Update occupations
-      call smear_calc_fermi_and_occ(smear, elsi, states)
+      call smear%calc_fermi_occ(elsic, states)
 
       ! Calculate density
-      call this%rho_in%calculate(system%basis, states, out=this%rho_out)
+      call this%rho_in%calculate(system, this%H%potential, states, out=this%rho_out)
       
-      !Calc. potentials
+      ! Calculate necessary potentials
       select case (system%basis%type)
       case ( PLANEWAVES )
-        call this%H%potentials%calculate(this%rho_out%density_pw%density, this%H%energy)
+
+        call this%H%potential%calculate(this%rho_out%density_pw%density, system%energy)
+        
       case( ATOMCENTERED )
-        !TODO
+
+        ! TODO, clarify intent here. The potentials are required to calculate the
+        ! output density. As such the potential type is required in the density_ac%calculate
+        ! routine.
+        
       end select
 
       !Calc. energies
-      call this%H%energy%calculate()  
+      call system%energy%calculate()
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density
@@ -140,7 +178,7 @@ contains
         
       end if
 
-      ! Perform mixing
+      ! Perform mixing (in/out)
       call this%mix(system%basis, this%rho_in, this%rho_out)
 
       !Update Hamiltonian matrix
@@ -149,32 +187,37 @@ contains
     
     call yaml_mapping_close()
 
-    call this%H%energy%display()
+    call system%energy%display()
 
   end subroutine loop
   
   ! Perform mixing step
   !----------------------------------------------------
-  subroutine mix(this, basis, rho_in, rho_out)
+  subroutine mix(this, basis, in, out)
     class(scf_t) :: this
     type(basis_t),  intent(in)   :: basis
-    type(density_t), intent(in) :: rho_in, rho_out 
+    type(density_t), intent(inout) :: in, out 
 
-    real(kind=dp), allocatable :: rhonew(:)
+    real(kind=dp), allocatable :: next(:)
     integer :: np
 
-    np = rho_in%np
+    select case ( basis%type )
+    case ( PLANEWAVES )
 
-    select case (basis%type)
-    case ( PLANEWAVES )  
-      allocate(rhonew(1:np))
-      call this%mixer%linear(np, rho_in%density_pw%density(1:np), rho_out%density_pw%density(1:np), rhonew(1:np))
-      call rho_in%density_pw%set_den(rhonew)
-      deallocate(rhonew)
+      np = in%np
+
+      allocate(next(1:np))
+      call this%mixer%linear(np, in%density_pw%density(1:np), out%density_pw%density(1:np), next(1:np))
+      call in%density_pw%set_den(next)
+      deallocate(next)
+      
     case ( ATOMCENTERED )
-    !TODO
-!!$      call mixing_linear(this%mixer, this%np, this%rhoin, this%rhoout, this%rhonew)
-!!$      call this%ac%set_den(this%rhonew)
+
+      ! Since the linear mixing does not do look-ahead calls we can alias
+      ! the same array
+      np = in%ac%DM%sp%nz
+      call this%mixer%linear(np, in%ac%DM%M, out%ac%DM%M, in%ac%DM%M)
+      
     end select
 
   end subroutine mix

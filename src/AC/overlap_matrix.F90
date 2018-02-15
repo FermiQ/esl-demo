@@ -49,7 +49,7 @@ contains
         ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        call grid%radial_function(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iao)
+        call grid%radial_function_ylm(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iao)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -68,14 +68,14 @@ contains
           jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          call grid%radial_function(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jao)
+          call grid%radial_function_ylm(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jao)
 
           S%M(ind) = &
               grid%overlap(ixyz(:), iao, ir_max, jxyz(:), jao, jr_max)
 
           ! DEBUG print
-          if ( ia == ja .and. iio == jjo ) &
-              print *,' Diagonal overlap matrix: ', ia, iio, S%M(ind)
+!          if ( ia == ja .and. iio == jjo ) &
+!              print *,' Diagonal overlap matrix: ', ia, iio, S%M(ind)
           !print *,' Calculing overlap matrix: ', ia, iio, ja, jjo, S%M(ind)
 
         end do

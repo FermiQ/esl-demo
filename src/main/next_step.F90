@@ -12,14 +12,12 @@ module esl_next_step_m
 contains
 
   subroutine next_step_setup(system)
-
     use esl_system_m, only: system_t
     use esl_basis_m, only: PLANEWAVES, ATOMCENTERED
+    
+    type(system_t), intent(inout) :: system
 
-    !< System that we wish to process as a new step
-    class(system_t), intent(inout) :: system
-
-    ! TODO insert generic initialization stuff
+    ! Move quantities required for a move
 
     select case ( system%basis%type )
     case ( PLANEWAVES )
@@ -32,48 +30,15 @@ contains
 
     subroutine next_atomicorbs()
 
-      use esl_sparse_pattern_m, only: sparse_pattern_t
-      use esl_create_sparse_pattern_ac_m, only: create_sparse_pattern_ac_create
-      use esl_overlap_matrix_ac_m, only: overlap_matrix_ac_calculate
-      use esl_density_matrix_ac_m, only: density_matrix_ac_next
-
-      ! Target is necessary to preserve old pointers
-      type(sparse_pattern_t), target :: old_sp
-
-      ! Preserve the old sparse pattern such that the
-      ! sparse matrices still points to the pattern.
-      ! TODO copy a sparse pattern to keep the old one
-      !      call move_alloc(system%sparse_pattern, old_sp)
-
-      ! copy old sparse pattern
-      ! Initialize the sparse pattern
-      call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
-
-      ! Essentially we have to figure out whether the previous
-      ! sparse patterns and quantities needs mangling (i.e.
-      ! copy the "old" DM -> "new" DM.
-      ! There are various choices here.
-      ! TODO Handle new-step DM changes
-
-      ! Calculate the overlap matrix
-      ! This requires that the grid information is present
-      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
-          system%sparse_pattern, system%S)
-
-      ! Figure out the next density matrix
-      ! This routine will initially fill it with the
-      ! atomic fillings.
-      call density_matrix_ac_next(system%basis%ac, &
-          old_sp, system%sparse_pattern, system%DM)
-
-      ! Clean-up the old sparse-matrix
-      call old_sp%delete()
+      ! add content for the initialization for a new plane-wave step
+      call system%update(periodic=.false.)
 
     end subroutine next_atomicorbs
 
     subroutine next_planewave()
 
       ! add content for the initialization for a new plane-wave step
+      call system%update(periodic=.false.)
 
     end subroutine next_planewave
 

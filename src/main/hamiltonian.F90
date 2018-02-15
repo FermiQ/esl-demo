@@ -1,12 +1,9 @@
 module esl_hamiltonian_m
   use prec, only : dp,ip
   use esl_basis_m
-  use esl_energy_m
-  use esl_force_m
   use esl_geometry_m
   use esl_grid_m
   use esl_hamiltonian_pw_m
-  use esl_ion_interaction_m
   use esl_potential_m
   use esl_states_m
 
@@ -18,10 +15,7 @@ module esl_hamiltonian_m
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
-    type(energy_t)          :: energy
-    type(force_t)           :: force
-    type(ion_interaction_t) :: ion_inter
-    type(potential_t)       :: potentials
+    type(potential_t)       :: potential
     type(hamiltonian_pw_t)  :: hm_pw
   contains
     private
@@ -40,16 +34,7 @@ contains
     type(states_t),   intent(in) :: states
     logical,          intent(in) :: periodic
 
-    call this%energy%init()
-    call this%potentials%init(grid, states, geo, periodic)
-    call this%force%init(geo%n_atoms)
-    call this%ion_inter%init()
-
-    if (periodic) then
-      call this%ion_inter%calculate_periodic(geo, this%force%ionion, this%energy%ionion)
-    else
-      call this%ion_inter%calculate_isolated(geo, this%force%ionion, this%energy%ionion)
-    end if
+    call this%potential%init(grid, states, geo, periodic)
 
   end subroutine init
 

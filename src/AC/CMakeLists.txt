@@ -1,8 +1,10 @@
 add_library(ac
   basis_ac.F90
+  calc_density_matrix.F90
   create_sparse_pattern.F90
   density_matrix.F90  
-  mulliken.F90
+  hamiltonian_ac.F90  
+  mulliken_ac.F90
   density_ac.F90
   overlap_matrix.F90
   sparse_pattern.F90

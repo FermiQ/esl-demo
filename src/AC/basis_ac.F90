@@ -1,5 +1,6 @@
 module esl_basis_ac_m
   use prec
+  use fdf, only: fdf_get
   use yaml_output
   use pspiof_m
 
@@ -53,6 +54,9 @@ module esl_basis_ac_m
 
   type basis_ac_t
 
+    ! TODO this should be from system, i.e.
+    real(dp) :: Q = 0._dp !< Number of electrons
+
     integer :: n_site = 0 !< Number of atomic centered sites
     real(dp), allocatable :: xyz(:,:) !< Cartesian coordinates of the atomic centered sites
 
@@ -101,9 +105,15 @@ contains
     type(pspiof_meshfunc_t), pointer :: mesh_R => null()
     integer :: is, no, io, isite
     integer :: l, m
-    real(dp) :: occ, r_cut
+    real(dp) :: occ, r_cut, cut_off
 
     ! Construct the basis functions
+    ! The option for constructing the basis is
+    ! determined by the cutoff radius for the basis functions
+    ! In this case we limit the basis-orbitals to the
+    ! cutoff value where the smallest R value where:
+    !    r_max @ abs(F(R) * R) < CutOff
+    cut_off = fdf_get('Basis.AC.FR.Cutoff', 0.0001_dp)
 
     ! First copy over the Cartesian coordinates
     this%n_site = geo%n_atoms
@@ -123,6 +133,8 @@ contains
     ! Each specie corresponds to a "state"
     this%n_state = geo%n_species
     allocate( this%state(this%n_state) )
+
+    this%Q = 0._dp
     
     ! Loop over each specie and construct the basis orbitals
     do is = 1, geo%n_species
@@ -174,7 +186,7 @@ contains
 
         ! Get all radial orbital information
         call geo%species(is)%get_radial_orbital(io, l, mesh_r, occ)
-        r_cut = geo%species(is)%get_radial_orbital_rmax(io, 0.0001_dp)
+        r_cut = geo%species(is)%get_radial_orbital_rmax(io, cut_off)
         this%state(is)%r_cut = max( this%state(is)%r_cut, r_cut )
 
         do m = -l , l
@@ -202,6 +214,10 @@ contains
       
       is = this%site_state_idx(isite)
       no = no + this%state(is)%n_orbital
+
+      do io = 1 , this%state(is)%n_orbital
+        this%Q = this%Q + this%state(is)%orb(io)%occ
+      end do
       
     end do
           
@@ -323,6 +339,11 @@ contains
       ! density on grids etc.
       call init()
       
+    else
+
+      ! Retrieve local pointer
+      sp => DM%sp
+      
     end if
 
     ! Initialize everything to 0
@@ -341,7 +362,7 @@ contains
 
         ! Check for the diagonal part
         if ( sp%column(ind) == io ) then
-          
+
           ! Ok, we have a diagonal entry.
           DM%M(ind) = occ
           
@@ -453,6 +474,7 @@ contains
     call yaml_mapping_open("basis_ac")
     
     call yaml_map("Number of sites", this%n_site)
+    call yaml_map("Total charge", this%Q)
 
     call yaml_map("Sites first orbital", this%site_orbital_start(:this%n_site))
     call yaml_map("Sites last orbital", this%site_orbital_start(2:this%n_site+1) - 1)
