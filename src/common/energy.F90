@@ -73,7 +73,8 @@ contains
     use yaml_output
     class(energy_t) :: this
 
-    call yaml_mapping_open("Energy")
+    call yaml_mapping_open("Energy", advance='NO')
+    call yaml_comment("Hartree", hfill = "-")
     call yaml_map("Total", this%total)
     call yaml_map("Eigenvalues", this%eigenvalues)
     call yaml_map("Hartree", this%hartree)
