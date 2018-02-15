@@ -101,9 +101,11 @@ contains
     allocate (work(1:28))
     do ii = 1, 11
       allocate (work(ii)%mat(1:m, 1:n))
+      work(ii)%mat(1:m, 1:n) = cmplx(0.d0, 0.d0, r8)
     end do
     do ii = 21, 28
       allocate (work(ii)%mat(1:n, 1:n))
+      work(ii)%mat(1:n, 1:n) = cmplx(0.d0, 0.d0, r8)
     end do
 
     !We copy the states in work(1)
@@ -123,12 +125,12 @@ contains
       case (ELSI_RCI_NULL)
       case (ELSI_RCI_CONVERGE)
         exit
-      case(ELSI_RCI_STOP)
+      case (ELSI_RCI_STOP)
         print *, "ELSI RCI did not converged."
         exit
       case (ELSI_RCI_H_MULTI) ! B = H^(trH) * A
-        do ii = 1,iS%n
-          call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m,ii),  work(iS%Bidx)%mat(1:iS%m,ii))
+        do ii = 1, iS%n
+          call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m, ii), work(iS%Bidx)%mat(1:iS%m, ii))
         end do
       case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
         !No overlap matrix
@@ -140,12 +142,14 @@ contains
         lda = size(work(iS%Aidx)%mat, 1)
         ldb = size(work(iS%Bidx)%mat, 1)
         ldc = size(work(iS%Cidx)%mat, 1)
-        call zgemm(iS%TrA, iS%TrB, iS%m, iS%n, iS%k, iS%alpha, &
+        call zgemm(iS%TrA, iS%TrB, iS%m, iS%n, iS%k, &
+                   cmplx(iS%alpha, 0.0_r8, r8), &
                    work(iS%Aidx)%mat, lda, work(iS%Bidx)%mat, ldb, &
-                   iS%beta, work(iS%Cidx)%mat, ldc)
+                   cmplx(iS%beta, 0.0_r8, r8), work(iS%Cidx)%mat, ldc)
 
       case (ELSI_RCI_AXPY) ! B = alpha * A + B
-        call zaxpy(iS%m*iS%n, iS%alpha, work(iS%Aidx)%mat, 1, &
+        call zaxpy(iS%m*iS%n, cmplx(iS%alpha, 0.0_r8, r8), &
+                   work(iS%Aidx)%mat, 1, &
                    work(iS%Bidx)%mat, 1)
 
       case (ELSI_RCI_COPY) ! B = A^(trA)
@@ -167,16 +171,17 @@ contains
         end do
         print *, result_in(1)
       case (ELSI_RCI_DOT) ! res = trace(A * B)
+        result_in(1) = 0.d0
         do ii = 1, iS%m
           do jj = 1, iS%n
             result_in(1) = result_in(1) &
-                             + real(conjg(work(iS%Aidx)%mat(ii, jj)) &
-                             *work(iS%Bidx)%mat(ii, jj),kind=dp)
+                           + real(conjg(work(iS%Aidx)%mat(ii, jj)) &
+                                  *work(iS%Bidx)%mat(ii, jj), kind=dp)
           end do
         end do
 
       case (ELSI_RCI_SCALE) ! A = alpha * A
-        work(iS%Aidx)%mat = cmplx(iS%alpha,0.d0)*work(iS%Aidx)%mat
+        work(iS%Aidx)%mat = cmplx(iS%alpha, 0.0_r8, r8)*work(iS%Aidx)%mat
 
       case default
         print *, 'Unsupported RCI operation ', task
@@ -194,14 +199,14 @@ contains
     call zheev('V', 'L', n, &
                Work(21)%Mat, lda, result_in, &
                Worktmp, lWorktmp, RWorktmp, info)
-    deallocate(Worktmp)
-    deallocate(RWorktmp)
+    deallocate (Worktmp)
+    deallocate (RWorktmp)
     lda = size(work(1)%mat, 1)
     ldb = size(work(21)%mat, 1)
     ldc = size(work(11)%mat, 1)
-    call zgemm('N', 'N', m, n, n, 1.0_r8, &
+    call zgemm('N', 'N', m, n, n, cmplx(1.0_r8,0.0_r8,r8), &
                work(1)%mat, lda, work(21)%mat, ldb, &
-               0.0_r8, work(11)%mat, ldc)
+               cmplx(0.0_r8,0.0_r8,r8), work(11)%mat, ldc)
 
     do ii = 1, n
       states%states(ii, 1, 1)%zcoef(1:pw%npw) = work(11)%mat(1:pw%npw, ii)
