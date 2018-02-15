@@ -74,7 +74,7 @@ link_directories(${ELSI_LIBRARY_DIRS})
 
 if(WITH_FLOOK)
   pkg_check_modules(FLOOK REQUIRED flook)
-  include_directories(${FLOOK_Fortran_INCLUDE_PATH})
+  include_directories(${FLOOK_INCLUDE_DIRS})
   link_directories(${FLOOK_LIBRARY_DIRS})
   message(STATUS "Build with flook library and Lua-interface support!")
   add_definitions("-DWITH_FLOOK")
