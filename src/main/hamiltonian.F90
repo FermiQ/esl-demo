@@ -15,7 +15,7 @@ module esl_hamiltonian_m
 
   !Data structure for the Hamiltonian
   type hamiltonian_t
-    type(potential_t)       :: potentials
+    type(potential_t)       :: potential
     type(hamiltonian_pw_t)  :: hm_pw
   contains
     private
@@ -34,7 +34,7 @@ contains
     type(states_t),   intent(in) :: states
     logical,          intent(in) :: periodic
 
-    call this%potentials%init(grid, states, geo, periodic)
+    call this%potential%init(grid, states, geo, periodic)
 
   end subroutine init
 
