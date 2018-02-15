@@ -37,18 +37,25 @@ contains
     & sparsity_pattern_ac)
     use mpi_dist_block_cyclic_m, only: mpi_dist_block_cyclic_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
+    use mpi
 
     type(elsi_t),                  intent(inout) :: elsi_ac
     type(mpi_dist_block_cyclic_t), intent(in)    :: mpi_dist_bc_ac
     type(sparse_pattern_t),        intent(in)    :: sparsity_pattern_ac
 
+    integer(ip) :: nnz_global
+    integer(ip) :: ierr
+
     ! Initialize ELSI MPI
     call elsi_set_mpi(elsi_ac%e_h, mpi_dist_bc_ac%comm)
 
+    call MPI_Allreduce(sparsity_pattern_ac%nz, nnz_global, 1, mpi_integer4, &
+      & mpi_sum,mpi_dist_bc_ac%comm, ierr)
+
     ! Initialize ELSI sparsity pattern
-    call elsi_set_csc(elsi_ac%e_h, mpi_dist_bc_ac%global_N, &
-      & sparsity_pattern_ac%nz, sparsity_pattern_ac%nr, &
-      & sparsity_pattern_ac%column, sparsity_pattern_ac%rptr)
+    call elsi_set_csc(elsi_ac%e_h, nnz_global, sparsity_pattern_ac%nz, &
+      & sparsity_pattern_ac%nr, sparsity_pattern_ac%column, &
+      & sparsity_pattern_ac%rptr)
 
     ! Set block size
     call elsi_set_csc_blk(elsi_ac%e_h, mpi_dist_bc_ac%block)
