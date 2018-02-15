@@ -11,7 +11,8 @@ module esl_calc_density_matrix_ac_m
   use elsi, only: elsi_set_mpi
 #endif
 
-  use elsi, only: elsi_set_csc, &
+  use elsi, only: elsi_set_output, &
+                  elsi_set_csc, &
                   elsi_set_csc_blk, &
                   elsi_dm_real_sparse, &
                   elsi_get_edm_real_sparse, &
@@ -34,7 +35,7 @@ contains
 #ifdef WITH_MPI
   subroutine set_elsi_sparsity_pattern_ac(elsi_ac, mpi_dist_bc_ac, &
     & sparsity_pattern_ac)
-    use mpi_dist_block_cyclic, only: mpi_dist_block_cyclic_t
+    use mpi_dist_block_cyclic_m, only: mpi_dist_block_cyclic_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
 
     type(elsi_t),                  intent(inout) :: elsi_ac

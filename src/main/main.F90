@@ -110,10 +110,15 @@ contains
     use fdf, only : fdf_init, fdf_get
     use esl_numeric_m, only : init_random
     use esl_info_m, only : about
+    use prec, only : ip
 
     character(len=256) :: echo_file, output_file
+    integer(ip) :: ierr
 
     !Init MPI
+#ifdef WITH_MPI
+    call MPI_Init(ierr)
+#endif
 
     !Init data basis strucutes 
 
