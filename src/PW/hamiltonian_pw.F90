@@ -1,5 +1,5 @@
 module esl_hamiltonian_pw_m
-  use prec, only : dp,ip
+  use prec, only:dp, ip
   use elsi
   use elsi_rci
   use elsi_rci_constants
@@ -17,17 +17,16 @@ module esl_hamiltonian_pw_m
   use mpi
 #endif
 
-
   implicit none
   private
 
-  public ::                          &
-      hamiltonian_pw_t,                &
-      hamiltonian_pw_apply,            &
-      hamiltonian_pw_apply_local
+  public :: &
+    hamiltonian_pw_t, &
+    hamiltonian_pw_apply, &
+    hamiltonian_pw_apply_local
 
   type work_matrix_t
-    complex(kind=dp), allocatable :: mat(:,:)
+    complex(kind=dp), allocatable :: mat(:, :)
   end type work_matrix_t
 
   !Data structure for the Hamiltonian
@@ -50,7 +49,7 @@ contains
   subroutine init(this, pot, comm)
     class(hamiltonian_pw_t) :: this
     type(potential_t), target, intent(in) :: pot
-    integer,        intent(in) :: comm
+    integer, intent(in) :: comm
 
     this%pot => pot
 
@@ -67,7 +66,7 @@ contains
 
 !    call this%dist%delete_()
 
-    nullify(this%pot)
+    nullify (this%pot)
 
   end subroutine cleanup
 
@@ -78,7 +77,7 @@ contains
     type(states_t), intent(inout) :: states
     type(basis_pw_t), intent(in)  :: pw
 
-    integer :: ii, jj, tmp_m,tmp_n 
+    integer :: ii, jj
     real(kind=r8), allocatable :: result_in(:)
     type(rci_instr)      :: iS
     integer(kind=i4) :: task, m, n, ijob
@@ -88,161 +87,149 @@ contains
     logical :: long_out = .true.
     type(work_matrix_t), allocatable :: work(:)
     complex(kind=dp), external :: zdotc
+    complex(kind=dp) :: result_in_comp
 
+    complex(kind=dp), allocatable :: Worktmp(:)
+    real(kind=r8), allocatable :: RWorktmp(:)
+    integer(kind=i4) :: lWorktmp
+    integer(kind=i4) :: info
 
-    m = pw%npw 
+    m = pw%npw
     n = states%nstates
 
     !OMM needs 28 matrices
-    allocate(work(1:28))
+    allocate (work(1:28))
     do ii = 1, 11
-      allocate(work(ii)%mat(1:m,1:n))
+      allocate (work(ii)%mat(1:m, 1:n))
     end do
     do ii = 21, 28
-      allocate(work(ii)%mat(1:n,1:n))
+      allocate (work(ii)%mat(1:n, 1:n))
     end do
 
     !We copy the states in work(1)
     !TODO support spin and kpoint
-    do ii=1,n
-      work(1)%mat(1:pw%npw, ii) = states%states(ii,1,1)%zcoef(1:pw%npw)
+    do ii = 1, n
+      work(1)%mat(1:pw%npw, ii) = states%states(ii, 1, 1)%zcoef(1:pw%npw)
     end do
 
     allocate (result_in(1))
     ijob = -1
     do
-        call rci_omm(ijob, iS, task, result_in, m, n, &
-                     e_min, cg_tol, max_iter, long_out)
+      call rci_omm(ijob, iS, task, result_in, m, n, &
+                   e_min, cg_tol, max_iter, long_out)
 
-        if(iS%Aidx > 11) then
-          tmp_m = n
-          tmp_n = n
-        else
-          tmp_m = m
-          tmp_n = n
+      select case (task)
+      case (ELSI_RCI_NULL)
+      case (ELSI_RCI_CONVERGE)
+        exit
+      case (ELSI_RCI_H_MULTI) ! B = H^(trH) * A
+        !           do ii = 1,iS%n
+        !             call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m,ii),  work(iS%Bidx)%mat(1:iS%m,ii))
+        !           end do
+        work(iS%Bidx)%mat = work(iS%Aidx)%mat
+      case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
+        !No overlap matrix
+        work(iS%Bidx)%mat = work(iS%Aidx)%mat
+      case (ELSI_RCI_P_MULTI) ! B = P^(trP) * A
+        ! No preconditioner
+        work(iS%Bidx)%mat = work(iS%Aidx)%mat
+      case (ELSI_RCI_GEMM) ! C = alpha * A^(trA) * B^(trB) + beta * C
+        lda = size(work(iS%Aidx)%mat, 1)
+        ldb = size(work(iS%Bidx)%mat, 1)
+        ldc = size(work(iS%Cidx)%mat, 1)
+        call zgemm(iS%TrA, iS%TrB, iS%m, iS%n, iS%k, iS%alpha, &
+                   work(iS%Aidx)%mat, lda, work(iS%Bidx)%mat, ldb, &
+                   iS%beta, work(iS%Cidx)%mat, ldc)
+
+      case (ELSI_RCI_AXPY) ! B = alpha * A + B
+        call zaxpy(iS%m*iS%n, iS%alpha, work(iS%Aidx)%mat, 1, &
+                   work(iS%Bidx)%mat, 1)
+
+      case (ELSI_RCI_COPY) ! B = A^(trA)
+        if (iS%TrA == 'N') then
+          work(iS%Bidx)%mat = work(iS%Aidx)%mat
+        end if
+        if (iS%TrA == 'T') then
+          work(iS%Bidx)%mat = transpose(work(iS%Aidx)%mat)
+        end if
+        if (iS%TrA == 'C') then
+          work(iS%Bidx)%mat = conjg(transpose(work(iS%Aidx)%mat))
         end if
 
-      !  print *, 'RCI task', task
+      case (ELSI_RCI_TRACE) ! res = trace(A)
+        result_in(1) = 0.0_DP
+        do ii = 1, iS%m
+          result_in(1) = result_in(1) &
+                         + real(work(iS%Aidx)%mat(ii, ii), kind=dp)
+        end do
 
-        select case (task)
-        case (ELSI_RCI_NULL)
-        case (ELSI_RCI_CONVERGE)
-            exit
-        case (ELSI_RCI_H_MULTI) ! B = H^(trH) * A
-          print *, 'Hmultn ', iS%Aidx, iS%Bidx
- !           do ii = 1,iS%n
- !             call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx)%mat(1:iS%m,ii),  work(iS%Bidx)%mat(1:iS%m,ii))
- !           end do
-           work(iS%Bidx)%mat(1:tmp_m,1:tmp_n) = work(iS%Aidx)%mat(1:tmp_m,1:tmp_n)
-        case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
-            !No overlap matrix
-          print *, 'Smult ', iS%Aidx, iS%Bidx
-          work(iS%Bidx)%mat(1:tmp_m,1:tmp_n) = work(iS%Aidx)%mat(1:tmp_m,1:tmp_n)
-        case (ELSI_RCI_P_MULTI) ! B = P^(trP) * A
-            ! No preconditioner
-          print *, 'Pmult ', iS%Aidx, iS%Bidx
-          work(iS%Bidx)%mat(1:tmp_m,1:tmp_n) = work(iS%Aidx)%mat(1:tmp_m,1:tmp_n)
-        case (ELSI_RCI_GEMM) ! C = alpha * A^(trA) * B^(trB) + beta * C
-          print *, 'Gemm ', iS%Aidx, iS%Bidx, iS%Cidx
-          if(iS%TrA == 'N') then
-             call zgemm(iS%TrA, iS%TrB, tmp_m, tmp_n, tmp_n, iS%alpha,     &
-               work(iS%Aidx)%mat(:,:), size(work(iS%Aidx)%mat,1), &
-               work(iS%Bidx)%mat(:,:), size(work(iS%Bidx)%mat,1), &
-               iS%beta, work(iS%Cidx)%mat(:,:), tmp_m)
-          else
-            call zgemm(iS%TrA, iS%TrB, tmp_n, tmp_m, tmp_m, iS%alpha,     &
-               work(iS%Aidx)%mat(:,:), size(work(iS%Aidx)%mat,1), &
-               work(iS%Bidx)%mat(:,:), size(work(iS%Bidx)%mat,1), &
-               iS%beta, work(iS%Cidx)%mat(:,:), tmp_n)
-          end if
-        case (ELSI_RCI_AXPY)  ! B = alpha * A + B
-          print *, 'Axpy ', iS%Aidx, iS%Bidx
-          do ii = 1,tmp_n
-            call zaxpy(tmp_m, iS%alpha, work(iS%Aidx)%mat(1:tmp_m,ii), 1, work(iS%Bidx)%mat(1:tmp_m,ii),1)
+      case (ELSI_RCI_DOT) ! res = trace(A * B)
+        result_in_comp = 0.d0
+        do ii = 1, iS%m
+          do jj = 1, iS%n
+            result_in_comp = result_in_comp &
+                             + conjg(work(iS%Aidx)%mat(ii, jj)) &
+                             *work(iS%Bidx)%mat(ii, jj)
           end do
-        case (ELSI_RCI_COPY) ! B = A^(trA)
-          print *, 'Copy ', iS%Aidx, iS%Bidx
-          if(iS%TrA == 'N') then
-            work(iS%Bidx)%mat(1:tmp_m,1:tmp_n) = work(iS%Aidx)%mat(1:tmp_m,1:tmp_n)
-          end if
-          if(iS%TrA == 'T') then
-            do ii = 1, tmp_m
-              do jj = 1, tmp_n
-                work(iS%Bidx)%mat(ii,jj) = work(iS%Aidx)%mat(jj,ii)
-              end do
-            end do
-          end if 
-          if(iS%TrA == 'C') then
-            do ii = 1, tmp_m
-              do jj = 1, tmp_n
-                work(iS%Bidx)%mat(ii,jj) = conjg(work(iS%Aidx)%mat(jj,ii))
-              end do
-            end do
-          end if
-        case (ELSI_RCI_TRACE) ! res = trace(A)
-          print *, 'Trace ', iS%Aidx
-          result_in(1) = 0.d0
-          do ii = 1, tmp_n
-            result_in(1) = result_in(1) + real(work(iS%Aidx)%mat(ii,ii),kind=dp)
-          end do
-          print *, result_in
-        case (ELSI_RCI_DOT) ! res = trace(A * B)
-          print *, 'Dot ', iS%Aidx, iS%Bidx
-          result_in(1) = 0.d0
-          do ii = 1, tmp_m
-            do jj = 1, tmp_n
-              result_in(1) = result_in(1) + real(conjg(work(iS%Aidx)%mat(ii,jj))*work(iS%Bidx)%mat(ii,jj),kind=dp)
-            end do
-          end do
-         print *, result_in
-        case (ELSI_RCI_SCALE) ! A = alpha * A
-          print *, 'Scale ', iS%Aidx
-        !  print *, iS%Aidx, iS%m, iS%n
-          do ii = 1,tmp_n
-            call zscal(tmp_m, iS%alpha, work(iS%Aidx)%mat(1:tmp_m,ii), 1)
-          end do
-        case default
-          print *, 'Unsupported RCI operation ', task
-        end select
+        end do
+        result_in(1) = real(result_in_comp, kind=dp)
 
-       ! print *, real(work(1)%mat(:,1))
-       ! print *, real(work(2)%mat(:,1))
-       ! print *, ''
+      case (ELSI_RCI_SCALE) ! A = alpha * A
+        work(iS%Aidx)%mat = iS%alpha*work(iS%Aidx)%mat
+
+      case default
+        print *, 'Unsupported RCI operation ', task
+      end select
+
     end do
 
     !We copy the states back from work(1)
     !Work(2) contains H|\psi>
     !TODO support spin and kpoint
-    do ii=1,n
-      states%states(ii,1,1)%zcoef(1:pw%npw) = work(1)%mat(1:pw%npw, ii)
-      states%eigenvalues(ii,1,1) = real(zdotc(pw%npw, work(1)%mat(1:pw%npw, ii), 1,  work(2)%mat(1:pw%npw, ii),1),kind=dp)
-    end do
+    lWorktmp = max(1, 2*n - 1)
+    allocate (Worktmp(lWorktmp))
+    allocate (RWorktmp(max(1, 3*n - 2)))
+    lda = size(Work(21)%Mat, 1)
+    call dsyev('V', 'L', n, &
+               Work(21)%Mat, lda, result_in, &
+               Worktmp, lWorktmp, RWorktmp, info)
+    deallocate(Worktmp)
+    deallocate(RWorktmp)
+    lda = size(work(1)%mat, 1)
+    ldb = size(work(21)%mat, 1)
+    ldc = size(work(11)%mat, 1)
+    call zgemm('N', 'N', m, n, n, 1.0_r8, &
+               work(1)%mat, lda, work(21)%mat, ldb, &
+               0.0_r8, work(11)%mat, ldc)
 
+    do ii = 1, n
+      states%states(ii, 1, 1)%zcoef(1:pw%npw) = work(11)%mat(1:pw%npw, ii)
+      states%eigenvalues(ii, 1, 1) = result_in(ii)
+    end do
 
     deallocate (result_in)
     do ii = 1, 11
-      deallocate(work(ii)%mat)
+      deallocate (work(ii)%mat)
     end do
     do ii = 21, 28
-      deallocate(work(ii)%mat)
+      deallocate (work(ii)%mat)
     end do
-    deallocate(work)
+    deallocate (work)
 
   end subroutine eigensolver
-
 
   !Apply the Hamiltonian matrix
   !----------------------------------------------------
   subroutine hamiltonian_pw_apply(pot, pw, psi, hpsi)
-    type(potential_t),  intent(in)    :: pot
-    type(basis_pw_t),   intent(in)    :: pw
-    complex(dp),      intent(in)      :: psi(:)
-    complex(dp),      intent(inout)   :: hpsi(:)
+    type(potential_t), intent(in)    :: pot
+    type(basis_pw_t), intent(in)    :: pw
+    complex(dp), intent(in)      :: psi(:)
+    complex(dp), intent(inout)   :: hpsi(:)
 
     integer :: ic
 
     !We apply the Laplacian
-    do ic = 1,pw%npw
+    do ic = 1, pw%npw
       hpsi(ic) = -0.5d0*psi(ic)*pw%gmod2(ic)
     end do
 
@@ -253,29 +240,28 @@ contains
   !Apply the local part of the Hamitonian to a wavefunction
   !----------------------------------------------------
   subroutine hamiltonian_pw_apply_local(pw, pot, psi, hpsi)
-    type(basis_pw_t),       intent(in)    :: pw
-    type(potential_t),      intent(in)    :: pot
-    complex(dp),            intent(in)    :: psi(:)
-    complex(dp),            intent(inout) :: hpsi(:)
+    type(basis_pw_t), intent(in)    :: pw
+    type(potential_t), intent(in)    :: pot
+    complex(dp), intent(in)    :: psi(:)
+    complex(dp), intent(inout) :: hpsi(:)
 
     integer :: ip
     complex(kind=dp), allocatable :: psi_rs(:), vpsi_rs(:)
 
     !TODO: Here there is no spin
 
-    allocate(psi_rs(1:pw%grid%np))
-    allocate(vpsi_rs(1:pw%grid%np))
+    allocate (psi_rs(1:pw%grid%np))
+    allocate (vpsi_rs(1:pw%grid%np))
 
-    call pw2grid(pw%grid, pw%gmap, pw%ndims, pw%npw, psi, psi_rs) 
+    call pw2grid(pw%grid, pw%gmap, pw%ndims, pw%npw, psi, psi_rs)
     !Note that hartree contains the external potential (from PSolver)
     do ip = 1, pot%np
       vpsi_rs(ip) = vpsi_rs(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi_rs(ip)
     end do
     call grid2pw(pw%grid, pw%gmap, pw%ndims, pw%npw, vpsi_rs, hpsi, .true.)
 
- 
-    deallocate(psi_rs)
-    deallocate(vpsi_rs)
+    deallocate (psi_rs)
+    deallocate (vpsi_rs)
 
   end subroutine hamiltonian_pw_apply_local
 
