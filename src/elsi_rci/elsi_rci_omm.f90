@@ -656,7 +656,7 @@ contains
         ! ls_fail
         ! C = 0.5*C
         if (ijob == SID_LS_FAIL) then
-            call rci_scale(iS, task, n, n, 0.5_r8, MID_C)
+            call rci_scale(iS, task, m, n, 0.5_r8, MID_C)
             ijob = ijob + 1
             return
         end if
