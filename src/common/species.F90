@@ -110,14 +110,8 @@ contains
 
     integer :: io
     
-    call pspiof_pspdata_free(this%psp)
-    call pspiof_meshfunc_free(this%rho)
-    if (allocated(this%radial_orbitals)) then
-      do io = 1, this%n_radial_orbitals
-        call pspiof_state_free(this%radial_orbitals(io))
-      end do
-    end if
     call pspiof_meshfunc_free(this%vlocal)
+    call pspiof_pspdata_free(this%psp)
 
   end subroutine cleanup
 
