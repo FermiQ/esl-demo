@@ -38,7 +38,7 @@ contains
 
     ! Initialize an ELSI handle
     call elsi_init(this%e_h, ELPA, MULTI_PROC, SIESTA_CSR, n_basis, &
-      & real(n_electron, dp), n_state)
+      & real(n_electron, dp), min(2*n_electron, n_basis))
 
     this%KS_energy   = 0._dp
     this%fermi_level = 0._dp
