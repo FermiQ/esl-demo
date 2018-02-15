@@ -116,7 +116,7 @@ contains
     class(scf_t), intent(inout) :: this
     type(elsi_t), intent(inout) :: elsic
     type(system_t), intent(inout) :: system
-    type(states_t), intent(in) :: states
+    type(states_t), intent(inout) :: states
     type(smear_t), intent(inout) :: smear
 
     integer :: iter !< Interation
