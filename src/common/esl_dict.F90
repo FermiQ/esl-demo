@@ -12,9 +12,6 @@ module esl_dict_m
 
   private
 
-  ! A dictionary for all the options
-  type(dict), public :: esl_options
-
   ! A dictionary for all variables
   type(dict), public :: esl_variables
 
@@ -29,41 +26,9 @@ module esl_dict_m
   end interface esl_dict_var_add
 
   ! Public interface
-  public :: esl_dict_clean
-  public :: esl_dict_populate, esl_dict_populate_options, esl_dict_populate_variables
   public :: esl_dict_var_add
 
 contains
-
-  subroutine esl_dict_clean()
-    
-    call delete(esl_options, dealloc=.false.)
-    call delete(esl_variables, dealloc=.false.)
-    
-  end subroutine esl_dict_clean
-  
-  subroutine esl_dict_populate()
-    
-    call esl_dict_populate_options()
-    call esl_dict_populate_variables()
-    
-  end subroutine esl_dict_populate
-
-  subroutine esl_dict_populate_options()
-
-    ! We simply re-create the options, (note the 
-    ! de-allocation by "nullification")
-    call delete(esl_options, dealloc=.false.)
-    
-  end subroutine esl_dict_populate_options
-
-  subroutine esl_dict_populate_variables()
-    
-    ! We simply re-create the options, (note the 
-    ! de-allocation by "nullification")
-    call delete(esl_variables, dealloc=.false.)
-
-  end subroutine esl_dict_populate_variables
 
   subroutine dict_variable_add_v_0d(name,val)
     character(len=*), intent(in) :: name
