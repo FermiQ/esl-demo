@@ -1,12 +1,10 @@
-NumberOfAtoms 3
+NumberOfAtoms 1
 output test.out
 
 cubic 10.0 Ang
 
 %block coordinates
-O 0.0 0.0 0.0
 H 1.2 1.2 0.0
-H -1.2 -1.2 0.0
 %endblock coordinates
 
 %block species
@@ -17,6 +15,6 @@ H H.UPF
 Smearing COLD
 
 BasisSet Planewaves
-cut-off 0.2 Ha
+cut-off 0.1 Ha
 
 SCFMaxIterations 5

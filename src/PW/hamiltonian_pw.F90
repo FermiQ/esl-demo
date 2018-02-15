@@ -1,6 +1,5 @@
 module esl_hamiltonian_pw_m
   use prec, only:dp, ip
-  use elsi
   use elsi_rci
   use elsi_rci_constants
   use elsi_rci_omm
@@ -31,7 +30,6 @@ module esl_hamiltonian_pw_m
 
   !Data structure for the Hamiltonian
   type hamiltonian_pw_t
-    type(elsi_handle)    :: e_h
     type(mpi_dist_t)     :: dist
 
     type(potential_t), pointer :: pot
@@ -82,12 +80,10 @@ contains
     type(rci_instr)      :: iS
     integer(kind=i4) :: task, m, n, ijob
     real(kind=r8) :: e_min = 0.0_r8
-    real(kind=r8) :: cg_tol = 0.0001_r8
+    real(kind=r8) :: cg_tol = 0.001_r8
     integer(kind=i4) :: max_iter = 20
     logical :: long_out = .true.
     type(work_matrix_t), allocatable :: work(:)
-    complex(kind=dp), external :: zdotc
-    complex(kind=dp) :: result_in_comp
 
     complex(kind=dp), allocatable :: Worktmp(:)
     real(kind=r8), allocatable :: RWorktmp(:)
@@ -101,9 +97,11 @@ contains
     allocate (work(1:28))
     do ii = 1, 11
       allocate (work(ii)%mat(1:m, 1:n))
+      work(ii)%mat(1:m, 1:n) = cmplx(0.d0,0.d0)
     end do
     do ii = 21, 28
       allocate (work(ii)%mat(1:n, 1:n))
+      work(ii)%mat(1:n, 1:n) = cmplx(0.d0,0.d0)
     end do
 
     !We copy the states in work(1)
@@ -133,9 +131,11 @@ contains
       case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
         !No overlap matrix
         work(iS%Bidx)%mat = work(iS%Aidx)%mat
+
       case (ELSI_RCI_P_MULTI) ! B = P^(trP) * A
         ! No preconditioner
         work(iS%Bidx)%mat = work(iS%Aidx)%mat
+
       case (ELSI_RCI_GEMM) ! C = alpha * A^(trA) * B^(trB) + beta * C
         lda = size(work(iS%Aidx)%mat, 1)
         ldb = size(work(iS%Bidx)%mat, 1)
@@ -167,15 +167,14 @@ contains
         end do
         print *, result_in(1)
       case (ELSI_RCI_DOT) ! res = trace(A * B)
-        result_in_comp = cmplx(0.d0,0.d0)
+         result_in(1) = 0.d0
         do ii = 1, iS%m
           do jj = 1, iS%n
-            result_in_comp = result_in_comp &
-                             + conjg(work(iS%Aidx)%mat(ii, jj)) &
-                             *work(iS%Bidx)%mat(ii, jj)
+            result_in(1) = result_in(1) &
+                             + real(conjg(work(iS%Aidx)%mat(ii, jj)) &
+                             *work(iS%Bidx)%mat(ii, jj),kind=dp)
           end do
         end do
-        result_in(1) = real(result_in_comp, kind=dp)
 
       case (ELSI_RCI_SCALE) ! A = alpha * A
         work(iS%Aidx)%mat = iS%alpha*work(iS%Aidx)%mat
@@ -233,7 +232,7 @@ contains
 
     !We apply the Laplacian
     do ic = 1, pw%npw
-      hpsi(ic) = -0.5d0*psi(ic)*pw%gmod2(ic)
+      hpsi(ic) = 0.5d0*psi(ic)*pw%gmod2(ic)
     end do
 
     !call hamiltonian_pw_apply_local(pw, pot, psi, hpsi)
