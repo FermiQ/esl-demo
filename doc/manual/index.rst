@@ -3,8 +3,8 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to ESL Plane-Wave Demonstrator's documentation!
-=======================================================
+Welcome to ESL Demonstrator's documentation!
+============================================
 
 Contents:
 
