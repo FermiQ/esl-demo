@@ -6,7 +6,7 @@ cubic 10.0 Ang
 %block coordinates
 O 0.0 0.0 0.0
 H 1.2 1.2 0.0
-H -1.2 -1.2 0.0
+H -1.2 1.2 0.0 
 %endblock coordinates
 
 %block species

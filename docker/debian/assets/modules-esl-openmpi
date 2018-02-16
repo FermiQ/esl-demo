@@ -8,11 +8,12 @@ set comp openmpi
 proc ModulesHelp {} {
         global version
         puts stderr "\n\tesl$pkg $version"
-        puts stderr "\tCompiled with $comp"
+        puts stderr "\tCompiled with gcc $comp"
         puts stderr "\tVersion $version\n"
 }
 
 module-whatis   "$pkg"
+conflict $pkg/serial
 
 
 set base /home/drFaustroll/$pkg/$comp/$version

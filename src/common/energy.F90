@@ -14,6 +14,7 @@ module esl_energy_m
     real(dp) :: total
     real(dp) :: eigenvalues
     real(dp) :: hartree
+    real(dp) :: KB
     real(dp) :: ionion
     real(dp) :: extern
     real(dp) :: exchange
@@ -41,6 +42,7 @@ contains
     this%total = 0._dp
     this%eigenvalues = 0._dp
     this%hartree = 0._dp
+    this%KB = 0._dp
     this%ionion = 0._dp
     this%extern = 0._dp
     this%exchange = 0._dp   
@@ -78,6 +80,7 @@ contains
     call yaml_map("Total", this%total)
     call yaml_map("Eigenvalues", this%eigenvalues)
     call yaml_map("Hartree", this%hartree)
+    call yaml_map("KB", this%KB)
     call yaml_map("Ion-ion", this%ionion)
     call yaml_map("Extern", this%extern)
     call yaml_map("Int_nvxc", this%int_nvxc)

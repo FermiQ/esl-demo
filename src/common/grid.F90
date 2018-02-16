@@ -224,7 +224,7 @@ contains
     do ip = 1, this%np
 
       xyz(:) = this%r(:,ip) - r_center(:)
-      call grylmr(xyz(1), xyz(3), xyz(3), ll, mm, f, gfunc(1:3,ip)) 
+      call grylmr(xyz(1), xyz(2), xyz(3), ll, mm, f, gfunc(1:3,ip)) 
 
       r = sqrt(sum(xyz**2))
       gfunc(1:3, ip) = f*pspiof_meshfunc_eval_deriv(rfunc, r) + &

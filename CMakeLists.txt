@@ -40,7 +40,6 @@ pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
 pkg_check_modules(GSL REQUIRED gsl>=1.16)
 pkg_check_modules(GRIDXC REQUIRED libgridxc>=0.8.0.3)
 pkg_check_modules(ELSI REQUIRED elsi>=0.0)
-pkg_check_modules(GRIDXC REQUIRED libgridxc>=0.8.0.0)
 
 message(STATUS "Found FDF support!")
 include_directories(${FDF_INCLUDE_DIRS})
@@ -116,7 +115,6 @@ target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIB
 if(WITH_MPI)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES} ${MPI_CXX_LIBRARIES})
-  message(STATUS "aaa ${MPI_CXX_LIBRARIES}")
 endif()
 if(WITH_FLOOK)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_FLOOK")
@@ -133,4 +131,32 @@ if(WITH_DOC)
   install(CODE "execute_process(COMMAND ${CMAKE_BUILD_TOOL} doc)")
   install(DIRECTORY ${CMAKE_BINARY_DIR}/doc/html/ DESTINATION ${CMAKE_INSTALL_DOCDIR}/developers/)
 endif()
+
+if(BUILD_TESTING)
+  include(CTest)
+  message(STATUS "Build with testing support support: make test")
+  find_package(PythonInterp 3.0 REQUIRED)
+  macro (do_test arg)
+    if (EXISTS ${CMAKE_SOURCE_DIR}/tests/${arg}/${arg}.inp)
+      message(STATUS "Adding test ${arg}/${arg}.inp")
+      file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/${arg})
+      file(COPY ${CMAKE_SOURCE_DIR}/tests/${arg}/
+        DESTINATION ${CMAKE_BINARY_DIR}/Testing/${arg}/)
+      add_test(NAME ${arg}
+        COMMAND ${PYTHON_EXECUTABLE} ${CMAKE_SOURCE_DIR}/utils/checktest.py -c ${CMAKE_SOURCE_DIR}/tests/esl-testsuite.yml 
+          -r ${CMAKE_SOURCE_DIR}/utils/Refs -s ${arg} -e ${CMAKE_BINARY_DIR}/bin/${target_name} 
+        WORKING_DIRECTORY ${CMAKE_BINARY_DIR}/Testing/${arg})
+        set_tests_properties (${arg}
+        PROPERTIES PASS_REGULAR_EXPRESSION "Status: PASSED")
+    endif()
+  endmacro (do_test)
+  file(GLOB Ts LIST_DIRECTORIES true ${CMAKE_SOURCE_DIR}/tests/*)
+  foreach(T ${Ts})
+    string(REGEX MATCH "([a-zA-Z0-9-_]+)$" test ${T})
+    do_test(${test})
+  endforeach()
+else()
+  message(STATUS "Build without testing target")
+endif()
+
 

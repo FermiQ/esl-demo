@@ -3,20 +3,101 @@
 !< The input sparse matrix *must* be pre-allocated.
 module esl_hamiltonian_ac_m
 
+  use prec, only: dp
+  use esl_basis_ac_m
+  use esl_geometry_m
+  use esl_grid_m
+
+  use esl_sparse_matrix_m, only: sparse_matrix_t
+  use esl_sparse_pattern_m, only: sparse_pattern_t
+
   implicit none
+  
+  private
 
   public :: hamiltonian_ac_laplacian
   public :: hamiltonian_ac_potential
+  
+  public :: hamiltonian_ac_t
+
+  !< Data structure for the sparse matrix Hamiltonians
+  type hamiltonian_ac_t
+
+    ! Store Hamiltonian quantities
+    
+    type(sparse_matrix_t) :: kin !< Kinetic (Laplacian) Hamiltonian
+    type(sparse_matrix_t) :: vkb !< Kleynman-Bylander projectors part of the Hamiltonian
+    type(sparse_matrix_t) :: SCF !< SCF Hamiltonian
+
+  contains
+    
+    procedure, public :: init
+    procedure, public :: calculate_H0
+    procedure, public :: setup_H0
+    
+    final :: cleanup
+  end type hamiltonian_ac_t
 
 contains
 
-  subroutine hamiltonian_ac_laplacian(basis, grid, H)
-    use prec, only: dp
-    use esl_basis_ac_m, only: basis_ac_t
-    use esl_grid_m, only: grid_t
-    use esl_sparse_pattern_m, only: sparse_pattern_t
-    use esl_sparse_matrix_m, only: sparse_matrix_t
+  !< Initialize the Hamiltonian by allocating initial quantities
+  !<
+  !< This routine will pre-allocate 3 matrices:
+  !<  1. The kinetic Hamiltonian (non-SCF dependent)
+  !<  2. Non-local Hamiltonian (non-SCF dependent)
+  !<  3. SCF Hamiltonian (changed on every SCF cycle)
+  subroutine init(this, sparse_pattern)
+    class(hamiltonian_ac_t), intent(inout) :: this
+    type(sparse_pattern_t), intent(in), target :: sparse_pattern
+    
+    call this%kin%init(sparse_pattern)
+    call this%vkb%init(sparse_pattern)
+    call this%SCF%init(sparse_pattern)
+    
+  end subroutine init
+  
+  subroutine cleanup(this)
+    type(hamiltonian_ac_t), intent(inout) :: this
+    
+    call this%kin%delete()
+    call this%vkb%delete()
+    call this%SCF%delete()
+    
+  end subroutine cleanup
 
+  !< Calculate all non-SCF dependent Hamiltonian terms
+  !<
+  !< These includes:
+  !<  1. The kinetic Hamiltonian (non-SCF dependent)
+  !<  2. Non-local Hamiltonian (non-SCF dependent)
+  subroutine calculate_H0(this, basis, geo, grid)
+    class(hamiltonian_ac_t), intent(inout) :: this
+    type(basis_ac_t), intent(in) :: basis
+    type(geometry_t), intent(in) :: geo
+    type(grid_t), intent(in) :: grid
+
+    ! Calculate individual elements for the H0-elements
+    this%kin%M = 0._dp
+    call hamiltonian_ac_laplacian(basis, grid, this%kin)
+
+    ! Calculate V_kb matrix elements
+    this%vkb%M = 0._dp
+    call hamiltonian_ac_Vkb(geo, grid, this%vkb)
+
+  end subroutine calculate_H0
+
+  !< Constructs the initial H from the H0 terms
+  !<
+  !< This is basically performing:
+  !<   H = H_kin + H_vk
+  subroutine setup_H0(this)
+    class(hamiltonian_ac_t), intent(inout) :: this
+
+    this%SCF%M(:) = this%kin%M(:) + this%vkb%M(:)
+    
+  end subroutine setup_H0
+
+  subroutine hamiltonian_ac_laplacian(basis, grid, H)
     class(basis_ac_t), intent(in) :: basis
     type(grid_t), intent(in) :: grid
     type(sparse_matrix_t), intent(inout) :: H
@@ -102,6 +183,22 @@ contains
     end function matrix_T
 
   end subroutine hamiltonian_ac_laplacian
+  
+  subroutine hamiltonian_ac_Vkb(geo, grid, H)
+    class(geometry_t), intent(in) :: geo
+    type(grid_t), intent(in) :: grid
+    type(sparse_matrix_t), intent(inout) :: H
+
+    type(sparse_pattern_t), pointer :: sp
+
+    ! Immediately return, if not needed
+    if ( .not. H%initialized() ) return
+
+    ! Retrieve pointer
+    sp => H%sp
+
+
+  end subroutine hamiltonian_ac_Vkb
 
 
   subroutine hamiltonian_ac_potential(basis, grid, pot, H)
@@ -173,7 +270,7 @@ contains
 
           H%M(ind) = H%M(ind) + &
               grid%matrix_elem(ixyz, ipsi, ir_max, pot, jxyz, jpsi, jr_max)
-
+          
           ! DEBUG print
 !          if ( ia == ja .and. iio == jjo ) &
 !              print *,'# Diagonal potential matrix: ', ia, iio, H%M(ind)

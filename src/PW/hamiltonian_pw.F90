@@ -1,6 +1,5 @@
 module esl_hamiltonian_pw_m
   use prec, only:dp, ip
-  use elsi
   use elsi_rci
   use elsi_rci_constants
   use elsi_rci_omm
@@ -30,7 +29,6 @@ module esl_hamiltonian_pw_m
 
   !Data structure for the Hamiltonian
   type hamiltonian_pw_t
-    type(elsi_handle)    :: e_h
     type(potential_t), pointer :: pot
   contains
     private
@@ -83,8 +81,6 @@ contains
     integer(kind=i4) :: max_iter = 100
     logical :: long_out = .true.
     type(work_matrix_t), allocatable :: work(:)
-    complex(kind=dp), external :: zdotc
-    complex(kind=dp) :: result_in_comp
 
     complex(kind=dp), allocatable :: Worktmp(:)
     real(kind=r8), allocatable :: RWorktmp(:)
@@ -133,6 +129,7 @@ contains
       case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
         !No overlap matrix
         work(iS%Bidx)%mat = work(iS%Aidx)%mat
+
       case (ELSI_RCI_P_MULTI) ! B = P^(trP) * A
 !work(iS%Bidx)%mat = work(iS%Aidx)%mat
 
@@ -141,6 +138,7 @@ contains
         do ii = 1, iS%n
           call hamiltonian_preconditioner(pw, work(iS%Aidx)%mat(1:iS%m, ii), work(iS%Bidx)%mat(1:iS%m, ii))
         end do
+
       case (ELSI_RCI_GEMM) ! C = alpha * A^(trA) * B^(trB) + beta * C
         lda = size(work(iS%Aidx)%mat, 1)
         ldb = size(work(iS%Bidx)%mat, 1)

@@ -1,10 +1,6 @@
 module esl_system_m
 
-  use prec, only : dp,ip
-  use esl_numeric_m, only : matr3inv
-
-  use fdf, only : block_fdf, fdf_get, fdf_block,fdf_defined, &
-      parsed_line, fdf_breals, fdf_bline, fdf_bnames
+  use prec, only : dp, ip
 
 #ifdef WITH_FLOOK
   use dictionary
@@ -19,18 +15,17 @@ module esl_system_m
   use esl_basis_m
   use esl_energy_m
   use esl_force_m
+  use esl_geometry_m
   use esl_ion_interaction_m
-
   use esl_smear_m
   use esl_states_m
   use esl_species_m
-  use esl_geometry_m
   
   implicit none
+  
   private
 
-  public ::                &
-       system_t
+  public :: system_t
 
   !Data structure for the system
   type system_t
