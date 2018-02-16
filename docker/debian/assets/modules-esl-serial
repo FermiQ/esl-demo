@@ -4,7 +4,7 @@
 ##
 set pkg esl
 set version 0.1.0
-set comp openmpi
+set comp serial
 proc ModulesHelp {} {
         global version
         puts stderr "\n\tesl$pkg $version"
@@ -13,8 +13,7 @@ proc ModulesHelp {} {
 }
 
 module-whatis   "$pkg"
-conflict $pkg/serial
-
+conflict $pkg/openmpi
 
 set base /home/drFaustroll/$pkg/$comp/$version
 setenv ESL_ROOT $base
