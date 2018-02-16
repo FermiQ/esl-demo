@@ -59,9 +59,8 @@ contains
   !----------------------------------------------------
   subroutine calculate(this, density, edata, vxc)
     class(xc_t), intent(in)  :: this
-    real(dp),    intent(in)  :: cell(3,3)
-    real(dp),    intent(in)  :: density(:,:,:,:)
-    real(dp),    intent(out) :: vxc(:,:,:,:)
+    real(dp),    intent(in)  :: density(:)
+    real(dp),    intent(out) :: vxc(:)
     type(energy_t), intent(inout) :: edata
 
     integer  :: nspin
