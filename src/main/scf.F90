@@ -2,6 +2,7 @@ module esl_scf_m
 
   use prec, only : dp,ip
   use fdf, only : fdf_get
+  
 #ifdef WITH_FLOOK
   use esl_flook_global_m, only: LUA
   use dictionary
@@ -27,12 +28,12 @@ module esl_scf_m
   implicit none
   private
 
-  public :: &
-      scf_t
+  public :: scf_t
 
   !Data structure containing the data for the SCF
-  type scf_t 
-    real(dp) :: tol_reldens 
+  type scf_t
+    
+    real(dp) :: tol_reldens !< Tolerance for SCF convergence
     integer(ip) :: max_iter !< Maximum number of iterations
 
     !< Mixer used during the SCF cycle
@@ -66,6 +67,8 @@ contains
   !<    orbitals are within the sum of their cutoff radius.
   !< 2. Once the sparse pattern has been created we calculate the overlap
   !<    matrix which is fixed for the entirety of the SCF loop.
+  !< 3. Finally the Hamiltonian is initialized (an initialization
+  !<    of the Hamiltonian also creates the non-SCF matrix elements)
   subroutine init(this, system, states)
     class(scf_t) :: this 
     type(system_t), intent(inout) :: system
@@ -75,10 +78,6 @@ contains
     this%max_iter    = fdf_get('SCFMaxIterations', 100)
 
     call this%mixer%init()
-
-    ! This is necessary for both AC and PW
-    ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
-    call this%H%init(system%basis, system%geo, states, periodic=.false.)
 
     select case (system%basis%type)
     case ( PLANEWAVES )
@@ -92,6 +91,12 @@ contains
           system%sparse_pattern, system%S)
 
     end select
+
+    ! This is necessary for both AC and PW
+    ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
+    call this%H%init(system%basis, system%geo, states, &
+        system%sparse_pattern, &
+        periodic=.false.)
 
     ! Finally we can initialize the densities
     ! This *has* to be done in the end because the density matrices
@@ -137,12 +142,13 @@ contains
 
     ! Perform initial guess on the density
     call this%rho_in%guess(system)
+    
     !Calc. potentials from guess density
     select case (system%basis%type)
     case ( PLANEWAVES )
       call this%H%potential%calculate(this%rho_in%density_pw%density, system%energy)
     case( ATOMCENTERED )
-      !TODO
+      ! We do not need to initialize any values for the guessed density
     end select
 
     ! TODO 
@@ -164,7 +170,7 @@ contains
       call smear%calc_fermi_occ(elsi, states)
 
       ! Calculate density
-      call this%rho_in%calculate(elsi, system, this%H%potential, states, out=this%rho_out)
+      call this%rho_in%calculate(elsi, system, this%H, states, out=this%rho_out)
       
       ! Calculate necessary potentials
       select case (system%basis%type)
@@ -197,9 +203,7 @@ contains
       call flook_if_call(LUA, LUA_SCF_LOOP)
 #endif
 
-!      call yaml_map("Rel. Density", reldens)
       if ( res <= this%tol_reldens ) then
-        
         call yaml_comment("SCF cycle converged.")
         
         exit loop_scf
@@ -208,8 +212,6 @@ contains
 
       ! Perform mixing (in/out)
       call this%mix(system%basis, this%rho_in, this%rho_out)
-
-      !Update Hamiltonian matrix
 
     end do loop_scf
     

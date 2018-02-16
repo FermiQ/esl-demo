@@ -38,7 +38,7 @@ contains
 
     subroutine next_atomicorbs()
 
-      ! add content for the initialization for a new plane-wave step
+      ! add content for the initialization for a new atomic centered step
       call system%update(periodic=.false.)
 
     end subroutine next_atomicorbs

@@ -13,7 +13,6 @@ module esl_density_ac_m
   use mpi_dist_block_cyclic_m
   use esl_elsi_m, only: elsi_t
   use esl_calc_density_matrix_ac_m
-  
 
   implicit none
 
@@ -82,7 +81,7 @@ contains
   end subroutine guess
 
   !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, elsi, grid, pot, basis, S, rho, energy, out)
+  subroutine calculate(this, elsi, grid, H, pot, basis, S, rho, energy, out)
 #ifdef WITH_MPI
     use mpi, only: mpi_comm_world
 #endif
@@ -91,6 +90,8 @@ contains
     class(elsi_t), intent(inout) :: elsi
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
+    !< Hamiltonian
+    class(hamiltonian_ac_t), intent(inout) :: H
     !< Potential container which calculates Hartree and XC
     class(potential_t), intent(inout) :: pot
     !< Atomic orbital basis
@@ -105,78 +106,57 @@ contains
     type(density_ac_t), intent(inout) :: out
 
     !< Real-space grid on which to retain the atomic filled density
-    real(dp), allocatable :: rho_atom(:)
-
-    !< Create the initial DM
-    type(sparse_matrix_t) :: DM_atom
+    real(dp), allocatable :: Vscf(:)
 
     ! Currently we contain the Hamiltonian here.
     ! However, since it is needed elsewhere we should decide where to place it.
-    type(sparse_matrix_t) :: H
     type(mpi_dist_block_cyclic_t) :: dist
 
     ! TODO logic for calculating the output density from an input
     ! density.
-    allocate(rho_atom(grid%np))
+    allocate(Vscf(grid%np))
     ! Initialize
-    rho_atom(:) = 0._dp
+    Vscf(:) = 0._dp
     
-    ! Calculate the atomic density
-!    call basis%atomic_density_matrix(DM_atom)
+    ! First step for any SCF step is to setup the correct Hamiltonian
+    ! Add the kinetic and V_KB Hamiltonians
+    call H%setup_H0()
     
-    ! Expand the atomic dM on an auxiliary grid
-!    call add_density_matrix(grid, basis, DM_atom, rho_atom)
-!    call DM_atom%delete()
+    ! Calculate the kinetic energy and non-local energy
+    energy%kinetic = sum(H%kin%M * this%DM%M)
+    energy%KB = sum(H%vkb%M * this%DM%M)
 
-!    print *, '# DEBUG rho-atom sum', grid%integrate(rho_atom)
-
-    
     ! 1. Start by calculating the density from the DM on the grid
     rho(:) = 0._dp
     call add_density_matrix(grid, basis, this%DM, rho)
 
-!    print *, '# DEBUG dRho sum', grid%integrate(rho_atom)
-
-    ! Initialize the Hamiltonian to 0
-    call H%init(S%sp)
-    H%M(:) = 0._dp
-
-    ! First step for any SCF step is to setup the
-    ! correct Hamiltonian
-
-    !  1. Add the Laplacian to the Hamiltonian
-    call hamiltonian_ac_laplacian(basis, grid, H)
-    ! Calculate the kinetic energy
-    energy%kinetic = sum(H%M * this%DM%M)
-
     !  2. Add Hartree potential
-    ! Now we are in a position to calculate Hartree potential from
-    ! rho
-
+    ! Now we are in a position to calculate Hartree potential from rho
     print *, '# DEBUG Rho sum', grid%integrate(rho)
-
     ! Now call the potentials_t%calculate which does:
     !   1. Calculate the XC potential.
     !   2. Calculate the Hartree potential
     !   3. Calculate the external local potential
     call pot%calculate(rho, energy)
 
-    ! Sum external, Hartree and XC potential,
-    ! this will ease the addition of the matrix elements to do it in one go.
+    ! Sum Hartree and XC potential,
+    ! Note that PSolver (in its current invocation)
+    ! sums the Hartree and external potential. So we do not need to add it
+    ! twice.
+    ! This will ease the addition of the matrix elements to do it in one go.
     ! Re-use rho-atom as the sum of potentials.
-    ! I.e. after this line we cannot use rho_atom anymore!
-    rho_atom(:) = pot%hartree(:) + pot%vxc(:) + pot%external(:)
-    print *, '# DEBUG V sum', grid%integrate(rho_atom)
-    call hamiltonian_ac_potential(basis, grid, rho_atom, H)
+    ! I.e. after this line we cannot use Vscf anymore!
+    Vscf(:) = pot%hartree(:) + pot%vxc(:)
+    print *, '# DEBUG V sum', grid%integrate(Vscf)
+    call hamiltonian_ac_potential(basis, grid, Vscf, H%SCF)
 
     ! X. Calculate output density matrix elements from the Hamiltonian
     ! Initialize the distribution
 !    call dist%init(MPI_COMM_World, this%DM%sp%nr, this%DM%sp%nr)
-!    call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
-!    call calc_density_matrix_ac(elsi, H, S, out%DM)
+!    call set_elsi_sparsity_pattern_ac(elsi, dist, H%SCF%sp)
+!    call calc_density_matrix_ac(elsi, H%SCF, S, out%DM)
 !    call get_energy_results(elsi, energy%eigenvalues, energy%fermi, energy%entropy)
 !    call dist%delete()
-
 !    call energy%display()
 
     call my_check()
@@ -198,15 +178,22 @@ contains
 
       integer :: N_Ef
 
-      sp => H%sp
+      sp => H%SCF%sp
       n = sp%nr
 
       allocate(eig(n))
       allocate(B(n ** 2))
       allocate(work(n ** 2))
       B = S%M
+
+      ! Calculate the Kohn-Sham energy
+      ! This needs to be done before diagonalization
+      energy%eigenvalues = sum(H%SCF%M * this%DM%M)
       
-      call dsygv(1, 'V', 'U', n, H%M, n, B, n, eig, work, n ** 2,info)
+      call dsygv(1, 'V', 'U', n, H%SCF%M, n, B, n, eig, work, n ** 2, info)
+      if ( info /= 0 ) then
+        print *, '# DEBUG FAILED DIAGONALIZATION: ', info
+      end if
 
       N_Ef = nint( basis%Q )
       energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
@@ -227,16 +214,13 @@ contains
             
             ! Calculate new DM
             out%DM%M(ind) = out%DM%M(ind) + &
-                H%M((ib-1)*n + jo) * H%M((ib-1)*n + io)
+                H%SCF%M((ib-1)*n + jo) * H%SCF%M((ib-1)*n + io)
             
           end do
           
         end do
         
       end do
-
-      ! Calculate the Kohn-Sham energy
-      energy%eigenvalues = sum(H%M * this%DM%M)
 
       deallocate(B,eig,work)
 
