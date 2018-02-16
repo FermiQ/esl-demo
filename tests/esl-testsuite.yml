@@ -1,0 +1,51 @@
+%YAML 1.2
+---
+
+# Default test parameters:
+#
+# - category   : basic = "just run SIESTA", advanced = "complex workflow"
+# - fail_allow : whether it is OK for a test to fail
+# - fail_expect: whether a test is expected to fail (new feature development)
+# - program    : executable program to run
+# - timeout    : maximum run time allowed (in case the program hangs)
+#
+# All these parameters can be overridden individually for each test.
+#
+defaults:
+  category: basic
+  fail_allow: no
+  fail_expect: no
+  program: esl 
+  timeout: 300
+
+# Term-wise tolerances (can be overridden individually for each test)
+tolerances:
+  DEna:   0.015
+  DUscf:  0.001
+  Eharris: 0.003
+  Ekin:   0.017
+  Ena:     0.003
+  Enl:    0.005
+  Etot:   0.003
+  Exc:    0.003
+  FreeEng: 0.005
+  Uscf:   0.015
+
+# Specifications for each test case:
+#
+# - auxdata : auxilliary files needed by the test
+# - name    : short name for the test (should match the test directory name)
+# - title   : one-sentence description of the test
+# - triggers: 
+#
+# The "name" and "title" fields are mandatory. The rest is optional.
+#
+tests:
+  - name: "ac"
+    title: "some title"
+  - name: "ac_H"
+    title: "Untitled"
+  - name: "pw"
+    title: "plane wave test"
+
+...
