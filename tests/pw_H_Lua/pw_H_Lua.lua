@@ -21,6 +21,7 @@ end
 
 
 res = {}
+local math = require "math"
 function scf(esl)
    -- Start by
    esl.IOprint('# LUA: Currently in SCF!')
@@ -43,6 +44,7 @@ function scf(esl)
 	 -- Decrease by 10%
 	 esl.SCF.Mixer.Alpha = esl.SCF.Mixer.Alpha * 0.9
       end
+      esl.SCF.Mixer.Alpha = math.min(0.9, esl.SCF.Mixer.Alpha)
 
       esl.send({'SCF.Mixer.Alpha'})
    end
