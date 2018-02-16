@@ -1,5 +1,5 @@
 NumberOfAtoms 1
-output test_H.out
+output ac_H.out
 
 cubic 10.0 Ang
 

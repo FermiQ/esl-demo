@@ -1,5 +1,5 @@
 NumberOfAtoms 3
-output test.out
+output ac.out
 
 cubic 10.0 Ang
 
