@@ -96,6 +96,7 @@ contains
   ! Calculate output density from an input density
   !----------------------------------------------------
   subroutine calculate(this, elsi, system, H, states, out)
+    use yaml_output, only: yaml_map
     class(density_t),   intent(inout) :: this
     type(elsi_t), intent(inout) :: elsi
     type(system_t), intent(inout) :: system
@@ -110,6 +111,7 @@ contains
 
       ! Calculate density
       call out%density_pw%calculate(states)
+      call yaml_map("Norm", system%basis%grid%integrate(out%density_pw%density))
 
     case ( ATOMCENTERED )
 
