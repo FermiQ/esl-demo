@@ -1,9 +1,11 @@
 module esl_grid_m
-  use esl_numeric_m, only: grylmr
   use prec, only : dp,lp
   use iso_c_binding
+
+  use esl_numeric_m, only: grylmr
   use module_fft_sg
   use pspiof_m
+  
   implicit none
   include 'fftw3.f03'
 

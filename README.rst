@@ -1,12 +1,19 @@
-ESL Demonstrator - Basic Plane-Wave Code
-========================================
+ESL Demonstrator - A basic DFT Code
+===================================
 
-.. image:: https://gitlab.e-cam2020.eu:10443/esl/esl-demo-pw/badges/master/build.svg
+.. image:: https://gitlab.e-cam2020.eu:10443/esl/esl-demo/badges/master/build.svg
    :alt: Build status
-   :target: https://gitlab.e-cam2020.eu:10443/esl/esl-demo-pw/commits/master
+   :target: https://gitlab.e-cam2020.eu:10443/esl/esl-demo/commits/master
 
-``esl-demo-pw`` demonstrates how to use Electronic Structure Library
-components to build and run a basic plane-wave Density Functional Theory code.
+``esl-demo`` demonstrates how to use Electronic Structure Library
+components to build and run a basic Density Functional Theory code.
+
+The demonstrator implements both a plane-wave code and a atomic orbital
+code.
+
+The ESL demonstrator documentation may be found `here <esl-demo-doc>`_.
+
+.. _esl-demo-doc: http://esl.e-cam2020.io/esl-demo//public/
 
 
 Minimum requirements
@@ -21,13 +28,13 @@ The following software elements are required to play with this project:
 
 To build the documentation, you will need a recent version of `Sphinx`_.
 
-_Sphinx:: http://sphinx-doc.org/
+.. _Sphinx: http://sphinx-doc.org/
 
 
 Developer requirements
 ----------------------
 
-If you clone the Git repository of ``esl-demo-pw``, you will need the following
+If you clone the Git repository of ``esl-demo``, you will need the following
 packages to build the demonstrator:
 
 - Autoconf >= 2.69
@@ -48,6 +55,7 @@ This ESL Demonstrator makes use of the following ESL components:
 - Pspio
 - SQARE
 - ESLW_Drivers
+- flook
 
 They will be downloaded and built automatically the first time you try to build
-``esl-demo-pw``.
+``esl-demo``.

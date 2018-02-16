@@ -9,13 +9,22 @@ module esl_basis_m
   use esl_grid_m
   use yaml_output
 
+#ifdef WITH_FLOOK
+  use dictionary
+  use esl_dict_m
+#endif
+
   implicit none
 
   private
 
   public :: basis_t
 
-  !Data structure for the basis
+  !< Basis information
+  !<
+  !< Contains the choice of the used basis, PW vs. AC
+  !< and also contains the specific basises used for each
+  !< of the PW vs. AC codes.
   type basis_t
     integer :: type
     type(basis_pw_t) :: pw !< Plane-wave basis
@@ -41,7 +50,7 @@ contains
     class(basis_t)                   :: this
     type(geometry_t),     intent(in) :: geo
     
-    character(len=100) :: str
+    character(len=128) :: str
     real(dp) :: ecut
     integer  :: ndims(3)
 
@@ -58,14 +67,20 @@ contains
       ! Initialize PW basis
       call this%pw%init(this%grid, ecut, ndims, geo%icell)
       this%size = this%pw%npw
+
+#ifdef WITH_FLOOK
+      call esl_dict_var_add('PW.CutOff', this%pw%ecut)
+#endif
       
     else if ( leqi(str, 'AtomicOrbitals') ) then
       
       this%type = ATOMCENTERED
 
+      ecut = fdf_get('MeshCutOff', 10._dp, 'Ha')
+
       ! Initialize auxiliary grid
-      ! For the moment the spacing in real space is hardcoded
-      call ndims_from_spacing(ndims, 0.25_dp, geo%cell)
+      call ndims_from_meshcutoff(ndims, ecut, geo%icell)
+
       call this%grid%init(ndims, geo%cell)
 
       ! Initialize AC basis
@@ -195,5 +210,21 @@ contains
     end do
 
   end subroutine ndims_from_spacing
+
+  subroutine ndims_from_meshcutoff(ndims, cutoff, icell)
+    integer,  intent(out) :: ndims(3)
+    real(dp), intent(in)  :: cutoff
+    real(dp), intent(in)  :: icell(3,3)
+    
+    integer :: idim, n
+    real(dp) :: v
+    
+    do idim = 1,3
+      v = dot_product(icell(:, idim), icell(:, idim))
+      n = 2 * sqrt(cutoff / v) + 1
+      call fourier_dim(n, ndims(idim))
+    end do
+
+  end subroutine ndims_from_meshcutoff
     
 end module esl_basis_m

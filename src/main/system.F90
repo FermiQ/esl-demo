@@ -27,9 +27,16 @@ module esl_system_m
 
   public :: system_t
 
-  !Data structure for the system
+  !< System data structure
+  !<
+  !< The system data-structure is a basic container that encompass
+  !< everything related to a single DFT calculation.
+  !< It contains the basis, energy, geometry and force information.
+  !< This is the highest level type which is necessary for performing
+  !< any DFT calculation.
   type system_t
-    !< Container for PW and AC basis
+    
+    !< Container for the basis used (container for PW and AC)
     type(basis_t) :: basis
     !< All system related energies
     type(energy_t) :: energy
@@ -52,6 +59,7 @@ module esl_system_m
     ! does not necessarily use the overlap matrix
     type(sparse_matrix_t) :: S ! always 1D
 
+    !< Total number of electrons
     real(dp) :: nElectrons = 0._dp
   contains
     private
@@ -64,8 +72,26 @@ module esl_system_m
 
 contains
 
-  !Initialize the physical system
-  !----------------------------------------------------
+  !< Initialize all contained types.
+  !<
+  !< If your compilation is performed with Lua, it is only *after*
+  !< this call are the listed items exposed to Lua:
+  !<   - Geometry.xyz
+  !<   - Geometry.cell
+  !<   - Geometry.Force.Total
+  !<   - Geometry.Force.Local
+  !<   - Geometry.Force.NonLocal
+  !<   - Geometry.Force.IonIon
+  !<   - IonIon.Ewald.Alpha
+  !<   - IonIon.Ewald.Alpha
+  !<   - E.Total
+  !<   - E.Hartree
+  !<   - E.Fermi
+  !<   - E.IonIon
+  !<   - E.External
+  !<   - E.Exchange
+  !<   - E.Correlation
+  !<   - E.Kinetic
   subroutine init(this)
     class(system_t), intent(inout) :: this
 
@@ -101,6 +127,9 @@ contains
 
   end subroutine init
 
+  !< Update the system after an MD step
+  !< Currently this re-calculates ion-specific quantities that are
+  !< independent on the SCF.
   subroutine update(this, periodic)
     class(system_t), intent(inout) :: this
     logical, intent(in) :: periodic
@@ -113,15 +142,14 @@ contains
     
   end subroutine update
 
-  !Release
-  !----------------------------------------------------
+
+  !< Clean up all the contained types.
   subroutine cleanup(sys)
     type(system_t) :: sys
 
   end subroutine cleanup
 
-  !Summary
-  !----------------------------------------------------
+  !< Show information about the type as YAML output
   subroutine summary(sys)
     use yaml_output
     class(system_t) :: sys

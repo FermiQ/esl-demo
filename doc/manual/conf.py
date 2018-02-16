@@ -207,7 +207,7 @@ html_static_path = ['_static']
 #html_search_scorer = 'scorer.js'
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = 'ESLPlane-WaveDemonstratordoc'
+htmlhelp_basename = 'ESLDemonstratordoc'
 
 # -- Options for LaTeX output ---------------------------------------------
 
@@ -229,7 +229,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'ESLPlane-WaveDemonstrator.tex', 'ESL Plane-Wave Demonstrator Documentation',
+    (master_doc, 'ESLDemonstrator.tex', 'ESL Demonstrator Documentation',
      'Yann Pouillon, Micael Oliveira, Fabiano Corsetti, Stefano de Gironcoli, Nick Papior, Damien Caliste, William Huhn, Victor Yu, Volker Blum', 'manual'),
 ]
 
@@ -259,7 +259,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'eslplane-wavedemonstrator', 'ESL Plane-Wave Demonstrator Documentation',
+    (master_doc, 'esl-demonstrator', 'ESL Demonstrator Documentation',
      [author], 1)
 ]
 
@@ -273,8 +273,8 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'ESLPlane-WaveDemonstrator', 'ESL Plane-Wave Demonstrator Documentation',
-     author, 'ESLPlane-WaveDemonstrator', 'One line description of project.',
+    (master_doc, 'ESLDemonstrator', 'ESL Demonstrator Documentation',
+     author, 'ESLDemonstrator', 'One line description of project.',
      'Miscellaneous'),
 ]
 
