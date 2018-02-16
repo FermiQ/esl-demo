@@ -21,3 +21,5 @@ cut-off 5 Ha
 
 SCFMaxIterations 200
 SCF.Mix.alpha = 0.3
+
+ExtraStates = 1
