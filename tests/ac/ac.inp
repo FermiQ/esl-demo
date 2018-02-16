@@ -19,4 +19,4 @@ Smearing COLD
 BasisSet AtomicOrbitals
 
 SCF.Mix.Alpha 0.2
-SCFMaxIterations 100
+SCFMaxIterations 2
