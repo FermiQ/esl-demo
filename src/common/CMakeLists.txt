@@ -3,6 +3,7 @@ add_library(common
   elsi_wrapper.F90
   energy.F90
   esl_dict.F90
+  flook_global.F90
   flook_if.F90
   force.F90
   geometry.F90

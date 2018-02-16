@@ -45,7 +45,7 @@ contains
 
     type(luaState), intent(inout) :: LUA
 
-    character(len=30) :: fortran_msg
+    character(len=64) :: fortran_msg
 
     character(*), parameter :: fortran_static_lua = '&
 esl = { &
@@ -55,7 +55,6 @@ esl = { &
   SCF_LOOP = 3, &
   FORCES = 4, &
   NEXT_STEP = 5, &
-  ANALYSIS = 6, &
   state = 0, &
   IOprint = function(self, ...) &
     if self.IONode then &
@@ -122,6 +121,8 @@ esl_comm = function(...) end'
       call message_error('LUA initialization failed, please check your Lua script!!!')
     end if
 
+    flook_if_run = .true.
+
   end subroutine flook_if_init
 
   subroutine flook_if_call(LUA, state)
@@ -176,7 +177,7 @@ esl_comm = function(...) end'
     use, intrinsic :: iso_c_binding, only: c_ptr, c_int
 
     use dictionary
-    use esl_dicts
+    use esl_dict_m
 
     ! Define the state
     type(c_ptr), value :: state
@@ -189,7 +190,7 @@ esl_comm = function(...) end'
     type(dict) :: keys
 
     if ( flook_if_debug ) then
-      write(*,'(a,i0)') '  lua: esl_receive, Node = ',Node + 1
+      write(*,'(a,i0)') '  lua: esl_receive, Node = ',1
     end if
 
     call lua_init(LUA,state)
@@ -201,8 +202,7 @@ esl_comm = function(...) end'
     tbl = lua_table(LUA,'esl')
 
     ! Expose the dictionary
-    call flook_if_put_dict(tbl,options,keys)
-    call flook_if_put_dict(tbl,variables,keys)
+    call flook_if_put_dict(tbl,esl_variables,keys)
 
     call lua_close_tree(tbl)
 
@@ -218,7 +218,7 @@ esl_comm = function(...) end'
     use, intrinsic :: iso_c_binding, only: c_ptr, c_int
 
     use dictionary
-    use esl_dicts
+    use esl_dict_m
 
     ! Define the state
     type(c_ptr), value :: state
@@ -230,7 +230,7 @@ esl_comm = function(...) end'
     type(dict) :: keys
 
     if ( flook_if_debug ) then
-      write(*,'(a,i0)') '  lua: esl_send, Node = ',Node + 1
+      write(*,'(a,i0)') '  lua: esl_send, Node = ',1
     end if
 
     call lua_init(LUA,state)
@@ -242,8 +242,7 @@ esl_comm = function(...) end'
     tbl = lua_table(LUA,'esl')
 
     ! Expose the dictionary
-    call flook_if_get_dict(tbl,options,keys)
-    call flook_if_get_dict(tbl,variables,keys)
+    call flook_if_get_dict(tbl,esl_variables,keys)
 
     call lua_close_tree(tbl)
 
@@ -335,7 +334,7 @@ esl_comm = function(...) end'
     subroutine put_var(key)
       use prec, only: sp, dp
       character(len=*), intent(in) :: key
-      character(len=1), pointer :: a1(:)
+!      character(len=1), pointer :: a1(:)
       logical, pointer :: b0, b1(:), b2(:,:)
       integer, pointer :: i0, i1(:), i2(:,:)
       real(sp), pointer :: s0, s1(:), s2(:,:)
@@ -361,10 +360,10 @@ esl_comm = function(...) end'
         end if
       end select
       select case ( t )
-      case ( 'a1' )
-        call associate(a1,v)
-        lkey = cunpack(a1)
-        call lua_set(tbl,rkey,lkey(1:len_trim(lkey)))
+!      case ( 'a1' )
+!        call associate(a1,v)
+!        lkey = cunpack(a1)
+!        call lua_set(tbl,rkey,lkey(1:len_trim(lkey)))
       case ( 'b0' )
         call associate(b0,v)
         call lua_set(tbl,rkey,b0)
@@ -486,12 +485,12 @@ esl_comm = function(...) end'
       end select
       !      print *,'Attempt retrieving: ',trim(key), ' type= ',t
       select case ( t )
-      case ( 'a1' )
-        call associate(a1,v)
-        call lua_get(tbl,rkey,V0)
-        na1 = len_trim(V0)
-        a1 = ' '
-        a1(1:na1) = cpack(V0(1:na1))
+!      case ( 'a1' )
+!        call associate(a1,v)
+!        call lua_get(tbl,rkey,V0)
+!        na1 = len_trim(V0)
+!        a1 = ' '
+!        a1(1:na1) = cpack(V0(1:na1))
       case ( 'b0' ) 
         call associate(b0,v)
         call lua_get(tbl,rkey,b0)
@@ -556,7 +555,7 @@ esl_comm = function(...) end'
     use, intrinsic :: iso_c_binding, only: c_ptr, c_int
 
     use dictionary
-    use esl_dicts
+    use esl_dict_m
 
     ! Define the state
     type(c_ptr), value :: state
@@ -570,23 +569,16 @@ esl_comm = function(...) end'
     ! Currently we only let the current io-node
     ! print out information.
     nret = 0
-    if ( .not. flook_if_debug ) return
+    ! TODO limit this to the IO node
+!    if ( .not. flook_if_debug ) return
 
     ! Print out information
     write(*,'(a)') '-- esl table structure available in LUA'
     write(*,'(a)') 'esl = {'
-    write(*,'(tr2,a,i0,'','')') 'Node = ',Node + 1
+    write(*,'(tr2,a,i0,'','')') 'Node = ',1
 
     ! Loop across all keys in the dictionaries
-    et = .first. options
-    do while ( .not. (.empty. et) )
-      key = .key. et
-      write(*,fmt) trim(key)
-      et = .next. et
-    end do
-
-    ! Loop across all keys in the dictionaries
-    et = .first. variables
+    et = .first. esl_variables
     do while ( .not. (.empty. et) )
       key = .key. et
       write(*,fmt) trim(key)

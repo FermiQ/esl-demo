@@ -4,7 +4,12 @@ module esl_system_m
   use esl_numeric_m, only : matr3inv
 
   use fdf, only : block_fdf, fdf_get, fdf_block,fdf_defined, &
-       parsed_line, fdf_breals, fdf_bline, fdf_bnames
+      parsed_line, fdf_breals, fdf_bline, fdf_bnames
+
+#ifdef WITH_FLOOK
+  use dictionary
+  use esl_dict_m
+#endif
 
   ! Sparse pattern for LO
   use esl_sparse_pattern_m, only: sparse_pattern_t
@@ -77,6 +82,27 @@ contains
     call this%energy%init()
 
     call this%summary()
+
+#ifdef WITH_FLOOK
+    ! Add variables
+    call esl_dict_var_add('Geometry.xyz', this%geo%xyz)
+    call esl_dict_var_add('Geometry.cell', this%geo%cell)
+    call esl_dict_var_add('Geometry.Force.Total', this%force%total)
+    call esl_dict_var_add('Geometry.Force.Local', this%force%loc)
+    call esl_dict_var_add('Geometry.Force.NonLocal', this%force%nl)
+    call esl_dict_var_add('Geometry.Force.IonIon', this%force%ionion)
+    call esl_dict_var_add('IonIon.Ewald.Alpha', this%ion_inter%alpha)
+    
+    call esl_dict_var_add('E.Total', this%energy%total)
+    call esl_dict_var_add('E.Hartree', this%energy%hartree)
+    call esl_dict_var_add('E.Fermi', this%energy%fermi)
+    call esl_dict_var_add('E.IonIon', this%energy%ionion)
+    call esl_dict_var_add('E.External', this%energy%extern)
+    call esl_dict_var_add('E.Exchange', this%energy%exchange)
+    call esl_dict_var_add('E.Correlation', this%energy%correlation)
+    call esl_dict_var_add('E.Kinetic', this%energy%kinetic)
+
+#endif
 
   end subroutine init
 
