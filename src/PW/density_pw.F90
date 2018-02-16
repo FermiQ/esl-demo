@@ -147,7 +147,7 @@ contains
   function residue(this, grid, nel, other) result(res)
     class(density_pw_t), intent(in) :: this
     type(grid_t),        intent(in) :: grid
-    integer,             intent(in) :: nel
+    real(dp),            intent(in) :: nel
     type(density_pw_t),  intent(in) :: other
 
     real(kind=dp), allocatable :: diff(:)
@@ -161,7 +161,7 @@ contains
       diff(ip) = abs(other%density(ip) - this%density(ip))
     end do
     res = grid%integrate(diff)
-    if ( nel > 0 ) then
+    if ( nel > 0.0_dp ) then
       res = res / real(nel, dp)
     end if
 

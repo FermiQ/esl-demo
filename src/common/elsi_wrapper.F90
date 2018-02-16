@@ -33,12 +33,12 @@ contains
 
     class(elsi_t), intent(inout) :: this
     integer(ip),   intent(in)    :: n_basis
-    integer(ip),   intent(in)    :: n_electron
+    real(dp),      intent(in)    :: n_electron
     integer(ip),   intent(in)    :: n_state
 
     ! Initialize an ELSI handle
     call elsi_init(this%e_h, ELPA, MULTI_PROC, SIESTA_CSR, n_basis, &
-      & real(n_electron, dp), min(2*n_electron, n_basis))
+      & n_electron, min(2*int(n_electron), n_basis))
 
     this%KS_energy   = 0._dp
     this%fermi_level = 0._dp
