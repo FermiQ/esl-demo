@@ -94,12 +94,9 @@ contains
     call this%rho_out%init(system)
 
 #ifdef WITH_FLOOK
-    esl_options = esl_options // &
-        ('SCF.Mixer.Alpha'.kvp.this%mixer%alpha)
-    esl_options = esl_options // &
-        ('SCF.Iter.Max'.kvp.this%max_iter)
-    esl_options = esl_options // &
-        ('SCF.Tolerance'.kvp.this%tol_reldens)
+    call esl_dict_var_add('SCF.Mixer.Alpha', this%mixer%alpha)
+    call esl_dict_var_add('SCF.Iter.Max', this%max_iter)
+    call esl_dict_var_add('SCF.Tolerance', this%tol_reldens)
 #endif
 
   end subroutine init
