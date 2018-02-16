@@ -202,7 +202,6 @@ esl_comm = function(...) end'
     tbl = lua_table(LUA,'esl')
 
     ! Expose the dictionary
-    call flook_if_put_dict(tbl,esl_options,keys)
     call flook_if_put_dict(tbl,esl_variables,keys)
 
     call lua_close_tree(tbl)
@@ -243,7 +242,6 @@ esl_comm = function(...) end'
     tbl = lua_table(LUA,'esl')
 
     ! Expose the dictionary
-    call flook_if_get_dict(tbl,esl_options,keys)
     call flook_if_get_dict(tbl,esl_variables,keys)
 
     call lua_close_tree(tbl)
@@ -578,14 +576,6 @@ esl_comm = function(...) end'
     write(*,'(a)') '-- esl table structure available in LUA'
     write(*,'(a)') 'esl = {'
     write(*,'(tr2,a,i0,'','')') 'Node = ',1
-
-    ! Loop across all keys in the dictionaries
-    et = .first. esl_options
-    do while ( .not. (.empty. et) )
-      key = .key. et
-      write(*,fmt) trim(key)
-      et = .next. et
-    end do
 
     ! Loop across all keys in the dictionaries
     et = .first. esl_variables
