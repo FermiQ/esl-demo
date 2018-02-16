@@ -13,6 +13,7 @@ proc ModulesHelp {} {
 }
 
 module-whatis   "$pkg"
+conflict $pkg/serial
 
 
 set base /home/drFaustroll/$pkg/$comp/$version
