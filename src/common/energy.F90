@@ -83,6 +83,8 @@ contains
     call yaml_map("KB", this%KB)
     call yaml_map("Ion-ion", this%ionion)
     call yaml_map("Extern", this%extern)
+    call yaml_map("Exchange", this%exchange)
+    call yaml_map("Correlation", this%correlation)
     call yaml_map("Int_nvxc", this%int_nvxc)
     call yaml_map("Kinetic", this%kinetic)
     call yaml_map("Fermi-level", this%fermi)
