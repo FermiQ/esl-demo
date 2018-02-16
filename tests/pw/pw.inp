@@ -1,5 +1,5 @@
 NumberOfAtoms 3
-output test.out
+output pw.out
 
 cubic 10.0 Ang
 

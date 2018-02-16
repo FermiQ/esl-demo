@@ -1,5 +1,5 @@
 NumberOfAtoms 1
-output test_H.out
+output ac_H_Lua.out
 
 cubic 10.0 Ang
 
@@ -18,5 +18,5 @@ BasisSet AtomicOrbitals
 SCF.Mix.Alpha 0.2
 SCFMaxIterations 100
 
-Lua.Script test_ac_H_Lua.lua
+Lua.Script ac_H_Lua.lua
 Lua.Debug true
