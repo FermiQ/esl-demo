@@ -114,7 +114,7 @@ target_link_libraries(${target_name} ac pw elsi_rci common ${FDF_LIBRARIES} ${PS
 target_link_libraries(${target_name} common ac pw ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES}  ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if(WITH_MPI)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
-  target_link_libraries(${target_name} esldmpi ${MPI_LIBRARIES})
+  target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES} ${MPI_CXX_LIBRARIES})
   message(STATUS "aaa ${MPI_CXX_LIBRARIES}")
 endif()
 if(WITH_FLOOK)
