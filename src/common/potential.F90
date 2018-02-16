@@ -15,6 +15,7 @@ module esl_potential_m
 
   !Data structure for the potentials
   type potential_t
+    
     integer :: np !< Number of points in real space
 
     real(dp), allocatable :: hartree(:)  !Hartree potential
