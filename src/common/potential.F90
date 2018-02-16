@@ -63,7 +63,7 @@ contains
     pot%ionicOffset = 0._dp
     call pot%psolver%init(0, 1, geocode, grid%ndims, grid%hgrid)
 
-    call pot%xc%init()
+    call pot%xc%init(geo, grid)
 
     call pot%compute_ext_loc(grid, geo)
 
@@ -98,7 +98,7 @@ contains
     call pot%psolver%h_potential(pot%hartree, pot%external, pot%ionicOffset, energy%hartree)
 
     !Here we need to compute the xc potential
-    call pot%xc%calculate(density, pot%vxc)
+    call pot%xc%calculate(density, energy, pot%vxc)
 
   end subroutine calculate
 
