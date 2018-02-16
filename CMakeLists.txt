@@ -20,6 +20,10 @@ include(GNUInstallDirs)
 include(ESLDemoBuildOptions)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+if (WITH_COVERAGE)
+  include(CodeCoverage)
+  set(BUILD_TESTING ON)
+endif() 
 
 if(WITH_MPI)
   ### if we want MPI check for it and set the internal kitchen
@@ -153,3 +157,7 @@ else()
 endif()
 
 
+if (WITH_COVERAGE)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/analysis)
+  setup_coverage(coverage analysis)
+endif()
