@@ -20,6 +20,10 @@ include(GNUInstallDirs)
 include(ESLDemoBuildOptions)
 set(LIBRARY_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_LIBDIR})
 set(EXECUTABLE_OUTPUT_PATH ${PROJECT_BINARY_DIR}/${CMAKE_INSTALL_BINDIR})
+if (WITH_COVERAGE)
+  include(CodeCoverage)
+  set(BUILD_TESTING ON)
+endif() 
 
 if(WITH_MPI)
   ### if we want MPI check for it and set the internal kitchen
@@ -37,8 +41,8 @@ pkg_check_modules(FDF REQUIRED libfdf>=0.1.1)
 pkg_check_modules(PSOLVER REQUIRED psolver>=1.8)
 pkg_check_modules(PSPIO REQUIRED libpspio>=0.2.2)
 pkg_check_modules(FFTW REQUIRED fftw3>=3.3.0)
-find_package(BLAS REQUIRED)
 pkg_check_modules(GSL REQUIRED gsl>=1.16)
+pkg_check_modules(GRIDXC REQUIRED libgridxc>=0.8.0.3)
 pkg_check_modules(ELSI REQUIRED elsi>=0.0)
 
 message(STATUS "Found FDF support!")
@@ -60,6 +64,11 @@ link_directories(${GSL_LIBRARY_DIRS})
 message(STATUS "Found FFTW support!")
 include_directories(${FFTW_PREFIX}/include)
 link_directories(${FFTW_LIBRARY_DIRS})
+
+message(STATUS "Found GRIDXC support!")
+include_directories(${GRIDXC_INCLUDEDIR})
+include_directories(${GRIDXC_INCLUDE_DIRS})
+link_directories(${GRIDXC_LIBRARY_DIRS})
 
 message(STATUS "Found ELSI support!")
 include_directories(${ELSI_INCLUDEDIR})
@@ -93,6 +102,7 @@ add_subdirectory(${src_dir}/PW)
 add_subdirectory(${src_dir}/AC)
 add_subdirectory(${src_dir}/common)
 add_subdirectory(${src_dir}/elsi_rci)
+add_subdirectory(${src_dir}/gridxc_handlers)
 
 
 add_executable(${target_name}
@@ -104,7 +114,8 @@ add_executable(${target_name}
   ${src_dir}/main/scf.F90
   ${src_dir}/main/system.F90
   )
-target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
+add_dependencies(${target_name} gridxc_handlers)
+target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${GRIDXC_LIBRARIES} gridxc_handlers ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if(WITH_MPI)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
   target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES} ${MPI_CXX_LIBRARIES})
@@ -153,3 +164,7 @@ else()
 endif()
 
 
+if (WITH_COVERAGE)
+  file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/analysis)
+  setup_coverage(coverage analysis)
+endif()

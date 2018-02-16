@@ -137,6 +137,15 @@ contains
     !   1. Calculate the XC potential.
     !   2. Calculate the Hartree potential
     !   3. Calculate the external local potential
+    ! TODO check PSolver
+    ! I am not sure whether PSolver requires the voxel normed
+    ! density. If that is the case:
+    !   rho = rho * grid%volelem
+    ! also, perhaps the potentials should be adapted in the
+    ! pot%* to be normalized as well.
+    ! All I can say is that if rho = rho * grid%volelem
+    ! the Mulliken charges are less fluctuating on the Hydrogen case
+    ! for the s-orbital.
     call pot%calculate(rho, energy)
 
     ! Sum Hartree and XC potential,

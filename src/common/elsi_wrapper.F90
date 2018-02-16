@@ -49,9 +49,9 @@ contains
   !> Finalize ELSI
   subroutine cleanup(this)
     type(elsi_t), intent(inout) :: this
-    
+
     call elsi_finalize(this%e_h)
-    
+
   end subroutine cleanup
 
 end module esl_elsi_m
