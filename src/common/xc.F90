@@ -16,13 +16,14 @@ module esl_xc_m
 
   !Data structure for the xc potential
   type xc_t
-    integer  :: exchange
-    integer  :: correlation
+    integer :: exchange
+    integer :: correlation
     real(dp), pointer :: cell(:,:) => null()
     integer, pointer :: nmesh(:) => null()
   contains
     procedure, public :: init
     procedure, public :: calculate
+    procedure, public :: summary
     final  :: cleanup
   end type xc_t
 
@@ -35,11 +36,11 @@ contains
     type(geometry_t), target, intent(in) :: geo
     type(grid_t), target, intent(in) :: grid
 
-    this%exchange = fdf_get('exchange', XC_LDA_X)
-    this%correlation = fdf_get('correlation', XC_LDA_C_PZ)
+    this%exchange = fdf_get('Exchange', XC_LDA_X)
+    this%correlation = fdf_get('Correlation', XC_LDA_C_PZ)
 
     call setxc_libxc_ids(2, [this%exchange, this%correlation])
-
+    
     this%cell => geo%cell
     this%nmesh => grid%ndims
 
@@ -87,15 +88,27 @@ contains
 
     ! Let GridXC build the potential from the density
     call cellXC(0, this%cell, this%nmesh, lb1, ub1, lb2, ub2, lb3, ub3, nspin, &
-&     density, ex, ec, dx, dc, stress_xc, vxc)
+        density, ex, ec, dx, dc, stress_xc, vxc)
 
     ! Populate energy terms, with necessary arithmetics
-    edata%exchange = ex
-    edata%correlation = ec
-    edata%int_nvxc = dx + dc
+    ! Internally libgridxc uses Ry, convert to Hartree
+    edata%exchange = ex * 0.5_dp
+    edata%correlation = ec * 0.5_dp
+    edata%int_nvxc = (dx + dc) * 0.5_dp
 
     ! FIXME: convert potential from 4 to 1 dimension
 
   end subroutine calculate
+
+  subroutine summary(this)
+    use yaml_output
+    class(xc_t), intent(in) :: this
+
+    call yaml_mapping_open("XC")
+    call yaml_map("Exchange (LibXC ID)", this%exchange)
+    call yaml_map("Correlation (LibXC ID)", this%correlation)
+    call yaml_mapping_close()
+
+  end subroutine summary
 
 end module esl_xc_m

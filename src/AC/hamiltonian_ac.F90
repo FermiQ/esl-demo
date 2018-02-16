@@ -197,7 +197,6 @@ contains
     ! Retrieve pointer
     sp => H%sp
 
-
   end subroutine hamiltonian_ac_Vkb
 
 
