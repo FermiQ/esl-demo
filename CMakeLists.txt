@@ -5,7 +5,7 @@ endif(COMMAND cmake_policy)
 
 project(esl-demo
   VERSION 0.0.1
-  LANGUAGES Fortran
+  LANGUAGES Fortran CXX
   )
 
 set(AUTHOR "X;Y;Z")
@@ -98,7 +98,7 @@ add_executable(${target_name}
 target_link_libraries(${target_name} ac pw common ${FDF_LIBRARIES} ${PSOLVER_LIBRARIES} ${PSPIO_LIBRARIES} ${FFTW_LIBRARIES} ${GSL_LIBRARIES} ${ELSI_LIBRARIES})
 if(WITH_MPI)
   set_target_properties(${target_name} PROPERTIES COMPILE_DEFINITIONS "WITH_MPI")
-  target_link_libraries(${target_name} esldmpi ${MPI_LIBRARIES})
+  target_link_libraries(${target_name} esldmpi ${MPI_Fortran_LIBRARIES} ${MPI_CXX_LIBRARIES})
 endif()
 
 if(WITH_DOC)
