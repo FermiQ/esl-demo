@@ -42,12 +42,16 @@ tolerances:
 #
 tests:
   - name: "ac"
-    title: "some title"
+    title: "AC"
   - name: "ac_H"
-    title: "Untitled"
+    title: "AC single Hydrogen"
   - name: "ac_H_Lua"
-    title: "AC single Hydrogen with Luad"
+    title: "AC single Hydrogen with Lua"
   - name: "pw"
-    title: "plane wave test"
+    title: "PW"
+  - name: "pw_H"
+    title: "PW single Hydrogen"
+  - name: "pw_H_Lua"
+    title: "PW single Hydrogen with Lua"
 
 ...
