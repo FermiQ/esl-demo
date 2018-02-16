@@ -1,6 +1,7 @@
 module esl_states_m
 
   use prec, only : dp,ip
+  use fdf
   use yaml_output
 
   use esl_geometry_m
@@ -50,12 +51,16 @@ contains
     logical,          intent(in)    :: complex !< Should the wavefunctions be complex?
     integer,          intent(in)    :: ncoef    !< Size of wavefunctions (number of coefficients)
 
-    integer :: ist, isp, ik
+    integer :: ist, isp, ik, extra_states
+
+    extra_states = fdf_get('ExtraStates', 0)
 
     !TODO: the charge hould be a real number, not an integer
-    this%nel = int(geo%electronic_charge())
-    this%nstates = this%nel
     this%nspin = nspin
+    this%nel = int(geo%electronic_charge())
+    this%nstates = int(geo%electronic_charge()/2)
+    if ( this%nstates*2 < geo%electronic_charge() ) this%nstates = this%nstates + 1
+    this%nstates = this%nstates + extra_states
     this%nkpt = nkpt
     this%complex_states = complex
     this%ncoef = ncoef
