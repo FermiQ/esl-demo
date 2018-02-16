@@ -71,7 +71,7 @@ contains
     this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt) = 0._dp
     nel = this%nel
     do ist = 1, this%nstates
-      if ( nel == 0.0_dp) exit
+      if ( nel <= 0.0_dp) exit
       occ = 2.0/real(this%nspin, dp)
       if ( nel < occ ) occ = nel
       this%occ_numbers(ist,  1:nspin, 1:nkpt) = occ
