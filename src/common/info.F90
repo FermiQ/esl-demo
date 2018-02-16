@@ -14,19 +14,24 @@ contains
   subroutine about()
 
 #ifdef WITH_MPI
-    integer          :: ierr,mpi_ver,mpi_subver,ll
-    character(1000)  :: lib
+    integer          :: ierr,mpi_ver,mpi_subver
     character(20)    :: aux
+#ifndef OLDMPI    
+    character(1000)  :: lib
+    integer          :: ll
+#endif    
 #endif
     call yaml_mapping_open("About")
     call yaml_map("compiler version", trim(compiler_version()))
     call yaml_map("compiler options", trim(compiler_options()))
 #ifdef WITH_MPI
     call MPI_Get_version(mpi_ver,mpi_subver,ierr)
-!    call MPI_Get_library_version(lib,ll,ierr)
     write(aux,'(i0,a1,i0)')mpi_ver,'.',mpi_subver
     call yaml_map("MPI Standard: ", trim(aux))
- !   call yaml_map("MPI Implementation",trim(lib))
+#ifndef OLDMPI    
+    call MPI_Get_library_version(lib,ll,ierr)
+    call yaml_map("MPI Implementation",trim(lib))
+#endif    
 #endif
     call yaml_mapping_close()
   end subroutine about
