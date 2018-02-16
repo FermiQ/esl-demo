@@ -230,7 +230,7 @@ contains
 
       r = sqrt(sum(xyz**2))
       gfunc(1:3, ip) = f*pspiof_meshfunc_eval_deriv(rfunc, r) + &
-        gfunc(1:3, ip)*pspiof_meshfunc_eval(rfunc, r)
+          gfunc(1:3, ip)*pspiof_meshfunc_eval(rfunc, r)
         
     end do
      

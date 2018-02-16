@@ -206,8 +206,8 @@ contains
 
       N_Ef = nint( basis%Q )
       energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
-      print *, '# DEBUG fermi level: ', energy%fermi, eig
-
+      print *, '# DEBUG fermi level (eV): ', energy%fermi * 27.2114, eig * 27.2114
+      
       ! Re-construct the DM
       out%DM%M(:) = 0._dp
 

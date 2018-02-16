@@ -169,7 +169,8 @@ contains
 
   contains
 
-    function matrix_T(iT, jT) result(T)
+    pure function matrix_T(iT, jT) result(T)
+      use esl_constants_m, only: PI
       real(dp), intent(in) :: iT(:,:), jT(:,:)
       real(dp) :: T
       integer :: ip
@@ -178,7 +179,8 @@ contains
       do ip = 1, grid%np
         T = T + iT(1,ip) * jT(1,ip) + iT(2,ip) * jT(2,ip) + iT(3,ip) * jT(3,ip)
       end do
-      T = T * grid%volelem
+      ! TODO check Laplacian and units, it isn't fully correct, but closer to Siesta (in its current state)
+      T = T * grid%volelem / (2*PI)
       
     end function matrix_T
 
