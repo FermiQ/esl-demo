@@ -10,6 +10,11 @@ module esl_density_ac_m
   use esl_sparse_matrix_m
   use esl_hamiltonian_ac_m
 
+  use mpi_dist_block_cyclic_m
+  use esl_elsi_m, only: elsi_t
+  use esl_calc_density_matrix_ac_m
+  
+
   implicit none
 
   private
@@ -77,8 +82,13 @@ contains
   end subroutine guess
 
   !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, grid, pot, basis, S, rho, energy, out)
+  subroutine calculate(this, elsi, grid, pot, basis, S, rho, energy, out)
+#ifdef WITH_MPI
+    use mpi, only: mpi_comm_world
+#endif
     class(density_ac_t), intent(inout) :: this
+    !< ELSI handler
+    class(elsi_t), intent(inout) :: elsi
     !< Grid container that defines this density object
     class(grid_t), intent(in) :: grid
     !< Potential container which calculates Hartree and XC
@@ -103,6 +113,7 @@ contains
     ! Currently we contain the Hamiltonian here.
     ! However, since it is needed elsewhere we should decide where to place it.
     type(sparse_matrix_t) :: H
+    type(mpi_dist_block_cyclic_t) :: dist
 
     ! TODO logic for calculating the output density from an input
     ! density.
@@ -117,14 +128,14 @@ contains
 !    call add_density_matrix(grid, basis, DM_atom, rho_atom)
 !    call DM_atom%delete()
 
-!    print *, 'DEBUG rho-atom sum', grid%integrate(rho_atom)
+!    print *, '# DEBUG rho-atom sum', grid%integrate(rho_atom)
 
+    
     ! 1. Start by calculating the density from the DM on the grid
     rho(:) = 0._dp
     call add_density_matrix(grid, basis, this%DM, rho)
 
-!    rho_atom = rho - rho_atom
-!    print *, 'DEBUG dRho sum', grid%integrate(rho_atom)
+!    print *, '# DEBUG dRho sum', grid%integrate(rho_atom)
 
     ! Initialize the Hamiltonian to 0
     call H%init(S%sp)
@@ -142,7 +153,7 @@ contains
     ! Now we are in a position to calculate Hartree potential from
     ! rho
 
-    print *, 'DEBUG Rho sum', grid%integrate(rho)
+    print *, '# DEBUG Rho sum', grid%integrate(rho)
 
     ! Now call the potentials_t%calculate which does:
     !   1. Calculate the XC potential.
@@ -155,17 +166,24 @@ contains
     ! Re-use rho-atom as the sum of potentials.
     ! I.e. after this line we cannot use rho_atom anymore!
     rho_atom(:) = pot%hartree(:) + pot%vxc(:) + pot%external(:)
-    print *, 'DEBUG V sum', grid%integrate(rho_atom)
+    print *, '# DEBUG V sum', grid%integrate(rho_atom)
     call hamiltonian_ac_potential(basis, grid, rho_atom, H)
 
     ! X. Calculate output density matrix elements from the Hamiltonian
-    ! TODO add elsi calls
-    out%DM%M(:) = this%DM%M(:)
-    
+    ! Initialize the distribution
+!    call dist%init(MPI_COMM_World, this%DM%sp%nr, this%DM%sp%nr)
+!    call set_elsi_sparsity_pattern_ac(elsi, dist, H%sp)
+!    call calc_density_matrix_ac(elsi, H, S, out%DM)
+!    call get_energy_results(elsi, energy%eigenvalues, energy%fermi, energy%entropy)
+!    call dist%delete()
+
+!    call energy%display()
+
     call my_check()
 
     ! Final, output Mulliken charges
     call mulliken_ac_summary(basis, S, out%DM)
+    call energy%display()
 
   contains
 
@@ -173,7 +191,6 @@ contains
 
       real(dp), allocatable :: eig(:)
       real(dp), allocatable :: B(:), work(:)
-      real(dp) :: Ef
       integer :: n, info
       integer :: io, jo, ib, ind
 
@@ -193,7 +210,7 @@ contains
 
       N_Ef = nint( basis%Q )
       energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
-      print *, 'DEBUG fermi level: ', Ef
+      print *, '# DEBUG fermi level: ', energy%fermi, eig
 
       ! Re-construct the DM
       out%DM%M(:) = 0._dp
@@ -217,7 +234,10 @@ contains
         end do
         
       end do
-      
+
+      ! Calculate the Kohn-Sham energy
+      energy%eigenvalues = sum(H%M * this%DM%M)
+
       deallocate(B,eig,work)
 
     end subroutine my_check

@@ -103,9 +103,10 @@ contains
     use fdf, only : fdf_init, fdf_get
     use esl_numeric_m, only : init_random
     use esl_info_m, only : about
+    use prec, only : ip
 
     character(len=256) :: echo_file, output_file
-    integer :: mpierr
+    integer(ip) :: mpierr
 
     !Init MPI
 #ifdef WITH_MPI

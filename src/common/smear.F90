@@ -77,10 +77,10 @@ contains
     type(elsi_t),   intent(inout) :: elsic
     type(states_t), intent(inout) :: states
 
-  !  call elsi_set_mu_broaden_scheme(elsic%e_h, this%smearing)
-  !  call elsi_set_mu_broaden_width(elsic%e_h, this%eBroad)
-
-! TODO: add it back
+! TODO: Add back
+!    call elsi_set_mu_broaden_scheme(elsic%e_h, this%smearing)
+!    call elsi_set_mu_broaden_width(elsic%e_h, this%eBroad)
+!
 !    call elsi_compute_mu_and_occ(elsic%e_h, real(states%nel, dp), &
 !      & states%nstates, states%nspin, states%nkpt, states%k_weights, &
 !      & this%eigenvalues, states%occ_numbers, this%fermi_level)

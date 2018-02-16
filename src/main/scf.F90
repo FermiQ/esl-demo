@@ -122,10 +122,10 @@ contains
     use esl_states_m
     use esl_elsi_m
 
-    class(scf_t),  intent(inout) :: this
-    type(elsi_t),  intent(inout) :: elsi
-    type(system_t),intent(inout) :: system
-    type(states_t),intent(inout) :: states
+    class(scf_t), intent(inout) :: this
+    type(elsi_t), intent(inout) :: elsi
+    type(system_t), intent(inout) :: system
+    type(states_t), intent(inout) :: states
     type(smear_t), intent(inout) :: smear
 
     integer :: iter !< Interation
@@ -164,7 +164,7 @@ contains
       call smear%calc_fermi_occ(elsi, states)
 
       ! Calculate density
-      call this%rho_in%calculate(system, this%H%potential, states, out=this%rho_out)
+      call this%rho_in%calculate(elsi, system, this%H%potential, states, out=this%rho_out)
       
       ! Calculate necessary potentials
       select case (system%basis%type)
