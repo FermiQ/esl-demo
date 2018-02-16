@@ -22,7 +22,7 @@ module esl_states_m
      integer :: nstates
      integer :: nspin
      integer :: nkpt
-     integer :: nel   !< Number of electrons
+     real(dp) :: nel   !< Number of electrons
 
      logical :: complex_states
      integer :: ncoef !< Number of coefficients
@@ -50,14 +50,15 @@ contains
     integer,          intent(in)    :: nkpt
     logical,          intent(in)    :: complex !< Should the wavefunctions be complex?
     integer,          intent(in)    :: ncoef    !< Size of wavefunctions (number of coefficients)
-
+    
     integer :: ist, isp, ik, extra_states
-
+    real(dp) :: nel, occ
+    
     extra_states = fdf_get('ExtraStates', 0)
 
     !TODO: the charge hould be a real number, not an integer
     this%nspin = nspin
-    this%nel = int(geo%electronic_charge())
+    this%nel = geo%electronic_charge()
     this%nstates = int(geo%electronic_charge()/2)
     if ( this%nstates*2 < geo%electronic_charge() ) this%nstates = this%nstates + 1
     this%nstates = this%nstates + extra_states
@@ -68,7 +69,14 @@ contains
     allocate(this%states(1:this%nstates, 1:nspin, 1:nkpt))
     allocate(this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt))
     this%occ_numbers(1:this%nstates, 1:nspin, 1:nkpt) = 0._dp
-    this%occ_numbers(1:this%nel,  1:nspin, 1:nkpt) = 1.d0
+    nel = this%nel
+    do ist = 1, this%nstates
+      if ( nel == 0.0_dp) exit
+      occ = 2.0/real(this%nspin, dp)
+      if ( nel < occ ) occ = nel
+      this%occ_numbers(ist,  1:nspin, 1:nkpt) = occ
+      nel = nel - occ
+    end do
 
     allocate(this%eigenvalues(1:this%nstates, 1:nspin, 1:nkpt))
     this%eigenvalues(1:this%nstates, 1:nspin, 1:nkpt) = 0._dp    
