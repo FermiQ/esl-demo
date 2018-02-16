@@ -2,7 +2,7 @@ program esl_demo
   use yaml_output
 
 #ifdef WITH_FLOOK
-  use flook, only : luaState
+  use esl_flook_global_m, only: LUA
   use esl_flook_if_m
 #endif
 
@@ -15,12 +15,6 @@ program esl_demo
   ! Input-file
   character(len=256) :: input_file
   integer :: out_unit
-  
-#ifdef WITH_FLOOK
-  ! LUA-handle, we really do need it up here to be able to use it
-  type(luaState) :: LUA
-#endif
-
 
   ! Initialization of the program
   call esl_init()
@@ -75,11 +69,6 @@ contains
       
       ! this step is not adhearing to anything, it could be
       ! md-steps, or whatever.
-
-#ifdef WITH_FLOOK
-      ! Call lua just before we are to initialize a new step.
-      call flook_if_call(LUA, LUA_INIT_STEP)
-#endif
 
       ! Prepare the next step for the system
       call next_step_setup(system)
