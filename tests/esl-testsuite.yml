@@ -45,6 +45,8 @@ tests:
     title: "some title"
   - name: "ac_H"
     title: "Untitled"
+  - name: "ac_H_Lua"
+    title: "AC single Hydrogen with Luad"
   - name: "pw"
     title: "plane wave test"
 
