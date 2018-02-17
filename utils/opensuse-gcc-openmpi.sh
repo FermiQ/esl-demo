@@ -7,6 +7,3 @@ mkdir build
 pushd build
 cmake ../
 make -j VERBOSE=1
-cd ../
-cd tests/ac_H
-../../build/bin/esl-demo.X ac_H.inp 
