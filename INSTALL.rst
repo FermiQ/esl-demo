@@ -24,6 +24,14 @@ MPI Support
 cmake ../ -DWITH_MPI=On
 ```
 
+if you get undefined references to MPI_Get_library_version you have a very old MPI implementation
+Solution:
+  - update the MPI
+  - or
+```
+  FFLAGS="-DOLDMPI" cmake ../ -DWITH_MPI=on
+```
+
 Shared libraries
 -----------------
 ```
