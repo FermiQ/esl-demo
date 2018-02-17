@@ -3,42 +3,42 @@ stages:
   - deploy
 
 opensuse:
-  image: drfaustroll/esl:tumbleweed
+  image: eslib/esl:tumbleweed
   stage: build
   script:
     - sh utils/opensuse-gcc-openmpi.sh
 
 opensuse-noflook:
-  image: drfaustroll/esl:tumbleweed
+  image: eslib/esl:tumbleweed
   stage: build
   script:
     - sh utils/opensuse-gcc-openmpi-noflook.sh
   
 opensuse-paranoid:
-  image: drfaustroll/esl:tumbleweed
+  image: eslib/esl:tumbleweed
   stage: build
   script:
     - sh utils/opensuse-paranoid.sh
 
 debian:
-  image: drfaustroll/esl:debian
+  image: eslib/esl:debian
   stage: build
   script:
     - sh utils/debian-gcc-openmpi.sh
 
 debian-noflook:
-  image: drfaustroll/esl:debian
+  image: eslib/esl:debian
   stage: build
   script:
     - sh utils/debian-gcc-openmpi-noflook.sh
 
 debian-paranoid:
-  image: drfaustroll/esl:debian
+  image: eslib/esl:debian
   stage: build
   script:
     - sh utils/debian-paranoid.sh
 pages:
-  image: drfaustroll/esl:tumbleweed
+  image: eslib/esl:tumbleweed
   stage: deploy
   only:
     - master
