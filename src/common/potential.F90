@@ -95,7 +95,7 @@ contains
       pot%hartree(i) = density(i)
     end forall
 
-    call pot%psolver%h_potential(pot%hartree, pot%external, pot%ionicOffset, energy%hartree)
+    call pot%psolver%hartree_potential(pot%hartree, pot%external, pot%ionicOffset, energy%hartree)
 
     !Here we need to compute the xc potential
     call pot%xc%calculate(density, energy, pot%vxc)
