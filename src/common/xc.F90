@@ -95,6 +95,7 @@ contains
     edata%exchange = ex * 0.5_dp
     edata%correlation = ec * 0.5_dp
     edata%int_nvxc = (dx + dc) * 0.5_dp
+    vxc = vxc * 0.5_dp
 
     ! FIXME: convert potential from 4 to 1 dimension
 
