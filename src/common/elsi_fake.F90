@@ -1,5 +1,12 @@
-module elsi ! (Stub)
+!< Stub module to allow ELSI calls without having elsi
+module elsi
   use prec, only: ip, dp
+
+  implicit none
+
+  ! Everything is public (except precisions)
+  public
+  private :: ip, dp
 
   type elsi_handle
     integer :: tut
@@ -35,7 +42,7 @@ contains
   end subroutine elsi_get_edm_real_sparse
 
   subroutine elsi_compute_mu_and_occ(eh, nel, nstate, nspin, nkpt, evals, &
-    & occ_nums, k_weights, fermi_level)
+      occ_nums, k_weights, fermi_level)
     type(elsi_handle), intent(in) :: eh
     real(dp), intent(in) :: nel
     integer(ip), intent(in) :: nstate, nspin, nkpt

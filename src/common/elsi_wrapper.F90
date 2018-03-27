@@ -10,7 +10,7 @@ module esl_elsi_m
 
   public :: elsi_t
 
-  !Data structure for ELSI
+  !< Data structure for ELSI.
   type elsi_t
     type(elsi_handle) :: e_h
     real(dp)          :: KS_energy

@@ -1,3 +1,16 @@
+
+!< Energy module implementing a type to retain energies.
+!<
+!< The type should be used for energies calculated.
+!< Generally the energies only gets updated upon explicit calls.
+!< So interaction with this type requires knowledge of the used
+!< energies calculation.
+!< The total energy is an important energy that only gets updated
+!< upon `call energy%calculate(states)` calls.
+!< Thus using the total energy requires that `calculate` has been
+!< called.
+!<
+!< All energies are in Hartree.
 module esl_energy_m
   use prec, only : dp
 
@@ -6,36 +19,48 @@ module esl_energy_m
   implicit none
   private
 
-  public ::                          &
-      energy_t
+  public :: energy_t
 
-  !Data structure for the energy
+  !< Data structure for energy terms
   type energy_t
-    real(dp) :: total
-    real(dp) :: eigenvalues
-    real(dp) :: hartree
-    real(dp) :: KB
-    real(dp) :: ionion
-    real(dp) :: extern
-    real(dp) :: exchange
-    real(dp) :: correlation
-    real(dp) :: int_nvxc
-    real(dp) :: kinetic
-    real(dp) :: entropy
-    real(dp) :: fermi
+    !< Total energy, only updated on `calculate` call
+    real(dp) :: total = 0._dp
+    !< Energy from KS eigenvalues
+    real(dp) :: eigenvalues = 0._dp
+    !< Hartree potential energy
+    real(dp) :: hartree = 0._dp
+    !< Kleynman-Bylander energies
+    real(dp) :: KB = 0._dp
+    !< Ion-ion interaction energy
+    real(dp) :: ionion = 0._dp
+    !< External energy
+    real(dp) :: extern = 0._dp
+    !< Exchange energy
+    real(dp) :: exchange = 0._dp
+    !< Correlation energy
+    real(dp) :: correlation = 0._dp
+    !< TODO ?
+    real(dp) :: int_nvxc = 0._dp
+    !< Kinetic energy
+    real(dp) :: kinetic = 0._dp
+    !< Entropy (not energy, unit-less)
+    real(dp) :: entropy = 0._dp
+    !< Fermi-level of system
+    real(dp) :: fermi = 0._dp
 
   contains
     private
+    
     procedure, public :: init
     procedure, public :: calculate
     procedure, public :: display
+    
   end type energy_t
 
 
 contains
 
-  !Initialize the energies
-  !----------------------------------------------------
+  !< Initialize data type by setting all contained variables to 0.
   subroutine init(this)
     class(energy_t) :: this
 
@@ -55,26 +80,25 @@ contains
   end subroutine init
 
 
-  !Compute the total energy
-  !----------------------------------------------------
+  !< Update total energy by examining the states
   subroutine calculate(this, states)
     class(energy_t) :: this
     type(states_t), intent(in) :: states
 
-    this%eigenvalues=sum(states%eigenvalues)
+    ! TODO Check that the energies are correct. Added eigenvalues times occupations!
+    this%eigenvalues = sum(states%eigenvalues * states%occ_numbers)
 
-    this%total = this%ionion +  this%eigenvalues  + this%extern &
-                 -this%hartree + this%exchange + this%correlation + this%kinetic - this%int_nvxc
+    this%total = this%ionion + this%eigenvalues + this%extern &
+                 - this%hartree + this%exchange + this%correlation + this%kinetic - this%int_nvxc
 
   end subroutine calculate
 
 
-  !Display de different components of the total energy
-  !----------------------------------------------------
+  !< Print to std-out the energy decomposition
   subroutine display(this)
     use yaml_output
     class(energy_t) :: this
-
+    
     call yaml_mapping_open("Energy", advance='NO')
     call yaml_comment("Hartree", hfill = "-")
     call yaml_map("Total", this%total)
