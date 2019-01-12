@@ -5,9 +5,20 @@ module esl_xc_m
   use esl_grid_m, only: grid_t
 
   use fdf, only : fdf_get
-  use m_cellxc, only : cellxc
+
+  ! GridXC initialization
+  use gridxc, only: gridxc_init
+  use gridxc, only: gridxc_setXC
+  use gridxc, only: gridxc_cellXC
+  use mesh3D, only: setMeshDistr  ! Defines a new mesh distribution
+  use mesh3D, only: fftMeshDistr  ! Sets/gets distribution for FFTs
+  use mesh3D, only: myMeshBox     ! Sets/gets distribution for FFTs
+  
   use xc_f90_lib_m, only : XC_LDA_X, XC_LDA_C_PZ
   use xcmod, only : setxc_libxc_ids
+#ifdef WITH_MPI
+  use mpi, only: MPI_COMM_WORLD
+#endif
 
   implicit none
   private
@@ -41,6 +52,14 @@ contains
 
     call setxc_libxc_ids(2, [this%exchange, this%correlation])
     
+#ifdef WITH_MPI
+    call gridxc_init(mpi_comm_world)
+#else
+    call gridxc_init()
+#endif
+    ! Specify flavour (FORCED TO LDA+CA)
+    call gridxc_setXC(0, (/'LDA'/), (/'CA'/), (/1._dp/), (/1._dp/))
+
     this%cell => geo%cell
     this%nmesh => grid%ndims
 
@@ -87,8 +106,9 @@ contains
     nspin = 1
 
     ! Let GridXC build the potential from the density
-    call cellXC(0, this%cell, this%nmesh, lb1, ub1, lb2, ub2, lb3, ub3, nspin, &
-        density, ex, ec, dx, dc, stress_xc, vxc)
+    call gridxc_cellXC( 1, this%cell, this%nmesh, &
+        lb1, ub1, lb2, ub2, lb3, ub3, nspin, &
+        density, Ex, Ec, Dx, Dc, stress_xc, Vxc)
 
     ! Populate energy terms, with necessary arithmetics
     ! Internally libgridxc uses Ry, convert to Hartree

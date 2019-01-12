@@ -4,6 +4,9 @@
 module esl_hamiltonian_ac_m
 
   use prec, only: dp
+  use pspiof_m
+  use fdf, only: fdf_get
+  
   use esl_basis_ac_m
   use esl_geometry_m
   use esl_grid_m
@@ -70,10 +73,10 @@ contains
   !< These includes:
   !<  1. The kinetic Hamiltonian (non-SCF dependent)
   !<  2. Non-local Hamiltonian (non-SCF dependent)
-  subroutine calculate_H0(this, basis, geo, grid)
+  subroutine calculate_H0(this, basis, geom, grid)
     class(hamiltonian_ac_t), intent(inout) :: this
     type(basis_ac_t), intent(in) :: basis
-    type(geometry_t), intent(in) :: geo
+    type(geometry_t), intent(in) :: geom
     type(grid_t), intent(in) :: grid
 
     ! Calculate individual elements for the H0-elements
@@ -81,15 +84,15 @@ contains
     call hamiltonian_ac_laplacian(basis, grid, this%kin)
 
     ! Calculate V_kb matrix elements
-    this%vkb%M = 0._dp
-    call hamiltonian_ac_Vkb(geo, grid, this%vkb)
+    this%vkb%M(:) = 0._dp
+    call hamiltonian_ac_Vkb(geom, basis, grid, this%vkb)
 
   end subroutine calculate_H0
 
   !< Constructs the initial H from the H0 terms
   !<
-  !< This is basically performing:
-  !<   H = H_kin + H_vk
+  !< This is using pre-calculated values:
+  !<   H = H_kin + H_vkb
   subroutine setup_H0(this)
     class(hamiltonian_ac_t), intent(inout) :: this
 
@@ -186,19 +189,193 @@ contains
 
   end subroutine hamiltonian_ac_laplacian
   
-  subroutine hamiltonian_ac_Vkb(geo, grid, H)
-    class(geometry_t), intent(in) :: geo
+  subroutine hamiltonian_ac_Vkb(geom, basis, grid, H)
+    class(geometry_t), intent(in) :: geom
+    class(basis_ac_t), intent(in) :: basis
     type(grid_t), intent(in) :: grid
     type(sparse_matrix_t), intent(inout) :: H
 
+    ! Local variables
     type(sparse_pattern_t), pointer :: sp
+    ! The projector
+    type(pspiof_meshfunc_t) :: proj
+    ! Grid parts
+    real(dp), allocatable :: iG(:), pG(:), jG(:)
+    real(dp) :: cut_off
+
+    ! Loop basis
+    integer :: ib, ibs, io, iio, il, im
+    real(dp) :: ibxyz(3), ir_max
+
+    ! Loop KB
+    integer :: a, as, ap, apl, m
+    real(dp) :: axyz(3), apr_max
+    real(dp), allocatable :: KB_i(:)
+    real(dp) :: Ep
+
+    ! Loop j
+    integer :: ind, jo, jb, jbs, jjo, jl, jm
+    real(dp) :: jbxyz(3), jr_max
+
+    ! Final calculation
+    real(dp) :: Vkb
 
     ! Immediately return, if not needed
     if ( .not. H%initialized() ) return
 
+    ! The option for figuring out KB projector overlap is
+    ! determined by the cutoff radius for the projectors.
+    ! In this case we limit the projectors to the
+    ! cutoff value where the smallest R value where:
+    !    r_max @ abs(F(R)) < CutOff
+    cut_off = fdf_get('Basis.AC.KB.Cutoff', 0.00001_dp)
+
     ! Retrieve pointer
     sp => H%sp
 
+    ! Allocate the grid
+    allocate(iG(grid%np))
+    allocate(pG(grid%np))
+    allocate(jG(grid%np))
+
+    ! Loop over all orbital connections in the sparse pattern and
+    ! once we have an i,j we loop over atoms to find projectors within a
+    ! close range.
+
+    ! loop: ib (basis sites)
+    basis_loop: do ib = 1, basis%n_site
+      ibs = basis%site_state_idx(ib)
+      ibxyz = basis%xyz(:, ib)
+
+      ! loop: i (row in H)
+      i_loop: do io = basis%site_orbital_start(ib), basis%site_orbital_start(ib + 1) - 1
+        ! Orbital index on basis site
+        iio = io - basis%site_orbital_start(ib) + 1
+
+        ! Retrieve the current basis-functions
+        !   r_max maximum radius
+        !   l quantum number
+        !   m quantum number
+        ir_max = basis%state(ibs)%orb(iio)%r_cut
+        il = basis%state(ibs)%orb(iio)%l
+        im = basis%state(ibs)%orb(iio)%m
+        
+        ! Calculate the basis function on the grid -> iG
+        call grid%radial_function_ylm(basis%state(ibs)%orb(iio)%R, il, im, ibxyz, iG)
+
+        ! loop: alpha
+        ! Since there are typically few projectors we will loop those first
+        ! that should ease the sorting of which projectors are close to ibxyz
+        
+        ! If 
+        !   VKB_ij == 0 since <KB_alpha|phi_i> == 0
+        atom_loop: do a = 1, geom%n_atoms
+          as = geom%species_idx(a)
+          axyz = geom%xyz(:, a)
+
+          ! Loop projector
+          KB_loop: do ap = 1, geom%species(as)%n_projectors
+
+            ! Retrieve the r_max
+            apr_max = geom%species(as)%get_projector_rmax(ap, cut_off)
+
+            ! Now we check whether ap is non-zero
+            if ( not_within_cutoff(ibxyz, ir_max, axyz, apr_max) ) cycle
+
+            ! Retrieve the projector
+            call geom%species(as)%get_projector(ap, proj, Ep, apl)
+
+            ! We have a match!
+            ! Calculate
+            !    <KB_alpha|phi_i> * Ep
+
+            ! Allocate the <KB_alpha|phi_i> for all m quantum numbers of
+            ! this KB projector
+            allocate(KB_i(-apl:apl))
+            do m = -apl, apl
+
+              call grid%radial_function_ylm(proj, apl, m, axyz, pG)
+
+              KB_i(m) = grid%overlap(ibxyz, iG, ir_max, axyz, pG, apr_max) * Ep
+
+            end do
+
+            ! loop: j
+            do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+              
+              ! Figure out which basis orbital this belongs too
+              jo = sp%column(ind)
+              ! Figure out the basis site of the orbital
+              jb = basis%orbital_site(jo)
+              jbxyz = basis%xyz(:, jb)
+              jbs = basis%site_state_idx(jb)
+              jjo = jo - basis%site_orbital_start(jb) + 1
+              
+              ! Retrieve the current basis-functions
+              !   r_max maximum radius
+              !   l quantum number
+              !   m quantum number
+              jr_max = basis%state(jbs)%orb(jjo)%r_cut
+              jl = basis%state(jbs)%orb(jjo)%l
+              jm = basis%state(jbs)%orb(jjo)%m
+
+              ! Now we check whether ap is non-zero
+              if ( not_within_cutoff(axyz, apr_max, jbxyz, jr_max) ) cycle
+
+              ! Calculate the basis function on the grid -> jG
+              call grid%radial_function_ylm(basis%state(jbs)%orb(jjo)%R, jl, jm, jbxyz, jG)
+
+              Vkb = 0._dp
+              do m = -apl, apl
+                
+                call grid%radial_function_ylm(proj, apl, m, axyz, pG)
+                
+                Vkb = Vkb + KB_i(m) * grid%overlap(jbxyz, jG, jr_max, axyz, pG, apr_max)
+                
+              end do
+              
+              ! Add element to the matrix
+              H%M(ind) = H%M(ind) + Vkb
+
+              ! DEBUG print
+              ! NOTE this will print out multiple times per diagonal
+              !      element corresponding to the number of KB with overlap.
+!              if ( ibs == jbs .and. iio == jjo ) &
+!                  print *,'# Diagonal Vkb matrix: ', ibs, iio, H%M(ind)
+              
+            end do
+            
+            ! Clean-up
+            deallocate(KB_i)
+
+            call pspiof_meshfunc_free(proj)
+            
+          end do KB_LOOP
+          
+        end do atom_loop
+      end do i_loop
+      
+    end do basis_loop
+    
+    ! Clean-memory
+    deallocate(iG, pG, jG)
+    
+  contains
+    
+    pure function not_within_cutoff(xyz1, r1, xyz2, r2) result(not_within)
+      real(dp), intent(in) :: xyz1(3), r1
+      real(dp), intent(in) :: xyz2(3), r2
+      real(dp) :: d
+      logical :: not_within
+
+      d = (xyz1(1) - xyz2(1)) ** 2 + &
+          (xyz1(2) - xyz2(2)) ** 2 + &
+          (xyz1(3) - xyz2(3)) ** 2
+      
+      not_within = d > (r1 + r2) ** 2
+      
+    end function not_within_cutoff
+    
   end subroutine hamiltonian_ac_Vkb
 
 

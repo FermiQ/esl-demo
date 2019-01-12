@@ -97,7 +97,7 @@ contains
 
     call pot%psolver%hartree_potential(pot%hartree, pot%external, pot%ionicOffset, energy%hartree)
 
-    !Here we need to compute the xc potential
+    ! Here we need to compute the xc potential
     call pot%xc%calculate(density, energy, pot%vxc)
 
   end subroutine calculate

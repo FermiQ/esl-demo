@@ -31,6 +31,7 @@ module esl_species_m
     procedure, public :: get_radial_orbital
     procedure, public :: get_radial_orbital_rmax
     procedure, public :: get_projector
+    procedure, public :: get_projector_rmax
     procedure, public :: summary
     final :: cleanup
   end type species_t
@@ -193,6 +194,27 @@ contains
     deallocate(proj)
 
   end subroutine get_projector
+
+  function get_projector_rmax(this, ip, tolerance) result(rmax)
+    class(species_t) :: this
+    integer, intent(in) :: ip
+    real(dp), intent(in) :: tolerance
+
+    type(pspiof_mesh_t) :: mesh
+    real(dp) :: rmax
+
+    integer :: ir
+    real(dp), pointer :: r(:)
+
+    mesh = pspiof_pspdata_get_mesh(this%psp)
+    r => pspiof_mesh_get_r(mesh)
+
+    do ir = pspiof_mesh_get_np(mesh), 1, -1 
+      rmax = r(ir)
+      if (abs(pspiof_projector_eval(this%projectors(ip), rmax)) > tolerance) exit
+    end do
+    
+  end function get_projector_rmax
   
   !----------------------------------------------------
   !Private routines
