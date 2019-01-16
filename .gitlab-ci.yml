@@ -8,12 +8,6 @@ opensuse:
   script:
     - sh utils/opensuse-gcc-openmpi.sh
 
-opensuse-noflook:
-  image: eslib/esl:tumbleweed
-  stage: build
-  script:
-    - sh utils/opensuse-gcc-openmpi-noflook.sh
-  
 opensuse-paranoid:
   image: eslib/esl:tumbleweed
   stage: build
@@ -25,12 +19,6 @@ debian:
   stage: build
   script:
     - sh utils/debian-gcc-openmpi.sh
-
-debian-noflook:
-  image: eslib/esl:debian
-  stage: build
-  script:
-    - sh utils/debian-gcc-openmpi-noflook.sh
 
 debian-paranoid:
   image: eslib/esl:debian
