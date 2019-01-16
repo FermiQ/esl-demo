@@ -7,7 +7,7 @@ openmpi3-gnu-hpc openmpi3-gnu-hpc-devel libscalapack2-gnu-openmpi3-hpc libscalap
 hdf5-gnu-openmpi3-hpc-devel cmake make autoconf automake libtool python python-xml sudo git wget curl blas-devel lapack-devel \
 gsl-devel patch lua53-devel zlib-devel readline-devel libopenblas-gnu-hpc-devel \
 check-devel hdf5-gnu-hpc-devel fftw3-gnu-openmpi3-hpc-devel fftw3-gnu-hpc-devel libyaml-devel \
-doxygen zlib-devel python2-Sphinx vim nano
+doxygen zlib-devel python2-Sphinx vim nano libblacs2-gnu-openmpi3-hpc-devel
 
 WORKDIR /home/drFaustroll
 USER drFaustroll
