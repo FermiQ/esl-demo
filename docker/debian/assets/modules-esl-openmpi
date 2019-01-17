@@ -3,7 +3,7 @@
 ## AME 06/02/2018
 ##
 set pkg esl
-set version 0.3.0
+set version 0.3.1
 set comp openmpi
 proc ModulesHelp {} {
         global version
