@@ -61,12 +61,4 @@ module ELSI_RCI_CONSTANTS
 
     integer(kind=i4), parameter :: ELSI_RCI_APPROX_SOLVE = 31
 
-!    enum, bind(C) :: elsi_rci_op
-!        enumerator :: ELSI_RCI_NULL, ELSI_RCI_CONVERGE,&
-!                      ELSI_RCI_H_MULTI, ELSI_RCI_S_MULTI,&
-!                      ELSI_RCI_P_MULTI, ELSI_RCI_GEMM,&
-!                      ELSI_RCI_AXPY, ELSI_RCI_COPY,&
-!                      ELSI_RCI_TRACE, ELSI_RCI_DOT
-!    end enum
-
 end module ELSI_RCI_CONSTANTS
