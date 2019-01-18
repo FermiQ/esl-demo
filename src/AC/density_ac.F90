@@ -137,15 +137,6 @@ contains
     !   1. Calculate the XC potential.
     !   2. Calculate the Hartree potential
     !   3. Calculate the external local potential
-    ! TODO check PSolver
-    ! I am not sure whether PSolver requires the voxel normed
-    ! density. If that is the case:
-    !   rho = rho * grid%volelem
-    ! also, perhaps the potentials should be adapted in the
-    ! pot%* to be normalized as well.
-    ! All I can say is that if rho = rho * grid%volelem
-    ! the Mulliken charges are less fluctuating on the Hydrogen case
-    ! for the s-orbital.
     call pot%calculate(rho, energy)
 
     ! Sum Hartree and XC potential,
@@ -166,8 +157,8 @@ contains
 !    call calc_density_matrix_ac(elsi, H%SCF, S, out%DM)
 !    call get_energy_results(elsi, energy%eigenvalues, energy%fermi, energy%entropy)
 !    call dist%delete()
-!    call energy%display()
 
+    ! TODO this is very crude since it assumes a dense matrix
     call my_check()
 
     ! Final, output Mulliken charges
@@ -185,6 +176,7 @@ contains
 
       type(sparse_pattern_t), pointer :: sp
 
+      logical :: log
       integer :: N_Ef
 
       sp => H%SCF%sp
@@ -192,32 +184,46 @@ contains
 
       allocate(eig(n))
       allocate(B(n ** 2))
-      allocate(work(n ** 2))
+      allocate(work(n ** 2 * 4))
       B = S%M
+
+      ! Check sparsity pattern
+      log = .true.
+      do io = 1, sp%nr
+        log = log .and. sp%nrow(io) == sp%nc
+        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+          log = log .and. sp%column(ind) == ind - sp%rptr(io) + 1
+        end do
+        print '(100(tr1,f10.5))', H%SCF%M(sp%rptr(io):sp%rptr(io) + sp%nrow(io) - 1)
+      end do
+      if ( .not. log ) then
+        print *, '# MYCHECK WILL NOT WORK, AT BEST IT WILL FAIL'
+      end if
+      
 
       ! Calculate the Kohn-Sham energy
       ! This needs to be done before diagonalization
       energy%eigenvalues = sum(H%SCF%M * this%DM%M)
-      
-      call dsygv(1, 'V', 'U', n, H%SCF%M, n, B, n, eig, work, n ** 2, info)
+
+      call dsygv(1, 'V', 'U', n, H%SCF%M, n, B, n, eig, work, n ** 2 * 4, info)
       if ( info /= 0 ) then
         print *, '# DEBUG FAILED DIAGONALIZATION: ', info
       end if
 
       N_Ef = nint( basis%Q )
       energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
-      print *, '# DEBUG fermi level (eV): ', energy%fermi * 27.2114, eig * 27.2114
-      
+      print *, '# DEBUG fermi level (eV): ', energy%fermi * 27.2114_dp
+      print '(a, 100(tr3, f10.6))', ' # DEBUG eigenvalues (eV): ', eig * 27.2114_dp
+
       ! Re-construct the DM
       out%DM%M(:) = 0._dp
-
       ! Loop rows
       do io = 1, n
         
         ! Loop columns
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
           jo = sp%column(ind)
-          
+
           ! Loop bands
           do ib = 1, N_ef
             

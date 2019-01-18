@@ -47,10 +47,12 @@ contains
     real(dp), intent(in) :: out(:)
     real(dp), intent(inout) :: next(:)
 
+    real(dp) :: beta
     integer :: ip
 
+    beta = 1._dp - this%alpha
     do ip = 1, np
-      next(ip) = in(ip) * (1._dp - this%alpha) + out(ip) * this%alpha
+      next(ip) = in(ip) * beta + out(ip) * this%alpha
     end do
 
   end subroutine linear

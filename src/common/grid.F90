@@ -20,15 +20,16 @@ module esl_grid_m
   !Data structure for the real space grid
   type grid_t
     real(dp) :: hgrid(3) !< Real space spacing
-    integer  :: ndims(3)  !< Number of points in each directions
-    integer  :: np !< Total number of points in the real space grid
+    integer :: ndims(3)  !< Number of points in each directions
+    integer :: np !< Total number of points in the real space grid
     real(dp), allocatable :: r(:,:) !<Grid point coordinates 
     real(dp) :: volelem !<Volume element
     real(dp) :: volume
 
-    type(C_PTR) fftplan !< Forward FFT plan
-    type(C_PTR) ifftplan !< Backward FFT (IFFT) plan
+    type(C_PTR) :: fftplan !< Forward FFT plan
+    type(C_PTR) :: ifftplan !< Backward FFT (IFFT) plan
   contains
+    
     private
     procedure, public :: init
     procedure, public :: radial_function
@@ -42,7 +43,7 @@ module esl_grid_m
     procedure, private :: dintegrate, zintegrate
     generic, public :: integrate => dintegrate, zintegrate
     
-    final  :: cleanup
+    final :: cleanup
   end type grid_t
 
   interface integrate
@@ -57,7 +58,6 @@ module esl_grid_m
     module procedure drs_grid2cube, zrs_grid2cube
   end interface rs_grid2cube
 
-
 contains
 
   !Initialize the grid
@@ -69,7 +69,7 @@ contains
 
     integer :: idim, ix, iy, iz, ip
     integer :: twice
-    complex(dp),         allocatable :: rin(:,:,:), cout(:,:,:)
+    complex(dp), allocatable :: rin(:,:,:), cout(:,:,:)
 
     this%ndims = ndims
 
@@ -293,6 +293,7 @@ contains
         overlap = overlap + ao1(ip)*ao2(ip)
       end do
       overlap = overlap*grid%volelem
+
     end if
 
   end function overlap

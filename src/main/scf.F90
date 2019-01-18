@@ -96,7 +96,7 @@ contains
     ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
     call this%H%init(system%basis, system%geo, states, &
         system%sparse_pattern, &
-        periodic=.false.)
+        periodic=.true.)
 
     ! Finally we can initialize the densities
     ! This *has* to be done in the end because the density matrices
