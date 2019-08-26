@@ -51,8 +51,6 @@ contains
  
     integer mpicomm
 
-    call this%potential%init(basis%grid, states, geo, periodic)
-
     mpicomm = 0
 #ifdef WITH_MPI
     mpicomm = MPI_COMM_WORLD
@@ -60,9 +58,11 @@ contains
 
     select case (basis%type)
     case ( PLANEWAVES )
+      call this%potential%init(basis%pw, states, geo, periodic)
       call this%hm_pw%init(this%potential, mpicomm)
     case ( ATOMCENTERED )
-
+      call this%potential%init(basis%ac, states, geo, periodic)
+      
       ! Initialize the AC part of the Hamiltonian
       call this%ac%init(sp)
       
