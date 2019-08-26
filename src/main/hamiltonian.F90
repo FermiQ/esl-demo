@@ -67,7 +67,7 @@ contains
       call this%ac%init(sp)
       
       ! Immediately calculate the non-SCF dependent Hamiltonian quantities
-      call this%ac%calculate_H0(basis%ac, geo, basis%grid)
+      call this%ac%calculate_H0(basis%ac, geo)
 
     end select
  

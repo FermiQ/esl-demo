@@ -148,7 +148,7 @@ contains
     ! I.e. after this line we cannot use Vscf anymore!
     Vscf(:) = pot%hartree(:) + pot%vxc(:)
     print *, '# DEBUG V sum', grid%integrate(Vscf)
-    call hamiltonian_ac_potential(basis, grid, Vscf, H%SCF)
+    call hamiltonian_ac_potential(basis, Vscf, H%SCF)
 
     ! X. Calculate output density matrix elements from the Hamiltonian
     ! Initialize the distribution

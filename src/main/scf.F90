@@ -87,7 +87,7 @@ contains
       call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
 
       ! Calculate the overlap matrix for this SCF cycle
-      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
+      call overlap_matrix_ac_calculate(system%basis%ac, &
           system%sparse_pattern, system%S)
 
     end select

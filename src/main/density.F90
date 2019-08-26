@@ -51,7 +51,7 @@ contains
     select case ( system%basis%type )
     case ( PLANEWAVES )
       
-      call this%density_pw%init(system%basis%grid, system%basis%pw)
+      call this%density_pw%init(system%basis%pw)
       
     case ( ATOMCENTERED )
       
@@ -71,7 +71,7 @@ contains
     case ( PLANEWAVES )
 
       ! TODO fix interface 
-      call this%density_pw%guess(system%geo, system%basis%grid)
+      call this%density_pw%guess(system%geo)
       
     case ( ATOMCENTERED )
 
@@ -111,7 +111,7 @@ contains
 
       ! Calculate density
       call out%density_pw%calculate(states)
-      call yaml_map("Norm", system%basis%grid%integrate(out%density_pw%density))
+      call yaml_map("Norm", system%basis%pw%grid%integrate(out%density_pw%density))
 
     case ( ATOMCENTERED )
 
@@ -138,7 +138,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
 
-      res = this%density_pw%residue(basis%grid, states%nel, other%density_pw)
+      res = this%density_pw%residue(basis%pw%grid, states%nel, other%density_pw)
       
     case ( ATOMCENTERED )
 
