@@ -74,10 +74,13 @@ contains
   subroutine summary(this)
     class(basis_pw_t), intent(in) :: this
 
-    call yaml_mapping_open("basis_pw")
+    call yaml_mapping_open("basis")
+    call yaml_map("Type", "Plane waves")
     call yaml_map("Cut-off (Ha)", this%ecut)
     call yaml_map("Number of plane-waves", this%size)
     call yaml_mapping_close()
+
+    call this%grid%summary()
 
   end subroutine summary
 

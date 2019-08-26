@@ -91,19 +91,13 @@ contains
   subroutine summary(this)
     class(basis_t), intent(in) :: this
 
-    call yaml_mapping_open("basis")
     select case (this%type)
     case ( PLANEWAVES )
-      call yaml_map("Type", "Plane waves")
       call this%pw%summary()
     case ( ATOMCENTERED )
-      call yaml_map("Type", "Atomic orbitals")
       call this%ac%summary()
     end select
-    call yaml_mapping_close()
 
-    call this%grid%summary()
-    
   end subroutine summary
 
   subroutine ndims_from_spacing(ndims, spacing, cell)

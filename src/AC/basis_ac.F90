@@ -498,7 +498,8 @@ contains
     integer, allocatable :: i1(:)
     real(dp), allocatable :: d1(:)
 
-    call yaml_mapping_open("basis_ac")
+    call yaml_mapping_open("basis")
+    call yaml_map("Type", "Atomic orbitals")
     
     call yaml_map("Number of sites", this%n_site)
     call yaml_map("Total charge", this%Q)
@@ -549,6 +550,8 @@ contains
     
     call yaml_mapping_close()
 
+    call this%grid%summary()
+    
   end subroutine summary
 
 end module esl_basis_ac_m
