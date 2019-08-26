@@ -22,6 +22,8 @@ module esl_density_ac_m
 
   !Data structure for the density
   type density_ac_t
+    !< Density on the real space grid
+    real(dp), allocatable :: rho(:)
 
     !< Density matrix
     type(sparse_matrix_t) :: DM
@@ -45,9 +47,13 @@ module esl_density_ac_m
 contains
 
   !< Initialize the density matrices for this object
-  subroutine init(this, sp)
+  subroutine init(this, sp, basis)
     class(density_ac_t), intent(inout) :: this
     type(sparse_pattern_t), target, intent(in) :: sp
+    type(basis_ac_t), intent(in) :: basis
+
+    allocate(this%rho(1:basis%grid%np))
+    this%rho(1:basis%grid%np) = 0.d0
 
     ! Initialize the sparse matrices
     call this%DM%init(sp)
@@ -59,6 +65,10 @@ contains
   !----------------------------------------------------
   subroutine cleanup(this)
     type(density_ac_t), intent(inout) :: this
+
+    if( allocated(this%rho) ) then
+      deallocate(this%rho)
+    end if
 
     call this%DM%delete()
     call this%EDM%delete()
@@ -81,15 +91,13 @@ contains
   end subroutine guess
 
   !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, elsi, grid, H, pot, basis, S, rho, energy, out)
+  subroutine calculate(this, elsi, H, pot, basis, S, energy, out)
 #ifdef WITH_MPI
     use mpi, only: mpi_comm_world
 #endif
     class(density_ac_t), intent(inout) :: this
     !< ELSI handler
     class(elsi_t), intent(inout) :: elsi
-    !< Grid container that defines this density object
-    class(grid_t), intent(in) :: grid
     !< Hamiltonian
     class(hamiltonian_ac_t), intent(inout) :: H
     !< Potential container which calculates Hartree and XC
@@ -98,8 +106,6 @@ contains
     class(basis_ac_t), intent(in) :: basis
     !< The overlap matrix (has to be pre-calculated on entry)
     type(sparse_matrix_t) :: S
-    !< Real-space grid on which to calculate the (total) density from the DM
-    real(dp), intent(inout) :: rho(:)
     !< Energy type to contain all energies
     type(energy_t), intent(inout) :: energy
     !< Output density
@@ -114,7 +120,7 @@ contains
 
     ! TODO logic for calculating the output density from an input
     ! density.
-    allocate(Vscf(grid%np))
+    allocate(Vscf(basis%grid%np))
     ! Initialize
     Vscf(:) = 0._dp
     
@@ -127,17 +133,17 @@ contains
     energy%KB = sum(H%vkb%M * this%DM%M)
 
     ! 1. Start by calculating the density from the DM on the grid
-    rho(:) = 0._dp
-    call add_density_matrix(grid, basis, this%DM, rho)
+    this%rho(:) = 0._dp
+    call add_density_matrix(basis, this%DM, this%rho)
 
     !  2. Add Hartree potential
     ! Now we are in a position to calculate Hartree potential from rho
-    print *, '# DEBUG Rho sum', grid%integrate(rho)
+    print *, '# DEBUG Rho sum', basis%grid%integrate(this%rho)
     ! Now call the potentials_t%calculate which does:
     !   1. Calculate the XC potential.
     !   2. Calculate the Hartree potential
     !   3. Calculate the external local potential
-    call pot%calculate(rho, energy)
+    call pot%calculate(this%rho, energy)
 
     ! Sum Hartree and XC potential,
     ! Note that PSolver (in its current invocation)
@@ -147,7 +153,7 @@ contains
     ! Re-use rho-atom as the sum of potentials.
     ! I.e. after this line we cannot use Vscf anymore!
     Vscf(:) = pot%hartree(:) + pot%vxc(:)
-    print *, '# DEBUG V sum', grid%integrate(Vscf)
+    print *, '# DEBUG V sum', basis%grid%integrate(Vscf)
     call hamiltonian_ac_potential(basis, Vscf, H%SCF)
 
     ! X. Calculate output density matrix elements from the Hamiltonian
@@ -247,10 +253,9 @@ contains
   !< Add a sparse density matrix to the density grid using basis coefficients, etc.
   !<
   !< Add the basis functions density to the grid via an input density matrix.
-  subroutine add_density_matrix(grid, basis, DM, rho)
+  subroutine add_density_matrix(basis, DM, rho)
 
     !< Grid container that defines this density object
-    class(grid_t), intent(in) :: grid
     !< Atomic orbital basis
     class(basis_ac_t), intent(in) :: basis
     !< Density matrix
@@ -303,13 +308,13 @@ contains
     ! Allocate one array to calculate all psi for the LHS 
     allocate(ipsi(max_no))
 
-    loop_grid: do ip = 1, grid%np
+    loop_grid: do ip = 1, basis%grid%np
 
       ! Initialize the density to be added to this grid-point
       rho_ip = 0._dp
 
       ! Figure out all neighbouring sites
-      call populate_neighbours(n_neigh, grid%r(:, ip))
+      call populate_neighbours(n_neigh, basis%grid%r(:, ip))
 
       ! Loop on all sites connecting to the grid-point
       loop_neigh: do in = 1, n_neigh
@@ -319,7 +324,7 @@ contains
         is = basis%site_state_idx(ia)
 
         ! Retrieve current vector from grid-point to the basis-orbital
-        idr(:) = grid%r(:,ip) - basis%xyz(:,ia)
+        idr(:) = basis%grid%r(:,ip) - basis%xyz(:,ia)
 
         ! Calculate all psi-components at point r for all basis-functions
         ! on this specie
@@ -343,7 +348,7 @@ contains
             js = basis%site_state_idx(ja) ! which basis specie
             jjo = jo - basis%site_orbital_start(ja) + 1 ! local basis-function index of site ja
 
-            jdr(:) = grid%r(:,ip) - basis%xyz(:,ja)
+            jdr(:) = basis%grid%r(:,ip) - basis%xyz(:,ja)
             call basis%get_psi(js, jjo, jdr, jpsi)
 
             ! Add density contribution to the grid

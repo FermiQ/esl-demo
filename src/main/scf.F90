@@ -234,7 +234,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
 
-      np = in%np
+      np = basis%pw%grid%np
 
       allocate(next(1:np))
       call this%mixer%linear(np, in%density_pw%density(1:np), out%density_pw%density(1:np), next(1:np))

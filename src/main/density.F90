@@ -19,10 +19,6 @@ module esl_density_m
 
   !Data structure for the density
   type density_t
-    integer :: np !< Copied from grid
-
-    real(dp), allocatable :: rho(:)
-
     type(density_ac_t) :: ac
     type(density_pw_t) :: density_pw
     
@@ -44,10 +40,6 @@ contains
     class(density_t), intent(inout) :: this
     type(system_t), intent(in) :: system
 
-    allocate(this%rho(1:system%basis%grid%np))
-    this%rho(1:system%basis%grid%np) = 0.d0
-    this%np = system%basis%grid%np
-
     select case ( system%basis%type )
     case ( PLANEWAVES )
       
@@ -55,7 +47,7 @@ contains
       
     case ( ATOMCENTERED )
       
-      call this%ac%init(system%sparse_pattern)
+      call this%ac%init(system%sparse_pattern, system%basis%ac)
       
     end select
 
@@ -87,10 +79,6 @@ contains
   subroutine cleanup(this)
     type(density_t), intent(inout) :: this
 
-    if( allocated(this%rho) ) then
-      deallocate(this%rho)
-    end if
-
   end subroutine cleanup
 
   ! Calculate output density from an input density
@@ -116,10 +104,8 @@ contains
     case ( ATOMCENTERED )
 
       ! Calculate the density on the grid
-      call this%ac%calculate(elsi, system%basis%grid, &
-          H%ac, H%potential, &
-          system%basis%ac, system%S, this%rho, &
-          system%energy, out%ac)
+      call this%ac%calculate(elsi, H%ac, H%potential, system%basis%ac, system%S, &
+        system%energy, out%ac)
       
     end select
 
