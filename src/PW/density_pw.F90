@@ -126,7 +126,7 @@ contains
         do ist = 1, states%nstates
           !TODO: Here we should have a gmap for each k-point
           !From the G vectors to the real space
-          call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%npw, &
+          call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%size, &
                                states%states(ist,isp,ik)%zcoef, coef_rs)
 
           weight = states%occ_numbers(ist,isp,ik)*states%k_weights(ik)

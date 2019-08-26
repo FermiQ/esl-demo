@@ -87,7 +87,7 @@ contains
     integer(kind=i4) :: lWorktmp
     integer(kind=i4) :: info
 
-    m = pw%npw
+    m = pw%size
     n = states%nstates
 
     !OMM needs 28 matrices
@@ -104,7 +104,7 @@ contains
     !We copy the states in work(1)
     !TODO support spin and kpoint
     do ii = 1, n
-      work(1)%mat(1:pw%npw, ii) = states%states(ii, 1, 1)%zcoef(1:pw%npw)
+      work(1)%mat(1:pw%size, ii) = states%states(ii, 1, 1)%zcoef(1:pw%size)
     end do
 
     !result_in is also used for computing the eigenvalues
@@ -209,7 +209,7 @@ contains
                cmplx(0.0_r8,0.0_r8,r8), work(11)%mat, ldc)
 
     do ii = 1, n
-      states%states(ii, 1, 1)%zcoef(1:pw%npw) = work(11)%mat(1:pw%npw, ii)
+      states%states(ii, 1, 1)%zcoef(1:pw%size) = work(11)%mat(1:pw%size, ii)
       states%eigenvalues(ii, 1, 1) = result_in(ii)
     end do
 
@@ -235,7 +235,7 @@ contains
     integer :: ic
 
     !We apply the Laplacian
-    do ic = 1, pw%npw
+    do ic = 1, pw%size
       hpsi(ic) = -0.5d0*psi(ic)*pw%gmod2(ic)
     end do
 
@@ -253,7 +253,7 @@ contains
     integer :: ic
 
     !We apply the Laplacian
-    do ic = 1, pw%npw
+    do ic = 1, pw%size
       hpsi(ic) = 2.0d0*psi(ic)/(pw%gmod2(ic)+1.0e-08)
     end do
 
@@ -277,12 +277,12 @@ contains
     allocate (vpsi_rs(1:pw%grid%np))
     vpsi_rs(1:pw%grid%np) = 0.d0
 
-    call pw2grid(pw%grid, pw%gmap, pw%ndims, pw%npw, psi, psi_rs)
+    call pw2grid(pw%grid, pw%gmap, pw%ndims, pw%size, psi, psi_rs)
     !Note that hartree contains the external potential (from PSolver)
     do ip = 1, pot%np
       vpsi_rs(ip) = vpsi_rs(ip) + (pot%hartree(ip) + pot%vxc(ip))*psi_rs(ip)
     end do
-    call grid2pw(pw%grid, pw%gmap, pw%ndims, pw%npw, vpsi_rs, hpsi, .true.)
+    call grid2pw(pw%grid, pw%gmap, pw%ndims, pw%size, vpsi_rs, hpsi, .true.)
 
 
     deallocate (psi_rs)

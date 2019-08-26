@@ -15,7 +15,6 @@ module esl_basis_pw_m
 
   type, extends(basis_base_t) :: basis_pw_t
     real(dp) :: ecut !< Plane wave cut-off in Hartree
-    integer  :: npw  !< Number of plane waves
     integer  :: ndims(3) !< Number of plane-waves in each direction
     real(kind=dp) :: gmet(3,3) !< Metric
 
@@ -51,12 +50,11 @@ contains
               &        + geo%icell(3, i) * geo%icell(3, :)
     end do
 
-    this%npw = get_number_of_pw(this%ndims, this%ecut, this%gmet, [0._dp, 0._dp, 0._dp])
-    this%size = this%npw
+    this%size = get_number_of_pw(this%ndims, this%ecut, this%gmet, [0._dp, 0._dp, 0._dp])
  
     !TODO: We should create of these for each k-point
-    allocate(this%gmod2(1:this%npw))
-    allocate(this%gmap(1:3,1:this%npw))
+    allocate(this%gmod2(1:this%size))
+    allocate(this%gmap(1:3,1:this%size))
     call construct_mod_map_tables(this%ndims, this%ecut, this%gmet, [0._dp, 0._dp, 0._dp], this%gmod2, this%gmap)
 
   end subroutine init
@@ -78,7 +76,7 @@ contains
 
     call yaml_mapping_open("basis_pw")
     call yaml_map("Cut-off (Ha)", this%ecut)
-    call yaml_map("Number of plane-waves", this%npw)
+    call yaml_map("Number of plane-waves", this%size)
     call yaml_mapping_close()
 
   end subroutine summary
