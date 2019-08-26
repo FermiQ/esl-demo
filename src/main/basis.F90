@@ -70,16 +70,8 @@ contains
       
       this%type = ATOMCENTERED
 
-      ecut = fdf_get('MeshCutOff', 10._dp, 'Ha')
-
-      ! Initialize auxiliary grid
-      call ndims_from_meshcutoff(ndims, ecut, geo%icell)
-
-      call this%grid%init(ndims, geo%cell)
-
       ! Initialize AC basis
       call this%ac%init(geo)
-      this%size = this%ac%n_orbital
       
     else
       call message_error("Unknown basis set: "//trim(str))
@@ -127,21 +119,5 @@ contains
     end do
 
   end subroutine ndims_from_spacing
-
-  subroutine ndims_from_meshcutoff(ndims, cutoff, icell)
-    integer,  intent(out) :: ndims(3)
-    real(dp), intent(in)  :: cutoff
-    real(dp), intent(in)  :: icell(3,3)
-    
-    integer :: idim, n
-    real(dp) :: v
-    
-    do idim = 1,3
-      v = dot_product(icell(:, idim), icell(:, idim))
-      n = 2 * sqrt(cutoff / v) + 1
-      call fourier_dim(n, ndims(idim))
-    end do
-
-  end subroutine ndims_from_meshcutoff
     
 end module esl_basis_m
