@@ -28,6 +28,7 @@ program esl_demo
 contains
 
   subroutine esl_main()
+    use esl_basis_m
     use esl_hamiltonian_m, only : hamiltonian_t
     use esl_scf_m, only : scf_t
     use esl_states_m, only : states_t
@@ -59,7 +60,14 @@ contains
     !--------------TEMP --------------------
     nspin = 1
     !---------------------------------------
-    call states%init(system%geo, nspin, 1, .true., system%basis%size)
+    ! The following selec case is temporary and will be removed once
+    ! we can initialize the states without knowing the type of basis
+    select case (system%basis%type)
+    case (PLANEWAVES)
+      call states%init(system%geo, nspin, 1, .true., system%basis%pw%size)
+    case (ATOMCENTERED)
+      call states%init(system%geo, nspin, 1, .true., system%basis%ac%size)
+    end select
     call states%summary()
 
     ! TODO Nstep should probably be read from another entity

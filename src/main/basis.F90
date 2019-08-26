@@ -29,7 +29,6 @@ module esl_basis_m
     integer :: type
     type(basis_pw_t) :: pw !< Plane-wave basis
     type(basis_ac_t) :: ac !< Atomic-centered basis
-    integer :: size
   contains
     private
     procedure, public :: init
