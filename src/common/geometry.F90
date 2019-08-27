@@ -48,20 +48,21 @@ module esl_geometry_m
 
   contains
     private
-    
-    procedure, public :: init
     procedure, public :: summary
     procedure, public :: volume
     procedure, public :: electronic_charge
     final  :: cleanup
-    
+
   end type geometry_t
+
+  interface geometry_t
+    module procedure geometry_constructor
+  end interface geometry_t
 
 contains
 
   !< Initialize the geometry by reading input from the user
-  subroutine init(this)
-    class(geometry_t) :: this
+  type(geometry_t) function geometry_constructor() result(this)
 
     integer :: is, ia, i
     type(block_fdf)            :: blk
@@ -155,7 +156,7 @@ contains
     end if
     this%icell = matr3inv(this%cell)
 
-  end subroutine init
+  end function geometry_constructor
 
   !< Clean up the object
   subroutine cleanup(this)

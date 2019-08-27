@@ -96,7 +96,7 @@ contains
     class(system_t), intent(inout) :: this
 
     call this%energy%init()
-    call this%geo%init()
+    this%geo = geometry_t()
     call this%basis%init(this%geo)
     call this%force%init(this%geo%n_atoms)
     call this%ion_inter%init()
