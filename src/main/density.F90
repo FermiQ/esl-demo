@@ -19,10 +19,6 @@ module esl_density_m
 
   !Data structure for the density
   type density_t
-    integer :: np !< Copied from grid
-
-    real(dp), allocatable :: rho(:)
-
     type(density_ac_t) :: ac
     type(density_pw_t) :: density_pw
     
@@ -44,18 +40,14 @@ contains
     class(density_t), intent(inout) :: this
     type(system_t), intent(in) :: system
 
-    allocate(this%rho(1:system%basis%grid%np))
-    this%rho(1:system%basis%grid%np) = 0.d0
-    this%np = system%basis%grid%np
-
     select case ( system%basis%type )
     case ( PLANEWAVES )
       
-      call this%density_pw%init(system%basis%grid, system%basis%pw)
+      call this%density_pw%init(system%basis%pw)
       
     case ( ATOMCENTERED )
       
-      call this%ac%init(system%sparse_pattern)
+      call this%ac%init(system%sparse_pattern, system%basis%ac)
       
     end select
 
@@ -71,7 +63,7 @@ contains
     case ( PLANEWAVES )
 
       ! TODO fix interface 
-      call this%density_pw%guess(system%geo, system%basis%grid)
+      call this%density_pw%guess(system%geo)
       
     case ( ATOMCENTERED )
 
@@ -86,10 +78,6 @@ contains
   !----------------------------------------------------
   subroutine cleanup(this)
     type(density_t), intent(inout) :: this
-
-    if( allocated(this%rho) ) then
-      deallocate(this%rho)
-    end if
 
   end subroutine cleanup
 
@@ -111,15 +99,13 @@ contains
 
       ! Calculate density
       call out%density_pw%calculate(states)
-      call yaml_map("Norm", system%basis%grid%integrate(out%density_pw%density))
+      call yaml_map("Norm", system%basis%pw%grid%integrate(out%density_pw%density))
 
     case ( ATOMCENTERED )
 
       ! Calculate the density on the grid
-      call this%ac%calculate(elsi, system%basis%grid, &
-          H%ac, H%potential, &
-          system%basis%ac, system%S, this%rho, &
-          system%energy, out%ac)
+      call this%ac%calculate(elsi, H%ac, H%potential, system%basis%ac, system%S, &
+        system%energy, out%ac)
       
     end select
 
@@ -138,7 +124,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
 
-      res = this%density_pw%residue(basis%grid, states%nel, other%density_pw)
+      res = this%density_pw%residue(basis%pw%grid, states%nel, other%density_pw)
       
     case ( ATOMCENTERED )
 

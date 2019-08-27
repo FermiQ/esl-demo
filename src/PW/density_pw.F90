@@ -36,17 +36,12 @@ contains
 
   !Initialize the density
   !----------------------------------------------------
-  subroutine init(this, grid, basis)
+  subroutine init(this, basis)
     class(density_pw_t),     intent(inout) :: this
-    type(grid_t),               intent(in) :: grid
     type(basis_pw_t), target,   intent(in) :: basis
 
-    if(grid%np /= product(basis%ndims)) then
-      call message_error("Number of grid point and number of plane waves are not consistent.")
-    end if
-
-    allocate(this%density(1:grid%np))
-    this%np = grid%np
+    allocate(this%density(1:basis%grid%np))
+    this%np = basis%grid%np
 
     this%pw => basis
 
@@ -54,20 +49,19 @@ contains
 
   !Guess the initial density from the atomic orbitals
   !----------------------------------------------------
-  subroutine guess(this, geo, grid)
+  subroutine guess(this, geo)
     use esl_constants_m, only : PI
     class(density_pw_t), intent(inout) :: this
     type(geometry_t), intent(in) :: geo
-    type(grid_t),     intent(in) :: grid
     
     real(dp), allocatable :: atomicden(:)
     integer :: iat, ip, is
     real(dp):: norm
 
-    this%density(1:grid%np) = 0.d0
+    this%density(1:this%np) = 0.d0
 
-    allocate(atomicden(1:grid%np))
-    atomicden(1:grid%np) = 0.d0
+    allocate(atomicden(1:this%np))
+    atomicden(1:this%np) = 0.d0
 
     call yaml_mapping_open("Guess atomic density")
 
@@ -76,13 +70,13 @@ contains
       is = geo%species_idx(iat)      
 
       !Convert the radial density to the cartesian grid
-      call grid%radial_function(geo%species(is)%rho, geo%xyz(:,iat), func=atomicden)
+      call this%pw%grid%radial_function(geo%species(is)%rho, geo%xyz(:,iat), func=atomicden)
       
-      norm = grid%integrate(atomicden)
+      norm = this%pw%grid%integrate(atomicden)
       call yaml_map("Norm", norm)
 
       !Summing up to the total density
-      forall (ip = 1:grid%np)
+      forall (ip = 1:this%np)
         this%density(ip) = this%density(ip) + atomicden(ip)
       end forall
     end do
@@ -126,7 +120,7 @@ contains
         do ist = 1, states%nstates
           !TODO: Here we should have a gmap for each k-point
           !From the G vectors to the real space
-          call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%npw, &
+          call pw2grid(this%pw%grid, this%pw%gmap, this%pw%ndims, this%pw%size, &
                                states%states(ist,isp,ik)%zcoef, coef_rs)
 
           weight = states%occ_numbers(ist,isp,ik)*states%k_weights(ik)

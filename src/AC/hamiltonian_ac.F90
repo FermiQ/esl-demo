@@ -73,19 +73,18 @@ contains
   !< These includes:
   !<  1. The kinetic Hamiltonian (non-SCF dependent)
   !<  2. Non-local Hamiltonian (non-SCF dependent)
-  subroutine calculate_H0(this, basis, geom, grid)
+  subroutine calculate_H0(this, basis, geom)
     class(hamiltonian_ac_t), intent(inout) :: this
     type(basis_ac_t), intent(in) :: basis
     type(geometry_t), intent(in) :: geom
-    type(grid_t), intent(in) :: grid
 
     ! Calculate individual elements for the H0-elements
     this%kin%M = 0._dp
-    call hamiltonian_ac_laplacian(basis, grid, this%kin)
+    call hamiltonian_ac_laplacian(basis, this%kin)
 
     ! Calculate V_kb matrix elements
     this%vkb%M(:) = 0._dp
-    call hamiltonian_ac_Vkb(geom, basis, grid, this%vkb)
+    call hamiltonian_ac_Vkb(geom, basis, this%vkb)
 
   end subroutine calculate_H0
 
@@ -100,9 +99,8 @@ contains
     
   end subroutine setup_H0
 
-  subroutine hamiltonian_ac_laplacian(basis, grid, H)
+  subroutine hamiltonian_ac_laplacian(basis, H)
     class(basis_ac_t), intent(in) :: basis
-    type(grid_t), intent(in) :: grid
     type(sparse_matrix_t), intent(inout) :: H
 
     integer :: ia, is, io, iio, ind, jo, ja, js, jjo
@@ -118,8 +116,8 @@ contains
     sp => H%sp
 
     ! Allocate the Laplacian matrices
-    allocate(iT(3,grid%np))
-    allocate(jT(3,grid%np))
+    allocate(iT(3,basis%grid%np))
+    allocate(jT(3,basis%grid%np))
 
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
@@ -135,7 +133,7 @@ contains
         ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        call grid%radial_function_ylm_gradient(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iT)
+        call basis%grid%radial_function_ylm_gradient(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iT)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -154,7 +152,7 @@ contains
           jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          call grid%radial_function_ylm_gradient(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jT)
+          call basis%grid%radial_function_ylm_gradient(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jT)
 
           H%M(ind) = H%M(ind) + matrix_T(iT, jT)
 
@@ -179,20 +177,19 @@ contains
       integer :: ip
 
       T = 0._dp
-      do ip = 1, grid%np
+      do ip = 1, basis%grid%np
         T = T + iT(1,ip) * jT(1,ip) + iT(2,ip) * jT(2,ip) + iT(3,ip) * jT(3,ip)
       end do
       ! TODO check Laplacian and units, it isn't fully correct, but closer to Siesta (in its current state)
-      T = T * grid%volelem / (2*PI)
+      T = T * basis%grid%volelem / (2*PI)
       
     end function matrix_T
 
   end subroutine hamiltonian_ac_laplacian
   
-  subroutine hamiltonian_ac_Vkb(geom, basis, grid, H)
+  subroutine hamiltonian_ac_Vkb(geom, basis, H)
     class(geometry_t), intent(in) :: geom
     class(basis_ac_t), intent(in) :: basis
-    type(grid_t), intent(in) :: grid
     type(sparse_matrix_t), intent(inout) :: H
 
     ! Local variables
@@ -234,9 +231,9 @@ contains
     sp => H%sp
 
     ! Allocate the grid
-    allocate(iG(grid%np))
-    allocate(pG(grid%np))
-    allocate(jG(grid%np))
+    allocate(iG(basis%grid%np))
+    allocate(pG(basis%grid%np))
+    allocate(jG(basis%grid%np))
 
     ! Loop over all orbital connections in the sparse pattern and
     ! once we have an i,j we loop over atoms to find projectors within a
@@ -261,7 +258,7 @@ contains
         im = basis%state(ibs)%orb(iio)%m
         
         ! Calculate the basis function on the grid -> iG
-        call grid%radial_function_ylm(basis%state(ibs)%orb(iio)%R, il, im, ibxyz, iG)
+        call basis%grid%radial_function_ylm(basis%state(ibs)%orb(iio)%R, il, im, ibxyz, iG)
 
         ! loop: alpha
         ! Since there are typically few projectors we will loop those first
@@ -294,9 +291,9 @@ contains
             allocate(KB_i(-apl:apl))
             do m = -apl, apl
 
-              call grid%radial_function_ylm(proj, apl, m, axyz, pG)
+              call basis%grid%radial_function_ylm(proj, apl, m, axyz, pG)
 
-              KB_i(m) = grid%overlap(ibxyz, iG, ir_max, axyz, pG, apr_max) * Ep
+              KB_i(m) = basis%grid%overlap(ibxyz, iG, ir_max, axyz, pG, apr_max) * Ep
 
             end do
 
@@ -323,14 +320,14 @@ contains
               if ( not_within_cutoff(axyz, apr_max, jbxyz, jr_max) ) cycle
 
               ! Calculate the basis function on the grid -> jG
-              call grid%radial_function_ylm(basis%state(jbs)%orb(jjo)%R, jl, jm, jbxyz, jG)
+              call basis%grid%radial_function_ylm(basis%state(jbs)%orb(jjo)%R, jl, jm, jbxyz, jG)
 
               Vkb = 0._dp
               do m = -apl, apl
                 
-                call grid%radial_function_ylm(proj, apl, m, axyz, pG)
+                call basis%grid%radial_function_ylm(proj, apl, m, axyz, pG)
                 
-                Vkb = Vkb + KB_i(m) * grid%overlap(jbxyz, jG, jr_max, axyz, pG, apr_max)
+                Vkb = Vkb + KB_i(m) * basis%grid%overlap(jbxyz, jG, jr_max, axyz, pG, apr_max)
                 
               end do
               
@@ -379,17 +376,14 @@ contains
   end subroutine hamiltonian_ac_Vkb
 
 
-  subroutine hamiltonian_ac_potential(basis, grid, pot, H)
+  subroutine hamiltonian_ac_potential(basis, pot, H)
     use prec, only: dp
     use esl_basis_ac_m, only: basis_ac_t
-    use esl_grid_m, only: grid_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
     use esl_sparse_matrix_m, only: sparse_matrix_t
 
     !< AC basis used
     class(basis_ac_t), intent(in) :: basis
-    !< Current grid information
-    type(grid_t), intent(in) :: grid
     !< Potential of which to add the matrix elements to the Hamiltonian
     real(dp), intent(in) :: pot(:)
     !< Hamiltonian to add the matrix elements too
@@ -408,8 +402,8 @@ contains
     sp => H%sp
 
     ! Allocate the Laplacian matrices
-    allocate(ipsi(grid%np))
-    allocate(jpsi(grid%np))
+    allocate(ipsi(basis%grid%np))
+    allocate(jpsi(basis%grid%np))
 
     ! Loop over all orbital connections in the sparse pattern and
     ! calculate the overlap matrix for each of them
@@ -425,7 +419,7 @@ contains
         ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        call grid%radial_function_ylm(basis%state(is)%orb(iio)%R, il, im, ixyz, ipsi)
+        call basis%grid%radial_function_ylm(basis%state(is)%orb(iio)%R, il, im, ixyz, ipsi)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -444,10 +438,10 @@ contains
           jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          call grid%radial_function_ylm(basis%state(js)%orb(jjo)%R, jl, jm, jxyz, jpsi)
+          call basis%grid%radial_function_ylm(basis%state(js)%orb(jjo)%R, jl, jm, jxyz, jpsi)
 
           H%M(ind) = H%M(ind) + &
-              grid%matrix_elem(ixyz, ipsi, ir_max, pot, jxyz, jpsi, jr_max)
+              basis%grid%matrix_elem(ixyz, ipsi, ir_max, pot, jxyz, jpsi, jr_max)
           
           ! DEBUG print
 !          if ( ia == ja .and. iio == jjo ) &

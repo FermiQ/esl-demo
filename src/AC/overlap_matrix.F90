@@ -12,15 +12,13 @@ module esl_overlap_matrix_ac_m
 
 contains
 
-  subroutine overlap_matrix_ac_calculate(basis, grid, sp, S)
+  subroutine overlap_matrix_ac_calculate(basis, sp, S)
     use prec, only: dp
     use esl_basis_ac_m, only: basis_ac_t
-    use esl_grid_m, only: grid_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
     use esl_sparse_matrix_m, only: sparse_matrix_t
 
     class(basis_ac_t), intent(inout) :: basis
-    type(grid_t), intent(in) :: grid
     type(sparse_pattern_t), intent(in) :: sp
     type(sparse_matrix_t), intent(inout) :: S
 
@@ -29,8 +27,8 @@ contains
     real(dp) :: ixyz(3), ir_max, jxyz(3), jr_max
     integer :: il, im, jl, jm
 
-    allocate(iao(1:grid%np))
-    allocate(jao(1:grid%np))
+    allocate(iao(1:basis%grid%np))
+    allocate(jao(1:basis%grid%np))
 
     ! Re-initialize the sparse matrix
     call S%init(sp)
@@ -49,7 +47,7 @@ contains
         ir_max = basis%state(is)%orb(iio)%r_cut
         il = basis%state(is)%orb(iio)%l
         im = basis%state(is)%orb(iio)%m
-        call grid%radial_function_ylm(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iao)
+        call basis%grid%radial_function_ylm(basis%state(is)%orb(iio)%R, il, im, ixyz(:), iao)
 
         ! Loop entries in the sparse pattern
         do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
@@ -68,10 +66,10 @@ contains
           jr_max = basis%state(js)%orb(jjo)%r_cut
           jl = basis%state(js)%orb(jjo)%l
           jm = basis%state(js)%orb(jjo)%m
-          call grid%radial_function_ylm(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jao)
+          call basis%grid%radial_function_ylm(basis%state(js)%orb(jjo)%R, jl, jm, jxyz(:), jao)
 
           S%M(ind) = &
-              grid%overlap(ixyz(:), iao, ir_max, jxyz(:), jao, jr_max)
+              basis%grid%overlap(ixyz(:), iao, ir_max, jxyz(:), jao, jr_max)
 
           ! DEBUG print
 !          if ( ia == ja .and. iio == jjo ) &

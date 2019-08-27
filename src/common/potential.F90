@@ -1,6 +1,7 @@
 module esl_potential_m
 
   use prec, only : dp,ip
+  use esl_basis_base_m
   use esl_energy_m
   use esl_geometry_m
   use esl_grid_m
@@ -36,16 +37,16 @@ contains
 
   !Initialize the potentials
   !----------------------------------------------------
-  subroutine init(pot, grid, states, geo, periodic)
+  subroutine init(pot, basis, states, geo, periodic)
     class(potential_t) :: pot
-    type(grid_t),    intent(in) :: grid
+    class(basis_base_t), intent(in) :: basis
     type(states_t),  intent(in) :: states
     type(geometry_t),intent(in) :: geo
     logical,         intent(in) :: periodic
     
     character(len = 1) :: geocode
 
-    pot%np = grid%np
+    pot%np = basis%grid%np
 
     allocate(pot%hartree(1:pot%np))
     pot%hartree(1:pot%np) = 0.d0
@@ -61,11 +62,11 @@ contains
     end if
 
     pot%ionicOffset = 0._dp
-    call pot%psolver%init(0, 1, geocode, grid%ndims, grid%hgrid)
+    call pot%psolver%init(0, 1, geocode, basis%grid%ndims, basis%grid%hgrid)
 
-    call pot%xc%init(geo, grid)
+    call pot%xc%init(geo, basis%grid)
 
-    call pot%compute_ext_loc(grid, geo)
+    call pot%compute_ext_loc(basis, geo)
 
   end subroutine init
 
@@ -105,10 +106,10 @@ contains
 
   !Compute the local part of the external potential
   !----------------------------------------------------
-  subroutine compute_ext_loc(pot, grid, geo)
+  subroutine compute_ext_loc(pot, basis, geo)
     use esl_constants_m, only : PI
     class(potential_t), intent(inout) :: pot
-    type(grid_t),       intent(in)    :: grid
+    class(basis_base_t), intent(in)    :: basis
     type(geometry_t),   intent(in)    :: geo
 
     integer :: iat, ip, is
@@ -121,7 +122,7 @@ contains
       is = geo%species_idx(iat)
 
       ! Convert the radial density to the cartesian grid
-      call grid%radial_function(geo%species(is)%vlocal, geo%xyz(:,iat), func=extloc)
+      call basis%grid%radial_function(geo%species(is)%vlocal, geo%xyz(:,iat), func=extloc)
       
       do ip=1, pot%np
         pot%external(ip) = pot%external(ip) + extloc(ip)

@@ -87,7 +87,7 @@ contains
       call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
 
       ! Calculate the overlap matrix for this SCF cycle
-      call overlap_matrix_ac_calculate(system%basis%ac, system%basis%grid, &
+      call overlap_matrix_ac_calculate(system%basis%ac, &
           system%sparse_pattern, system%S)
 
     end select
@@ -234,7 +234,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
 
-      np = in%np
+      np = basis%pw%grid%np
 
       allocate(next(1:np))
       call this%mixer%linear(np, in%density_pw%density(1:np), out%density_pw%density(1:np), next(1:np))

@@ -4,6 +4,7 @@ module esl_basis_ac_m
   use yaml_output
   use pspiof_m
 
+  use esl_basis_base_m
   use esl_numeric_m
   use esl_message_m
   use esl_species_m
@@ -52,7 +53,7 @@ module esl_basis_ac_m
     
   end type state_ac_t
 
-  type basis_ac_t
+  type, extends(basis_base_t) :: basis_ac_t
 
     ! TODO this should be from system, i.e.
     real(dp) :: Q = 0._dp !< Number of electrons
@@ -105,7 +106,15 @@ contains
     type(pspiof_meshfunc_t), pointer :: mesh_R => null()
     integer :: is, no, io, isite
     integer :: l, m
-    real(dp) :: occ, r_cut, cut_off
+    real(dp) :: occ, r_cut, cut_off, ecut
+    integer  :: ndims(3)
+
+    ecut = fdf_get('MeshCutOff', 10._dp, 'Ha')
+
+    ! Initialize auxiliary grid
+    call ndims_from_meshcutoff(ndims, ecut, geo%icell)
+
+    call this%grid%init(ndims, geo%cell)
 
     ! Construct the basis functions
     ! The option for constructing the basis is
@@ -241,6 +250,8 @@ contains
     this%site_orbital_start(this%n_site+1) = no
     this%n_orbital = no - 1
 
+    this%size = this%n_orbital
+
   end subroutine init
 
   !Release
@@ -297,6 +308,22 @@ contains
     end do
 
   end subroutine cleanup
+
+  subroutine ndims_from_meshcutoff(ndims, cutoff, icell)
+    integer,  intent(out) :: ndims(3)
+    real(dp), intent(in)  :: cutoff
+    real(dp), intent(in)  :: icell(3,3)
+
+    integer :: idim, n
+    real(dp) :: v
+
+    do idim = 1,3
+      v = dot_product(icell(:, idim), icell(:, idim))
+      n = 2 * sqrt(cutoff / v) + 1
+      call fourier_dim(n, ndims(idim))
+    end do
+
+  end subroutine ndims_from_meshcutoff
 
   !< Create a sparse DM containing the atomic fillings
   !<
@@ -471,7 +498,8 @@ contains
     integer, allocatable :: i1(:)
     real(dp), allocatable :: d1(:)
 
-    call yaml_mapping_open("basis_ac")
+    call yaml_mapping_open("basis")
+    call yaml_map("Type", "Atomic orbitals")
     
     call yaml_map("Number of sites", this%n_site)
     call yaml_map("Total charge", this%Q)
@@ -522,6 +550,8 @@ contains
     
     call yaml_mapping_close()
 
+    call this%grid%summary()
+    
   end subroutine summary
 
 end module esl_basis_ac_m
