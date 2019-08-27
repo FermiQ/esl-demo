@@ -1,5 +1,6 @@
 set(common_SOURCES
   basis_base.F90
+  density_base.F90
   constants.F90
   elsi_wrapper.F90
   energy.F90

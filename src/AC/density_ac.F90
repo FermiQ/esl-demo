@@ -1,6 +1,7 @@
 module esl_density_ac_m
 
   use prec, only : dp
+  use esl_density_base_m
   use esl_basis_ac_m
   use esl_energy_m
   use esl_grid_m
@@ -24,9 +25,7 @@ module esl_density_ac_m
   public :: density_ac_t
 
   !Data structure for the density
-  type density_ac_t
-    !< Density on the real space grid
-    real(dp), allocatable :: rho(:)
+  type, extends(density_base_t) :: density_ac_t
 
     !< Density matrix
     type(sparse_matrix_t) :: DM
