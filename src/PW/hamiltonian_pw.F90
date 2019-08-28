@@ -117,7 +117,7 @@ contains
     ijob = -1
     do ispin = 1, states%nspin
       do
-        call rci_omm(ijob, iS, task, result_in(ispin), m, n, &
+        call rci_omm(ijob, iS, task, result_in(:, ispin), m, n, &
                      e_min, cg_tol, max_iter, long_out)
 
         select case (task)
@@ -128,9 +128,8 @@ contains
           print *, "ELSI RCI did not converged."
           exit
         case (ELSI_RCI_H_MULTI) ! B = H^(trH) * A
-            do ii = 1, iS%n
-              call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx, ispin)%mat(1:iS%m, ii), work(iS%Bidx, ispin)%mat(1:iS%m, ii))
-            end do
+          do ii = 1, iS%n
+            call hamiltonian_pw_apply(this%pot, pw, work(iS%Aidx, ispin)%mat(1:iS%m, ii), work(iS%Bidx, ispin)%mat(1:iS%m, ii))
           end do
 
         case (ELSI_RCI_S_MULTI) ! B = S^(trS) * A
@@ -145,7 +144,6 @@ contains
           do ii = 1, iS%n
             call hamiltonian_preconditioner(pw, work(iS%Aidx, ispin)%mat(1:iS%m, ii), work(iS%Bidx, ispin)%mat(1:iS%m, ii))
           end do
-        end do
 
         case (ELSI_RCI_GEMM) ! C = alpha * A^(trA) * B^(trB) + beta * C
           lda = size(work(iS%Aidx, ispin)%mat, 1)
