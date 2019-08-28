@@ -30,7 +30,6 @@ module esl_density_m
     procedure, public :: calculate
     procedure, public :: calculate_density_matrix
     procedure, public :: residue
-    final  :: cleanup
     
   end type density_t
 
@@ -74,13 +73,6 @@ contains
     end select
 
   end subroutine guess
-
-  !Release
-  !----------------------------------------------------
-  subroutine cleanup(this)
-    type(density_t), intent(inout) :: this
-
-  end subroutine cleanup
 
   ! Calculate new density based on a system and states
   !----------------------------------------------------

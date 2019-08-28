@@ -33,7 +33,7 @@ module esl_basis_ac_m
     
     procedure, public :: atomic_density_matrix
 
-    final :: cleanup
+    final :: finalizer
     
   end type basis_ac_t
 
@@ -205,7 +205,7 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(basis_ac_t) :: this
     integer :: is, io
     type(pspiof_meshfunc_t), pointer :: R => null()
@@ -256,7 +256,7 @@ contains
       
     end do
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   subroutine ndims_from_meshcutoff(ndims, cutoff, icell)
     integer,  intent(out) :: ndims(3)

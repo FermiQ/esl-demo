@@ -15,7 +15,6 @@ module esl_mixing_m
     private
     procedure, public :: init
     procedure, public :: linear
-    final  :: cleanup
   end type mixing_t
 
 contains
@@ -30,14 +29,6 @@ contains
     this%alpha = fdf_get('SCF.Mix.alpha', 0.1_dp)
 
   end subroutine init
-
-
-  !Release the mixer
-  !----------------------------------------------------
-  subroutine cleanup(this)
-    type(mixing_t) :: this
-
-  end subroutine cleanup
 
   ! Mix two input vectors
   subroutine linear(this, np, in, out, next)

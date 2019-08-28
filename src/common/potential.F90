@@ -30,7 +30,7 @@ module esl_potential_m
     procedure, public :: init
     procedure, public :: calculate
     procedure, public :: compute_ext_loc
-    final  :: cleanup
+    final  :: finalizer
   end type potential_t
 
 contains
@@ -73,14 +73,14 @@ contains
 
   !Release the potentials
   !----------------------------------------------------
-  subroutine cleanup(pot)
+  subroutine finalizer(pot)
     type(potential_t):: pot
 
     if(allocated(pot%hartree)) deallocate(pot%hartree)
     if(allocated(pot%external)) deallocate(pot%external)
     if(allocated(pot%vxc)) deallocate(pot%vxc)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
 
   !Compute the different potentials

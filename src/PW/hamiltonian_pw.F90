@@ -34,7 +34,7 @@ module esl_hamiltonian_pw_m
     private
     procedure, public :: init
     procedure, public :: eigensolver
-    final :: cleanup
+    final :: finalizer
   end type hamiltonian_pw_t
 
 contains
@@ -56,14 +56,14 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(hamiltonian_pw_t) :: this
 
 !    call this%dist%delete_()
 
     nullify (this%pot)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !Eigensolver
   !----------------------------------------------------

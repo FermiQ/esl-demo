@@ -16,7 +16,6 @@ module esl_ion_interaction_m
     procedure, public :: init
     procedure, public :: calculate_periodic
     procedure, public :: calculate_isolated
-    final  :: cleanup
   end type ion_interaction_t
 
 contains
@@ -29,13 +28,6 @@ contains
     this%alpha = fdf_get('Ewald.Alpha', 0.21d0)
 
   end subroutine init
-
-  !Release
-  !----------------------------------------------------
-  subroutine cleanup(this)
-    type(ion_interaction_t), intent(inout) :: this
-
-  end subroutine cleanup
 
   !Calc the ion-ion interaction for periodic systems
   !----------------------------------------------------

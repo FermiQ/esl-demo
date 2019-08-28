@@ -23,7 +23,7 @@ module esl_psolver_m
   contains
     procedure, public :: init
     procedure, public :: hartree_potential
-    final  :: cleanup
+    final  :: finalizer
   end type psolver_t
 
 contains
@@ -48,11 +48,11 @@ contains
     call pkernel_set(ps%pkernel, verbose=.true.)
   end subroutine init
 
-  subroutine cleanup(ps)
+  subroutine finalizer(ps)
     type(psolver_t), intent(inout) :: ps
 
     call pkernel_free(ps%pkernel)
-  end subroutine cleanup
+  end subroutine finalizer
 
   subroutine hartree_potential(ps, hartree, ionicPot, ionicOffset, ehartree)
     class(psolver_t), intent(inout) :: ps
