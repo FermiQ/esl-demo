@@ -31,8 +31,6 @@ if(WITH_MPI)
     )
   set_target_properties(esldmpi PROPERTIES
     COMPILE_DEFINITIONS "WITH_MPI"
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION_MAJOR}
     )
   set_target_properties(common PROPERTIES
     COMPILE_DEFINITIONS "WITH_MPI"
