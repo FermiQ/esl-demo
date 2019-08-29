@@ -169,3 +169,6 @@ if (WITH_COVERAGE)
   file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/analysis)
   setup_coverage(coverage analysis)
 endif()
+
+#installation
+install(TARGETS ${target_name} RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR})
