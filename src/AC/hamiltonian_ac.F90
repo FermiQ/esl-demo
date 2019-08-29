@@ -90,7 +90,7 @@ contains
     type(geometry_t), intent(in) :: geom
 
     ! Calculate individual elements for the H0-elements
-    this%kin%M = 0._dp
+    this%kin%M(:) = 0._dp
     call hamiltonian_ac_laplacian(basis, this%kin)
 
     ! Calculate V_kb matrix elements
@@ -170,7 +170,6 @@ contains
         if ( info /= 0 ) then
           print *, 'hamiltonian_ac::eigensolver::eig_gamma FAILED DIAGONALIZATION: ', info
         end if
-        !print *, 'eig', eig
 
         ! Copy over states and eigenvalues
         ! Since states does not necessarily take the full orbital space we have to

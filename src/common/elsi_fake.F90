@@ -46,104 +46,83 @@ contains
     real(dp), intent(inout) :: edm(:)
   end subroutine elsi_get_edm_real_sparse
 
-  subroutine elsi_compute_mu_and_occ(eh, nel, nstate, nspin, nkpt, evals, &
-      occ, k_weights, mu)
+  subroutine elsi_compute_mu_and_occ(eh, nel, nstate, nspin, nkpt, k_weights, &
+      evals, occ, mu)
     type(elsi_handle), intent(in) :: eh
     real(dp), intent(in) :: nel
     integer(ip), intent(in) :: nstate, nspin, nkpt
+    real(dp), dimension(nkpt), intent(in) :: k_weights
     real(dp), dimension(nstate,nspin,nkpt), intent(in) :: evals
     real(dp), dimension(nstate,nspin,nkpt), intent(out) :: occ
-    real(dp), dimension(nkpt), intent(in) :: k_weights
     real(dp), intent(out) :: mu
 
+    integer :: ikpt, ispin
+    integer :: it
+    integer, parameter :: max_it = 150
+    real(dp), parameter :: tolerance = 1.e-10_dp
     real(dp) :: e_min, e_max, spin_degen
-    real(dp) :: mu_min, mu_max
-    real(dp) :: diff_min, diff_max, diff
+    real(dp) :: diff
 
     e_min = minval(evals)
     e_max = maxval(evals)
 
     ! Initialize
-    mu_min = e_min
-    mu_max = e_max
-    if ( mu_max - mu_min < 1.e-6_dp ) then
-      mu_max = mu_max + 1._dp
-    end if
-
-    ! Initialize
-    occ(:,:,:) = 0._dp
-
-    call next_step()
-    !print *, 'occ', occ
-
-    ! Currently we have no fall-back
-    do while ( diff_min * diff_max > 0._dp )
-
-      mu_min = mu_min - 0.5_dp * abs(e_max - e_min)
-      mu_max = mu_max + 0.5_dp * abs(e_max - e_min)
-
-      call next_step()
-
+    diff = 0._dp
+    do ikpt = 1 , nkpt
+      do ispin = 1 , ispin
+        occ(:,ispin,ikpt) = k_weights(ikpt) * 2._dp / real(nspin, dp)
+        diff = diff + sum(occ(:,ispin,ikpt))
+      end do
     end do
 
-    ! Now calculate the Fermi-level
-    if ( abs(diff_min) < 1.e-6_dp ) then
-      mu = mu_min
-      call single_step(mu, diff)
-      return
-    else if ( abs(diff_max) < 1.e-6_dp ) then
-      mu = mu_max
-      call single_step(mu, diff)
-      return
+    if ( diff < nel ) then
+      print *, 'elsi_fake::elsi_compute_mu_and_occ cannot determine Fermi-level due to &
+          &insufficient number of states.'
     end if
 
-    ! TODO clean up to really have a correctly behaving bisection.
+    ! Check that we *can* calculate the proper fermi-level
 
-    do
-      mu = (mu_min + mu_max) * 0.5_dp
-      call single_step(mu, diff)
-      if ( abs(diff) < 1.e-6_dp ) then
+    ! First correct min/max values
+    e_min = e_min - eh%width * sqrt(-log(tolerance * 0.01_dp))
+    e_max = e_max + eh%width * sqrt(-log(tolerance * 0.01_dp))
+    do it = 1, max_it
+
+      ! Calculate current level
+      mu = 0.5_dp * (e_min + e_max)
+
+      call next_step(mu, diff)
+
+      if ( abs(diff) < tolerance ) then
         return
-      else if ( diff < 0._dp ) then
-        mu_min = mu
-      else ! diff > 0._dp
-        mu_max = mu
       end if
-    end do
 
+      if ( diff < 0._dp ) then
+        e_min = mu
+      else
+        e_max = mu
+      end if
+      
+    end do
+      
   contains
 
-    subroutine next_step()
+    subroutine next_step(mu, diff)
+      real(dp), intent(in) :: mu
+      real(dp), intent(out) :: diff
 
       select case ( eh%method )
       case ( 1 ) ! Fermi-Dirac
         spin_degen = 3 - nspin
-        call fermi_dirac_cycle(mu_min, diff_min)
-        call fermi_dirac_cycle(mu_max, diff_max)
+        call fermi_dirac(mu, diff)
       case default
         print *, 'ELSI stub does not implement others than Fermi-Dirac distributions'
       end select
 
     end subroutine next_step
 
-    subroutine single_step(mu, diff)
+    subroutine fermi_dirac(mu, diff)
       real(dp), intent(in) :: mu
       real(dp), intent(out) :: diff
-
-      select case ( eh%method )
-      case ( 1 ) ! Fermi-Dirac
-        spin_degen = 3 - nspin
-        call fermi_dirac_cycle(mu, diff)
-      case default
-        print *, 'ELSI stub does not implement others than Fermi-Dirac distributions'
-      end select
-
-    end subroutine single_step
-
-    subroutine fermi_dirac_cycle(mu, diff)
-      real(dp), intent(in) :: mu
-      real(dp), intent(out) :: diff
-
 
       integer :: ikpt, ispin, istate
 
@@ -167,9 +146,9 @@ contains
         end do
       end do
 
-      diff = diff - eh%nel
+      diff = diff - nel
 
-    end subroutine fermi_dirac_cycle
+    end subroutine fermi_dirac
     
   end subroutine elsi_compute_mu_and_occ
 

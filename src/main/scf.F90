@@ -137,7 +137,7 @@ contains
     call this%rho_in%guess(system)
     
     !Calc. potentials from guess density
-    select case (system%basis%type)
+    select case ( system%basis%type )
     case ( PLANEWAVES )
       call this%H%potential%calculate(this%rho_in%pw%density, system%energy)
     case( ATOMCENTERED )

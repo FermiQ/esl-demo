@@ -84,13 +84,13 @@ contains
   !Eigensolver
   !----------------------------------------------------
   subroutine eigensolver(this, basis, states)
-    class(hamiltonian_t) :: this
+    class(hamiltonian_t), intent(inout) :: this
     type(basis_t),  intent(in)    :: basis
     type(states_t), intent(inout) :: states
 
     select case (basis%type)
     case ( PLANEWAVES )
-      call this%pw%eigensolver(states, basis%pw)
+      call this%pw%eigensolver(basis%pw, states)
     case ( ATOMCENTERED )
       call this%ac%eigensolver(basis%ac, states)
     end select

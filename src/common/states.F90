@@ -44,7 +44,7 @@ contains
   !Initialize the states
   !----------------------------------------------------
   subroutine init(this, geo, nspin, nkpt, complex, ncoef)
-    class(states_t)  :: this
+    class(states_t), intent(inout)  :: this
     type(geometry_t), intent(inout) :: geo
     integer,          intent(in)    :: nspin
     integer,          intent(in)    :: nkpt
@@ -107,7 +107,7 @@ contains
   !Release the states
   !----------------------------------------------------
   subroutine cleanup(this)
-    type(states_t):: this
+    type(states_t), intent(inout) :: this
 
     integer :: ist, isp, ik
 
@@ -135,7 +135,7 @@ contains
   !Randomize the states
   !----------------------------------------------------
   subroutine randomize(this)
-    class(states_t):: this
+    class(states_t), intent(inout) :: this
 
     integer :: ist, isp, ik
     real(dp), allocatable :: tmp_re(:), tmp_im(:)
@@ -174,7 +174,7 @@ contains
   !Summary
   !----------------------------------------------------
   subroutine summary(this)
-    class(states_t) :: this
+    class(states_t), intent(inout) :: this
 
     call yaml_mapping_open("States")
     call yaml_map("Number of states", this%nstates)
