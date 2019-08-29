@@ -20,7 +20,7 @@ module esl_density_m
   !Data structure for the density
   type density_t
     type(density_ac_t) :: ac
-    type(density_pw_t) :: density_pw
+    type(density_pw_t) :: pw
     
   contains
     
@@ -43,11 +43,11 @@ contains
     select case ( system%basis%type )
     case ( PLANEWAVES )
       
-      call this%density_pw%init(system%basis%pw)
+      call this%pw%init(system%basis%pw)
       
     case ( ATOMCENTERED )
       
-      call this%ac%init(system%sparse_pattern, system%basis%ac)
+      call this%ac%init(system%basis%ac)
       
     end select
 
@@ -63,7 +63,7 @@ contains
     case ( PLANEWAVES )
 
       ! TODO fix interface 
-      call this%density_pw%guess(system%geo)
+      call this%pw%guess(system%geo)
       
     case ( ATOMCENTERED )
 
@@ -81,31 +81,35 @@ contains
 
   end subroutine cleanup
 
-  ! Calculate output density from an input density
+  ! Calculate new density based on a system and states
   !----------------------------------------------------
-  subroutine calculate(this, elsi, system, H, states, out)
+  subroutine calculate(this, system, states)
     use yaml_output, only: yaml_map
-    class(density_t),   intent(inout) :: this
-    type(elsi_t), intent(inout) :: elsi
+    class(density_t), intent(inout) :: this
     type(system_t), intent(inout) :: system
-    type(hamiltonian_t), intent(inout) :: H
-
-    type(states_t), intent(in) :: states
-    type(density_t),  intent(inout) ::  out
+    type(states_t), intent(in), optional :: states
 
     ! Calculate density on the grid
     select case ( system%basis%type )
     case ( PLANEWAVES )
 
+      if ( .not. present(states) ) then
+        print *, 'ERROR in calling calculate for PW calculations'
+      end if
+
       ! Calculate density
-      call out%density_pw%calculate(states)
-      call yaml_map("Norm", system%basis%pw%grid%integrate(out%density_pw%density))
+      call this%pw%calculate(states)
+      call yaml_map("Norm", system%basis%pw%grid%integrate(this%pw%density))
 
     case ( ATOMCENTERED )
 
-      ! Calculate the density on the grid
-      call this%ac%calculate(elsi, H%ac, H%potential, system%basis%ac, system%S, &
-        system%energy, out%ac)
+      if ( present(states) ) then
+        ! Requesting a DM calculation
+        call this%ac%calculate_DM(states)
+      else
+        ! We are requesting the current DM expanded onto the grid
+        call this%ac%calculate(system%basis%ac)
+      end if
       
     end select
 
@@ -124,7 +128,7 @@ contains
     select case ( basis%type )
     case ( PLANEWAVES )
 
-      res = this%density_pw%residue(basis%pw%grid, states%nel, other%density_pw)
+      res = this%pw%residue(basis%pw%grid, states%nel, other%pw)
       
     case ( ATOMCENTERED )
 

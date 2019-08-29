@@ -1,9 +1,11 @@
 module esl_hamiltonian_pw_m
   use prec, only:dp, ip
+#ifdef WITH_ELSI
   use elsi_rci
   use elsi_rci_constants
   use elsi_rci_omm
   use elsi_rci_precision, only:r8, i4
+#endif
 
   use esl_basis_pw_m
   use esl_grid_m
@@ -71,6 +73,7 @@ contains
     class(hamiltonian_pw_t) :: this
     type(states_t), intent(inout) :: states
     type(basis_pw_t), intent(in)  :: pw
+#ifdef WITH_ELSI
 
     integer :: ii, jj, lda, ldb, ldc
     real(kind=r8), allocatable :: result_in(:)
@@ -222,6 +225,9 @@ contains
     end do
     deallocate (work)
 
+#else
+    print *,'PW eigensolver REQUIRES ELSI'
+#endif
   end subroutine eigensolver
 
   !Apply the Hamiltonian matrix

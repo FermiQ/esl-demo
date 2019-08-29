@@ -10,7 +10,6 @@ module esl_smear_m
   type smear_t
 
      integer(ip)       :: smearing                     !< which smearing do we use
-     real(dp), pointer :: eigenvalues(:,:,:) => null() !< n_state,n_spin,n_kpt
      real(dp)          :: fermi_level
      real(dp)          :: eTemp
      real(dp)          :: eBroad
@@ -39,9 +38,9 @@ contains
 
     class(smear_t) :: this
 
-    character(len=100) :: sm
+    character(len=64) :: sm
 
-    sm = fdf_get('Smearing','Gaussian')
+    sm = fdf_get('Smearing','FD')
 
     if ( leqi(sm, 'Gaussian') )  Then
        this%smearing = GAUSSIAN
@@ -69,21 +68,20 @@ contains
   subroutine calc_fermi_occ(this, elsic, states)
     use esl_states_m, only: states_t
     use esl_elsi_m, only: elsi_t
- !   use elsi, only: elsi_set_mu_broaden_scheme, &
- !                   elsi_set_mu_broaden_width, &
- !                   elsi_compute_mu_and_occ
+    use elsi, only: elsi_set_mu_broaden_scheme, &
+        elsi_set_mu_broaden_width, &
+        elsi_compute_mu_and_occ
 
     class(smear_t), intent(inout) :: this
     type(elsi_t),   intent(inout) :: elsic
     type(states_t), intent(inout) :: states
 
-! TODO: Add back
-!    call elsi_set_mu_broaden_scheme(elsic%e_h, this%smearing)
-!    call elsi_set_mu_broaden_width(elsic%e_h, this%eBroad)
-!
-!    call elsi_compute_mu_and_occ(elsic%e_h, real(states%nel, dp), &
-!      & states%nstates, states%nspin, states%nkpt, states%k_weights, &
-!      & this%eigenvalues, states%occ_numbers, this%fermi_level)
+    call elsi_set_mu_broaden_scheme(elsic%e_h, this%smearing)
+    call elsi_set_mu_broaden_width(elsic%e_h, this%eBroad)
+
+    call elsi_compute_mu_and_occ(elsic%e_h, states%nel, &
+        states%nstates, states%nspin, states%nkpt, states%k_weights, &
+        states%eigenvalues, states%occ_numbers, this%fermi_level)
 
   end subroutine calc_fermi_occ
 

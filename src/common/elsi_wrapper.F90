@@ -3,7 +3,7 @@
 module esl_elsi_m
 
   use prec, only: ip, dp
-  use elsi, only: elsi_handle, elsi_init, elsi_finalize 
+  use elsi, only: elsi_handle, elsi_init, elsi_finalize
 
   implicit none
   private

@@ -4,6 +4,7 @@
 module esl_calc_density_matrix_ac_m
 
   use prec, only: ip, dp
+#ifdef WITH_ELSI
   use esl_elsi_m, only: elsi_t
   use esl_sparse_matrix_m, only: sparse_matrix_t
 
@@ -109,5 +110,7 @@ contains
     entropy     = elsi_ac%entropy
 
   end subroutine get_energy_results
+
+#endif
 
 end module esl_calc_density_matrix_ac_m

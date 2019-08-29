@@ -37,6 +37,8 @@ module esl_sparse_matrix_m
     !< Delete the sparse data (but not the sparse pattern)
     procedure, public :: delete => delete_
 
+    final :: cleanup_
+
   end type sparse_matrix_t
 
 contains
@@ -66,12 +68,18 @@ contains
 
   end function initialized_
 
+  subroutine cleanup_(this)
+    type(sparse_matrix_t), intent(inout) :: this
+    call this%delete()
+  end subroutine cleanup_
+
   subroutine delete_(this, stat)
     class(sparse_matrix_t), intent(inout) :: this
     integer, intent(out), optional :: stat
     integer :: istat
 
-    ! Ensure clean pointer
+    ! Ensure clean pointer (this class should *not* clean the sparse
+    ! pattern)
     nullify(this%sp)
 
     if ( present(stat) ) stat = 0

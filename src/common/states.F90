@@ -56,11 +56,10 @@ contains
     
     extra_states = fdf_get('ExtraStates', 0)
 
-    !TODO: the charge hould be a real number, not an integer
     this%nspin = nspin
     this%nel = geo%electronic_charge()
-    this%nstates = int(geo%electronic_charge()/2)
-    if ( this%nstates*2 < geo%electronic_charge() ) this%nstates = this%nstates + 1
+    this%nstates = int(this%nel / ( 3 - nspin ))
+    if ( this%nstates*(3 - nspin) < this%nel ) this%nstates = this%nstates + 1
     this%nstates = this%nstates + extra_states
     this%nkpt = nkpt
     this%complex_states = complex

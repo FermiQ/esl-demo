@@ -20,10 +20,10 @@ contains
   subroutine create_sparse_pattern_ac_create(basis, sp)
 
     use prec, only: dp
-    use esl_basis_ac_m, only: basis_ac_t
+    use esl_basis_ac_abc_t, only: basis_ac_abc_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
 
-    class(basis_ac_t), intent(in) :: basis
+    class(basis_ac_abc_t), intent(in) :: basis
     type(sparse_pattern_t), intent(inout) :: sp
     integer :: no, max_no, io, jo
     integer :: ia, ja, is, js

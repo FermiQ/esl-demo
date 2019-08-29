@@ -9,8 +9,11 @@ module esl_density_ac_m
   use esl_sparse_pattern_m
   use esl_sparse_matrix_m
   use esl_hamiltonian_ac_m
+  use esl_states_m
 
+#ifdef WITH_MPI
   use mpi_dist_block_cyclic_m
+#endif
   use esl_elsi_m, only: elsi_t
   use esl_calc_density_matrix_ac_m
 
@@ -39,6 +42,7 @@ module esl_density_ac_m
 
     procedure, public :: guess
     procedure, public :: calculate
+    procedure, public :: calculate_DM
     procedure, nopass, public :: add_density_matrix
     final  :: cleanup
 
@@ -47,17 +51,15 @@ module esl_density_ac_m
 contains
 
   !< Initialize the density matrices for this object
-  subroutine init(this, sp, basis)
+  subroutine init(this, basis)
     class(density_ac_t), intent(inout) :: this
-    type(sparse_pattern_t), target, intent(in) :: sp
     type(basis_ac_t), intent(in) :: basis
 
     allocate(this%rho(1:basis%grid%np))
-    this%rho(1:basis%grid%np) = 0.d0
 
     ! Initialize the sparse matrices
-    call this%DM%init(sp)
-    call this%EDM%init(sp)
+    call this%DM%init(basis%sparse_pattern)
+    call this%EDM%init(basis%sparse_pattern)
 
   end subroutine init
 
@@ -88,171 +90,158 @@ contains
     call basis%atomic_density_matrix(this%DM)
     this%EDM%M(:) = 0._dp
 
-  end subroutine guess
-
-  !< Calculate the density from the hosted density matrix in this object
-  subroutine calculate(this, elsi, H, pot, basis, S, energy, out)
-#ifdef WITH_MPI
-    use mpi, only: mpi_comm_world
-#endif
-    class(density_ac_t), intent(inout) :: this
-    !< ELSI handler
-    class(elsi_t), intent(inout) :: elsi
-    !< Hamiltonian
-    class(hamiltonian_ac_t), intent(inout) :: H
-    !< Potential container which calculates Hartree and XC
-    class(potential_t), intent(inout) :: pot
-    !< Atomic orbital basis
-    class(basis_ac_t), intent(in) :: basis
-    !< The overlap matrix (has to be pre-calculated on entry)
-    type(sparse_matrix_t) :: S
-    !< Energy type to contain all energies
-    type(energy_t), intent(inout) :: energy
-    !< Output density
-    type(density_ac_t), intent(inout) :: out
-
-    !< Real-space grid on which to retain the atomic filled density
-    real(dp), allocatable :: Vscf(:)
-
-    ! Currently we contain the Hamiltonian here.
-    ! However, since it is needed elsewhere we should decide where to place it.
-    type(mpi_dist_block_cyclic_t) :: dist
-
-    ! TODO logic for calculating the output density from an input
-    ! density.
-    allocate(Vscf(basis%grid%np))
-    ! Initialize
-    Vscf(:) = 0._dp
-    
-    ! First step for any SCF step is to setup the correct Hamiltonian
-    ! Add the kinetic and V_KB Hamiltonians
-    call H%setup_H0()
-    
-    ! Calculate the kinetic energy and non-local energy
-    energy%kinetic = sum(H%kin%M * this%DM%M)
-    energy%KB = sum(H%vkb%M * this%DM%M)
-
-    ! 1. Start by calculating the density from the DM on the grid
+    ! We initialize the guess on the grid here
     this%rho(:) = 0._dp
     call add_density_matrix(basis, this%DM, this%rho)
 
-    !  2. Add Hartree potential
-    ! Now we are in a position to calculate Hartree potential from rho
-    print *, '# DEBUG Rho sum', basis%grid%integrate(this%rho)
-    ! Now call the potentials_t%calculate which does:
-    !   1. Calculate the XC potential.
-    !   2. Calculate the Hartree potential
-    !   3. Calculate the external local potential
-    call pot%calculate(this%rho, energy)
+  end subroutine guess
 
-    ! Sum Hartree and XC potential,
-    ! Note that PSolver (in its current invocation)
-    ! sums the Hartree and external potential. So we do not need to add it
-    ! twice.
-    ! This will ease the addition of the matrix elements to do it in one go.
-    ! Re-use rho-atom as the sum of potentials.
-    ! I.e. after this line we cannot use Vscf anymore!
-    Vscf(:) = pot%hartree(:) + pot%vxc(:)
-    print *, '# DEBUG V sum', basis%grid%integrate(Vscf)
-    call hamiltonian_ac_potential(basis, Vscf, H%SCF)
+  !< Calculate the density from the hosted density matrix in this object
+  subroutine calculate(this, basis)
+    !< Density matrix and real-space density
+    class(density_ac_t), intent(inout) :: this
+    !< Atomic orbital basis
+    type(basis_ac_t), intent(in) :: basis
 
-    ! X. Calculate output density matrix elements from the Hamiltonian
-    ! Initialize the distribution
-!    call dist%init(MPI_COMM_World, this%DM%sp%nr, this%DM%sp%nr)
-!    call set_elsi_sparsity_pattern_ac(elsi, dist, H%SCF%sp)
-!    call calc_density_matrix_ac(elsi, H%SCF, S, out%DM)
-!    call get_energy_results(elsi, energy%eigenvalues, energy%fermi, energy%entropy)
-!    call dist%delete()
-
-    ! TODO this is very crude since it assumes a dense matrix
-    call my_check()
-
-    ! Final, output Mulliken charges
-    call mulliken_ac_summary(basis, S, out%DM)
-    call energy%display()
-
-  contains
-
-    subroutine my_check()
-
-      real(dp), allocatable :: eig(:)
-      real(dp), allocatable :: B(:), work(:)
-      integer :: n, info
-      integer :: io, jo, ib, ind
-
-      type(sparse_pattern_t), pointer :: sp
-
-      logical :: log
-      integer :: N_Ef
-
-      sp => H%SCF%sp
-      n = sp%nr
-
-      allocate(eig(n))
-      allocate(B(n ** 2))
-      allocate(work(n ** 2 * 4))
-      B = S%M
-
-      ! Check sparsity pattern
-      log = .true.
-      do io = 1, sp%nr
-        log = log .and. sp%nrow(io) == sp%nc
-        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
-          log = log .and. sp%column(ind) == ind - sp%rptr(io) + 1
-        end do
-        print '(100(tr1,f10.5))', H%SCF%M(sp%rptr(io):sp%rptr(io) + sp%nrow(io) - 1)
-      end do
-      if ( .not. log ) then
-        print *, '# MYCHECK WILL NOT WORK, AT BEST IT WILL FAIL'
-      end if
-      
-
-      ! Calculate the Kohn-Sham energy
-      ! This needs to be done before diagonalization
-      energy%eigenvalues = sum(H%SCF%M * this%DM%M)
-
-      call dsygv(1, 'V', 'U', n, H%SCF%M, n, B, n, eig, work, n ** 2 * 4, info)
-      if ( info /= 0 ) then
-        print *, '# DEBUG FAILED DIAGONALIZATION: ', info
-      end if
-
-      N_Ef = nint( basis%Q )
-      energy%fermi = (eig(n_ef) + eig(n_ef+1)) / 2
-      print *, '# DEBUG fermi level (eV): ', energy%fermi * 27.2114_dp
-      print '(a, 100(tr3, f10.6))', ' # DEBUG eigenvalues (eV): ', eig * 27.2114_dp
-
-      ! Re-construct the DM
-      out%DM%M(:) = 0._dp
-      ! Loop rows
-      do io = 1, n
-        
-        ! Loop columns
-        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
-          jo = sp%column(ind)
-
-          ! Loop bands
-          do ib = 1, N_ef
-            
-            ! Calculate new DM
-            out%DM%M(ind) = out%DM%M(ind) + &
-                H%SCF%M((ib-1)*n + jo) * H%SCF%M((ib-1)*n + io)
-            
-          end do
-          
-        end do
-        
-      end do
-
-      deallocate(B,eig,work)
-
-    end subroutine my_check
+    this%rho(:) = 0._dp
+    call add_density_matrix(basis, this%DM, this%rho)
 
   end subroutine calculate
+
+  !< Calculate a new density matrix from an input states object
+  subroutine calculate_DM(this, states)
+    !< Density matrix and real-space density
+    class(density_ac_t), intent(inout) :: this
+    !< Atomic orbital basis
+    type(states_t), intent(in) :: states
+
+    type(sparse_pattern_t), pointer :: sp
+    integer :: ispin, ikpt, io, ind, jo, ib
+    integer :: nr, nc
+    real(dp) :: kw
+    real(dp) :: occ_k, rio_occ, erio_occ
+    complex(dp) :: cio_occ, ecio_occ
+
+    sp => this%DM%sp
+    nr = sp%nr
+    nc = sp%nc
+
+    this%DM%M(:) = 0._dp
+    this%EDM%M(:) = 0._dp
+
+    do ikpt = 1, states%nkpt
+      kw = states%k_weights(ikpt)
+      do ispin = 1, states%nspin
+        
+        do ib = 1, states%nstates
+          ! Calculate new DM
+          if ( states%complex_states ) then
+            print *,'density_ac::calculate_DM::complex to be implemented!'
+          end if
+          occ_k = states%occ_numbers(io,ispin,ikpt) * kw
+          
+          do io = 1, nr
+            if ( states%complex_states ) then
+              cio_occ = states%states(ib,ispin,ikpt)%zcoef(io) * occ_k
+              ecio_occ = cio_occ * states%eigenvalues(ib,ispin,ikpt)
+            else
+              rio_occ = states%states(ib,ispin,ikpt)%dcoef(io) * occ_k
+              erio_occ = rio_occ * states%eigenvalues(ib,ispin,ikpt)
+            end if
+
+            ! Loop columns
+            do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+              jo = sp%column(ind)
+              if ( states%complex_states ) then
+                ! TODO phases from k
+                !this%DM%M(ind) = this%DM%M(ind) + real(cio_occ * dconjg(states%states(ib,ispin,ikpt)%zcoef(jo)), dp)
+                !this%EDM%M(ind) = this%EDM%M(ind) + real(ecio_occ * dconjg(states%states(ib,ispin,ikpt)%zcoef(jo)), dp)
+              else
+                this%DM%M(ind) = this%DM%M(ind) + rio_occ * states%states(ib,ispin,ikpt)%dcoef(jo)
+                this%EDM%M(ind) = this%EDM%M(ind) + erio_occ * states%states(ib,ispin,ikpt)%dcoef(jo)
+              end if
+
+            end do
+            
+          end do
+        end do
+      end do
+    end do
+    
+  end subroutine calculate_DM
+
+  !< Calculate and print-out the Mulliken charges
+  subroutine mulliken_summary(this, basis, S)
+    use yaml_output
+
+    type(density_ac_t), intent(in) :: this
+    type(basis_ac_t), intent(in) :: basis
+    type(sparse_matrix_t), intent(in) :: S
+
+    ! Local variables for calculating the Mulliken charges
+    integer :: ia, io, ind
+    integer :: io1, io2
+
+    type(sparse_pattern_t), pointer :: sp
+    
+    ! Actual Mulliken charges per site
+    real(dp), allocatable :: M(:), F(:)
+    character(len=16) :: str
+
+    ! Retrieve sparse pattern
+    sp => S%sp
+    
+    allocate(M(basis%n_site))
+    allocate(F(basis%n_orbital))
+
+    ! Calculate the total number charge, per site
+    do ia = 1 , basis%n_site
+      
+      M(ia) = 0._dp
+      do io = basis%site_orbital_start(ia), basis%site_orbital_start(ia + 1) - 1
+
+        F(io) = 0._dp
+        do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+
+          F(io) = F(io) + S%M(ind) * this%DM%M(ind)
+          
+        end do
+
+        M(ia) = M(ia) + F(io)
+
+      end do
+
+    end do
+
+    ! Produce YAML output
+    call yaml_mapping_open("Mulliken")
+    call yaml_map('Total', sum(M))
+    call yaml_comment("Q", hfill = "-")
+    do ia = 1, basis%n_site
+
+      write(str, '(i0)') ia
+      call yaml_mapping_open(trim(str))
+      !str = 'StillNotCreated' !basis%species(basis%site_state_idx(ia))%label
+      !call yaml_map('Label', trim(str))
+      call yaml_map('Sum', M(ia))
+      io1 = basis%site_orbital_start(ia)
+      io2 = basis%site_orbital_start(ia + 1) - 1
+      call yaml_map('Individual', F(io1:io2))
+      call yaml_mapping_close()
+      
+    end do
+
+    call yaml_mapping_close()
+
+    deallocate(M, F)
+    
+  end subroutine mulliken_summary
     
 
   !< Add a sparse density matrix to the density grid using basis coefficients, etc.
   !<
   !< Add the basis functions density to the grid via an input density matrix.
+  !TODO change to allow for spin-polarized calculations (DM(2), rho(:,2))
   subroutine add_density_matrix(basis, DM, rho)
 
     !< Grid container that defines this density object

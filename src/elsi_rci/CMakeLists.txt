@@ -1,9 +1,15 @@
-add_library(elsi_rci
-  elsi_rci_blas.f90
-  elsi_rci_constants.f90
-  elsi_rci_datatype.f90
-  elsi_rci_davidson.f90
-  elsi_rci_interface.f90
-  elsi_rci_omm.f90
-  elsi_rci_precision.f90
-  )
+if(WITH_ELSI)
+  add_library(elsi_rci
+    elsi_rci_blas.f90
+    elsi_rci_constants.f90
+    elsi_rci_datatype.f90
+    elsi_rci_davidson.f90
+    elsi_rci_interface.f90
+    elsi_rci_omm.f90
+    elsi_rci_precision.f90
+    )
+else()
+  add_library(elsi_rci
+    elsi_rci_interface_fake.f90
+    )
+endif()

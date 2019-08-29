@@ -81,21 +81,14 @@ contains
 
     select case (system%basis%type)
     case ( PLANEWAVES )
-      ! TODO anything syecific to SCF initialization
+      ! TODO anything specific to SCF initialization
     case( ATOMCENTERED )
-      ! Initialization of the SCF step is done here.
-      call create_sparse_pattern_ac_create(system%basis%ac, system%sparse_pattern)
-
-      ! Calculate the overlap matrix for this SCF cycle
-      call overlap_matrix_ac_calculate(system%basis%ac, &
-          system%sparse_pattern, system%S)
-
+      ! TODO anything specific to SCF initialization
     end select
 
     ! This is necessary for both AC and PW
     ! AC only needs the potential class (TODO consider moving the potential_t somewhere else!)
     call this%H%init(system%basis, system%geo, states, &
-        system%sparse_pattern, &
         periodic=.true.)
 
     ! Finally we can initialize the densities
@@ -146,48 +139,34 @@ contains
     !Calc. potentials from guess density
     select case (system%basis%type)
     case ( PLANEWAVES )
-      call this%H%potential%calculate(this%rho_in%density_pw%density, system%energy)
+      call this%H%potential%calculate(this%rho_in%pw%density, system%energy)
     case( ATOMCENTERED )
-      ! We do not need to initialize any values for the guessed density
+      ! Initialize H0
+      call this%H%ac%calculate_H0(system%basis%ac, system%geo)
     end select
 
-    ! TODO 
-    ! Randomize the states
-    ! Generally these are not needed for AC since we diagonalize
-    ! the Hamiltonian. However, when AC is using order-N methods one
-    ! does require initial guesses for the states.
-    call states%randomize()
+    select case (system%basis%type)
+    case ( PLANEWAVES )
+      ! Randomize the states
+      call states%randomize()
+    end select
 
     call yaml_mapping_open("SCF cycle")
 
     loop_scf: do iter = 1, this%max_iter
       call yaml_map("Iteration", iter)
 
-      ! Diagonalization (ELSI/KSsolver)
-      call this%H%eigensolver(system%basis, states)
-
-      ! Update occupations
-      call smear%calc_fermi_occ(elsi, states)
-
-      ! Calculate density
-      call this%rho_in%calculate(elsi, system, this%H, states, out=this%rho_out)
-      
-      ! Calculate necessary potentials
-      select case (system%basis%type)
+      ! Since the SCF cycles are *very* different we offload into
+      ! separate routines to clarify differences.
+      select case ( system%basis%type )
+      case ( ATOMCENTERED )
+        call SCF_AC()
       case ( PLANEWAVES )
-
-        call this%H%potential%calculate(this%rho_out%density_pw%density, system%energy)
-        
-      case( ATOMCENTERED )
-
-        ! TODO, clarify intent here. The potentials are required to calculate the
-        ! output density. As such the potential type is required in the density_ac%calculate
-        ! routine.
-        
+        call SCF_PW()
       end select
-
-      !Calc. energies
-      call system%energy%calculate(states)  
+      
+      ! Calc. energies
+      call system%energy%calculate()
 
       !Test tolerance and print status
       !We use rhonew to compute the relative density
@@ -195,7 +174,13 @@ contains
       !      differently, so perhaps it is better to pass everything?
       !      For now I don't do this...
       res = this%rho_in%residue(system%basis, this%rho_out, states)
+
+      ! Follow convergence
+      call yaml_mapping_open("iSCF")
+      call yaml_map("Total Energy", system%energy%total)
+      call yaml_map("Fermi level", system%energy%fermi)
       call yaml_map("Residue", res)
+      call yaml_mapping_close()
 
 #ifdef WITH_FLOOK
       ! Exchange data with Lua, so
@@ -219,6 +204,86 @@ contains
 
     call system%energy%display()
 
+  contains
+
+    subroutine SCF_AC()
+
+      real(dp), allocatable :: Vscf(:)
+
+      ! First we calculate the energies for what we know
+      system%energy%kinetic = sum(this%H%ac%kin%M(:) * this%rho_in%ac%DM%M(:))
+      system%energy%KB = sum(this%H%ac%vkb%M(:) * this%rho_in%ac%DM%M(:))
+      
+      ! Setup the Hamiltonian so we can solve the eigenvalue problem
+      ! First we initialize H0
+      ! This takes the pre-calculated *constant* Hamiltonian contributions
+      ! and adds them to the SCF Hamiltonian.
+      call this%H%ac%setup_H0()
+      
+      ! Now calculate the charge-density on the grid to be able to
+      ! calculate contributions from the potentials to the SCF Hamiltonian
+      ! This assumes DM stored in rho_in is the latest available!
+      call this%rho_in%calculate(system)
+
+      ! Calculate potentials and then add to H
+      ! Now call the potentials_t%calculate which does:
+      !   1. Calculate the XC potential.
+      !   2. Calculate the Hartree potential
+      !   3. Calculate the external local potential
+      call this%H%potential%calculate(this%rho_in%ac%rho, system%energy)
+
+      ! Prepare the Vscf to add potential to H
+      allocate(Vscf(system%basis%ac%grid%np))
+      Vscf(:) = this%H%potential%Hartree(:) + this%H%potential%Vxc(:) + this%H%potential%external(:)
+      call this%H%ac%add_potential(system%basis%ac, Vscf)
+      deallocate(Vscf)
+
+      ! Diagonalization (ELSI/KSsolver)
+      call this%H%eigensolver(system%basis, states)
+
+      ! Update occupations
+      call smear%calc_fermi_occ(elsi, states)
+      ! Copy over fermi-level
+      system%energy%fermi = smear%fermi_level
+      
+      ! Calculate new density matrix from states
+      ! rho%calculate has system and states as optional
+      ! This allows the same routine to calculate
+      ! 1. the DM expanded to the grid (if system present)
+      ! 2. the DM from the states (if system not present, and states present)
+      !
+      ! TODO consider moving this to a more clear implementation
+      ! I.e. currently rho%calculate can do both grid and DM calculations
+      ! for AC. However, doing it like this ensures that we only have one method.... :(
+      call this%rho_out%calculate(system, states)
+
+      ! H is now the input and DM is DM(H)
+      ! Thus we can calculate the eigenvalue energy now
+      !TODO for spin
+      system%energy%eigenvalues = sum(this%H%ac%H(1)%M(:) * this%rho_out%ac%DM%M(:))
+
+    end subroutine SCF_AC
+
+    subroutine SCF_PW()
+      ! Diagonalization (ELSI/KSsolver)
+      call this%H%eigensolver(system%basis, states)
+      
+      ! Update occupations
+      call smear%calc_fermi_occ(elsi, states)
+      ! Copy over fermi-level
+      system%energy%fermi = smear%fermi_level
+      
+      ! Calculate density from the new states
+      call this%rho_out%calculate(system, states)
+      
+      ! Calculate necessary potentials
+      call this%H%potential%calculate(this%rho_out%pw%density, system%energy)
+
+      ! TODO Check that the energies are correct. Added eigenvalues times occupations!
+      system%energy%eigenvalues = sum(states%eigenvalues * states%occ_numbers)
+
+    end subroutine SCF_PW
+
   end subroutine loop
   
   ! Perform mixing step
@@ -228,18 +293,14 @@ contains
     type(basis_t),  intent(in)   :: basis
     type(density_t), intent(inout) :: in, out 
 
-    real(kind=dp), allocatable :: next(:)
     integer :: np
 
     select case ( basis%type )
     case ( PLANEWAVES )
 
       np = basis%pw%grid%np
-
-      allocate(next(1:np))
-      call this%mixer%linear(np, in%density_pw%density(1:np), out%density_pw%density(1:np), next(1:np))
-      call in%density_pw%set_den(next)
-      deallocate(next)
+      call this%mixer%linear(np, in%pw%density(1:np), &
+          out%pw%density(1:np), in%pw%density(1:np))
       
     case ( ATOMCENTERED )
 
