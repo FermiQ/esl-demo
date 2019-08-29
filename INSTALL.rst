@@ -18,6 +18,13 @@ eg of building
  ```
  by default will look to read from sample.inp
 
+ELSI Support
+------------
+ELSI support is required for PW calculations.
+```
+cmake ../ -DWITH_ELSI=On
+```
+
 MPI Support
 -----------
 ```
