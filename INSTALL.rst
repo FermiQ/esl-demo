@@ -20,7 +20,7 @@ eg of building
 
 ELSI Support
 ------------
-ELSI support is required for PW calculations.
+Force ELSI support, otherwise the build-system will try and determine if it is present.
 ```
 cmake ../ -DWITH_ELSI=On
 ```

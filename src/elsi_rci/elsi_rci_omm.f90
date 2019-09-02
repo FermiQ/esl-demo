@@ -39,6 +39,7 @@ module ELSI_RCI_OMM
     implicit none
 
     public :: rci_omm
+    private :: omm_solve_quartic
 
     ! Matrix ID of size m by n
     !&<
@@ -705,4 +706,83 @@ contains
 
     end subroutine rci_omm
 
+    subroutine omm_solve_quartic(c,x_min,fail)
+      implicit none
+      !**** INPUT ***********************************!
+      real(r8), intent(in) :: c(0:4) ! coeffs. of the quartic equation
+      !**** OUTPUT **********************************!
+      logical, intent(out) :: fail ! did we fail to find a minimum?
+      real(r8), intent(out) :: x_min ! position of minimum
+      !**** LOCAL ***********************************!
+      integer :: i
+      integer :: x_order(1:3)
+      real(r8) :: t(1:3)
+      real(r8) :: z(1:3)
+      real(r8) :: a
+      real(r8) :: b
+      real(r8) :: d
+      real(r8) :: Q
+      real(r8) :: R
+      real(r8) :: theta
+      real(r8) :: S
+      real(r8) :: U
+      !**********************************************!
+      real(r8), parameter :: Pi = 3.14159265358979323846264338327950288419716939937510_r8
+      fail=.false.
+      !if (c(4)<0.0_r8) then
+      !  if (Node==0) print*, '#WARNING: Function is unbounded!'
+      !  !stop
+      !end if
+      ! in order to find the minimum of the quartic equation, we have to solve a cubic equation; the
+      ! following method is taken from Numerical Recipes
+      a=3.0_r8*c(3)/(4.0_r8*c(4))
+      b=2.0_r8*c(2)/(4.0_r8*c(4))
+      if ((abs(b)>=1.0d11) .or. (abs(c(4))<=1.0d-11)) then
+        !if (Node==0) print*, '#WARNING: Function is quadratic!'
+        x_min=-0.5_r8*c(1)/c(2)
+        return
+      end if
+      d=c(1)/(4.0_r8*c(4))
+      Q=(a**2-3.0_r8*b)/9.0_r8
+      R=(2.0_r8*a**3-9.0_r8*a*b+27.0_r8*d)/54.0_r8
+      if (R**2<Q**3) then
+        theta=acos(R/sqrt(Q**3))
+        t(1)=-2.0_r8*sqrt(Q)*cos(theta/3.0_r8)-a/3.0_r8
+        t(2)=-2.0_r8*sqrt(Q)*cos((theta+2.0_r8*Pi)/3.0_r8)-a/3.0_r8
+        t(3)=-2.0_r8*sqrt(Q)*cos((theta-2.0_r8*Pi)/3.0_r8)-a/3.0_r8
+        z(1:3)=c(4)*t(1:3)**4+c(3)*t(1:3)**3+c(2)*t(1:3)**2+c(1)*t(1:3)+c(0)
+        if (c(4)>0.0_r8) then
+          if (all(z(1)>=z(2:3))) then
+            x_order(1:3)=(/1,2,3/)
+          else if (z(2)>z(3)) then
+            x_order(1:3)=(/2,3,1/)
+          else
+            x_order(1:3)=(/3,1,2/)
+          end if
+          if ((0.0_r8<=t(x_order(1))) .and. (t(x_order(2))<=t(x_order(1)))) then
+            x_min=t(x_order(2))
+          else
+            x_min=t(x_order(3))
+          end if
+        else
+          if (all(z(1)<=z(2:3))) then
+            x_min=t(1)
+          else if (z(2)<z(3)) then
+            x_min=t(2)
+          else
+            x_min=t(3)
+          end if
+        end if
+      else
+        S=-sign(1.0_r8,R)*(abs(R)+sqrt(R**2-Q**3))**(1.0_r8/3.0_r8)
+        if (S==0.0_r8) then
+          U=0.0_r8
+        else
+          U=Q/S
+        end if
+        x_min=(S+U)-(a/3.0_r8)
+        if (c(4)<0.0_r8) fail=.true.
+      end if
+    end subroutine omm_solve_quartic
+    
 end module ELSI_RCI_OMM
