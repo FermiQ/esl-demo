@@ -28,6 +28,7 @@ module esl_density_m
     procedure, public :: init
     procedure, public :: guess
     procedure, public :: calculate
+    procedure, public :: calculate_density_matrix
     procedure, public :: residue
     final  :: cleanup
     
@@ -87,15 +88,11 @@ contains
     use yaml_output, only: yaml_map
     class(density_t), intent(inout) :: this
     type(system_t), intent(inout) :: system
-    type(states_t), intent(in), optional :: states
+    type(states_t), intent(in) :: states
 
     ! Calculate density on the grid
     select case ( system%basis%type )
     case ( PLANEWAVES )
-
-      if ( .not. present(states) ) then
-        print *, 'ERROR in calling calculate for PW calculations'
-      end if
 
       ! Calculate density
       call this%pw%calculate(states)
@@ -103,17 +100,30 @@ contains
 
     case ( ATOMCENTERED )
 
-      if ( present(states) ) then
-        ! Requesting a DM calculation
-        call this%ac%calculate_DM(states)
-      else
-        ! We are requesting the current DM expanded onto the grid
-        call this%ac%calculate(system%basis%ac)
-      end if
+      ! We are requesting the current DM expanded onto the grid
+      call this%ac%calculate(system%basis%ac)
       
     end select
 
   end subroutine calculate
+
+  ! Calculate new density matrix based on the states
+  !----------------------------------------------------
+  subroutine calculate_density_matrix(this, system, states)
+    use yaml_output, only: yaml_map
+    class(density_t), intent(inout) :: this
+    type(system_t), intent(inout) :: system
+    type(states_t), intent(in) :: states
+
+    ! Calculate density on the grid
+    select case ( system%basis%type )
+    case ( ATOMCENTERED )
+
+      call this%ac%calculate_density_matrix(states)
+      
+    end select
+
+  end subroutine calculate_density_matrix
 
 
   !< Calculate the relative difference between two densities

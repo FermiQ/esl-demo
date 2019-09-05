@@ -42,7 +42,7 @@ module esl_density_ac_m
 
     procedure, public :: guess
     procedure, public :: calculate
-    procedure, public :: calculate_DM
+    procedure, public :: calculate_density_matrix
     procedure, nopass, public :: add_density_matrix
     final  :: cleanup
 
@@ -109,7 +109,7 @@ contains
   end subroutine calculate
 
   !< Calculate a new density matrix from an input states object
-  subroutine calculate_DM(this, states)
+  subroutine calculate_density_matrix(this, states)
     !< Density matrix and real-space density
     class(density_ac_t), intent(inout) :: this
     !< Atomic orbital basis
@@ -138,7 +138,7 @@ contains
           if ( states%complex_states ) then
             print *,'density_ac::calculate_DM::complex to be implemented!'
           end if
-          occ_k = states%occ_numbers(io,ispin,ikpt) * kw
+          occ_k = states%occ_numbers(ib,ispin,ikpt) * kw
           
           do io = 1, nr
             if ( states%complex_states ) then
@@ -168,7 +168,7 @@ contains
       end do
     end do
     
-  end subroutine calculate_DM
+  end subroutine calculate_density_matrix
 
   !< Calculate and print-out the Mulliken charges
   subroutine mulliken_summary(this, basis, S)

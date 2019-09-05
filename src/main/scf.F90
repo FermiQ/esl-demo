@@ -223,7 +223,7 @@ contains
       ! Now calculate the charge-density on the grid to be able to
       ! calculate contributions from the potentials to the SCF Hamiltonian
       ! This assumes DM stored in rho_in is the latest available!
-      call this%rho_in%calculate(system)
+      call this%rho_in%calculate(system, states) ! states is a dummy argument
 
       ! Calculate potentials and then add to H
       ! Now call the potentials_t%calculate which does:
@@ -255,7 +255,7 @@ contains
       ! TODO consider moving this to a more clear implementation
       ! I.e. currently rho%calculate can do both grid and DM calculations
       ! for AC. However, doing it like this ensures that we only have one method.... :(
-      call this%rho_out%calculate(system, states)
+      call this%rho_out%calculate_density_matrix(system, states)
 
       ! H is now the input and DM is DM(H)
       ! Thus we can calculate the eigenvalue energy now
