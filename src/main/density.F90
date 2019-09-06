@@ -88,7 +88,7 @@ contains
 
       ! Calculate density
       call this%pw%calculate(states)
-      call yaml_map("Norm", system%basis%pw%grid%integrate(this%pw%density))
+      call yaml_map("Norm", system%basis%pw%grid%integrate(this%pw%rho))
 
     case ( ATOMCENTERED )
 

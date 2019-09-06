@@ -1,6 +1,7 @@
 module esl_density_pw_m
 
   use prec, only : dp
+  use esl_density_base_m
   use esl_basis_pw_m
   use esl_geometry_m
   use esl_grid_m
@@ -16,10 +17,9 @@ module esl_density_pw_m
   public :: density_pw_t
 
   !Data structure for the density
-  type density_pw_t
+  type, extends(density_base_t) :: density_pw_t
     integer :: np !< Copied from grid
 
-    real(dp), allocatable :: density(:)
     type(basis_pw_t), pointer :: pw
   contains
     private
@@ -40,7 +40,7 @@ contains
     class(density_pw_t),     intent(inout) :: this
     type(basis_pw_t), target,   intent(in) :: basis
 
-    allocate(this%density(1:basis%grid%np))
+    allocate(this%rho(1:basis%grid%np))
     this%np = basis%grid%np
 
     this%pw => basis
@@ -58,7 +58,7 @@ contains
     integer :: iat, ip, is
     real(dp):: norm
 
-    this%density(1:this%np) = 0.d0
+    this%rho(1:this%np) = 0.d0
 
     allocate(atomicden(1:this%np))
     atomicden(1:this%np) = 0.d0
@@ -77,7 +77,7 @@ contains
 
       !Summing up to the total density
       forall (ip = 1:this%np)
-        this%density(ip) = this%density(ip) + atomicden(ip)
+        this%rho(ip) = this%rho(ip) + atomicden(ip)
       end forall
     end do
     deallocate(atomicden)
@@ -91,7 +91,7 @@ contains
   subroutine finalizer(this)
     type(density_pw_t), intent(inout) :: this
 
-    if(allocated(this%density)) deallocate(this%density)
+    if(allocated(this%rho)) deallocate(this%rho)
     nullify(this%pw)
 
   end subroutine finalizer
@@ -110,7 +110,7 @@ contains
     !Coefficient in real space
     allocate(coef_rs(1:this%np))
 
-    this%density(:) = 0.d0
+    this%rho(:) = 0.d0
 
 
     ! Density should be calculated from states
@@ -126,7 +126,7 @@ contains
           weight = states%occ_numbers(ist,isp,ik)*states%k_weights(ik)
           !kWe accumulate the density
           do ip = 1, this%np
-            this%density(ip) = this%density(ip) + weight*abs(coef_rs(ip))**2
+            this%rho(ip) = this%rho(ip) + weight*abs(coef_rs(ip))**2
           end do
         end do
       end do
@@ -152,7 +152,7 @@ contains
 
     !We use rhonew to compute the relative density
     do ip = 1, this%np
-      diff(ip) = abs(other%density(ip) - this%density(ip))
+      diff(ip) = abs(other%rho(ip) - this%rho(ip))
     end do
     res = grid%integrate(diff)
     if ( nel > 0.0_dp ) then
@@ -172,7 +172,7 @@ contains
     integer :: ip
 
     forall(ip = 1:this%np)
-      rho(ip) = this%density(ip)
+      rho(ip) = this%rho(ip)
     end forall
 
   end subroutine get_den
@@ -186,7 +186,7 @@ contains
     integer :: ip
 
     forall (ip = 1:this%np)
-      this%density(ip) = rho(ip)
+      this%rho(ip) = rho(ip)
     end forall
 
   end subroutine set_den

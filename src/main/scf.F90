@@ -130,7 +130,7 @@ contains
     !Calc. potentials from guess density
     select case ( system%basis%type )
     case ( PLANEWAVES )
-      call this%H%potential%calculate(this%rho_in%pw%density, system%energy)
+      call this%H%potential%calculate(this%rho_in%pw%rho, system%energy)
     case( ATOMCENTERED )
       ! Initialize H0
       call this%H%ac%calculate_H0(system%basis%ac, system%geo)
@@ -268,7 +268,7 @@ contains
       call this%rho_out%calculate(system, states)
       
       ! Calculate necessary potentials
-      call this%H%potential%calculate(this%rho_out%pw%density, system%energy)
+      call this%H%potential%calculate(this%rho_out%pw%rho, system%energy)
 
       ! TODO Check that the energies are correct. Added eigenvalues times occupations!
       system%energy%eigenvalues = sum(states%eigenvalues * states%occ_numbers)
@@ -290,8 +290,8 @@ contains
     case ( PLANEWAVES )
 
       np = basis%pw%grid%np
-      call this%mixer%linear(np, in%pw%density(1:np), &
-          out%pw%density(1:np), in%pw%density(1:np))
+      call this%mixer%linear(np, in%pw%rho(1:np), &
+          out%pw%rho(1:np), in%pw%rho(1:np))
       
     case ( ATOMCENTERED )
 
