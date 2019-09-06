@@ -24,7 +24,7 @@ module esl_basis_pw_m
     private
     procedure, public :: init
     procedure, public :: summary
-    final :: cleanup
+    final :: finalizer
   end type basis_pw_t
   
 contains
@@ -61,13 +61,13 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(basis_pw_t) :: this
 
     if(allocated(this%gmod2)) deallocate(this%gmod2)
     if(allocated(this%gmap)) deallocate(this%gmap)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !Summary
   !----------------------------------------------------

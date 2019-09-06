@@ -55,8 +55,6 @@ module esl_system_m
     procedure, public :: init
     procedure, public :: update
     procedure, public :: summary
-
-    final  :: cleanup
   end type system_t
 
 contains
@@ -130,13 +128,6 @@ contains
     end if
     
   end subroutine update
-
-
-  !< Clean up all the contained types.
-  subroutine cleanup(sys)
-    type(system_t) :: sys
-
-  end subroutine cleanup
 
   !< Show information about the type as YAML output
   subroutine summary(sys)

@@ -20,7 +20,6 @@ module esl_smear_m
      private
      procedure, public :: init
      procedure, public :: calc_fermi_occ
-     final :: cleanup
 
   end type smear_t
 
@@ -60,10 +59,6 @@ contains
     this%eBroad = fdf_get('eBroad', 0.1_dp, 'Ha')
 
   end subroutine init
-
-  subroutine cleanup(this)
-    type(smear_t) :: this
-  end subroutine cleanup
 
   subroutine calc_fermi_occ(this, elsic, states)
     use esl_states_m, only: states_t

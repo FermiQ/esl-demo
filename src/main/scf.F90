@@ -51,8 +51,6 @@ module esl_scf_m
     procedure, public :: mix
     
     procedure, public :: loop
-
-    final :: cleanup
   end type scf_t
 
 contains
@@ -104,13 +102,6 @@ contains
 #endif
 
   end subroutine init
-
-  !Cleaning up
-  !----------------------------------------------------
-  subroutine cleanup(this)
-    type(scf_t) :: this
-
-  end subroutine cleanup
 
   !Perform the self-consistent field calculation
   !----------------------------------------------------

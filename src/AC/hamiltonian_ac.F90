@@ -40,7 +40,7 @@ module esl_hamiltonian_ac_m
     procedure, public :: add_potential
     procedure, public :: eigensolver
     
-    final :: cleanup
+    final :: finalizer
   end type hamiltonian_ac_t
 
 contains
@@ -67,7 +67,7 @@ contains
     
   end subroutine init
   
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(hamiltonian_ac_t), intent(inout) :: this
     integer :: ispin
     
@@ -77,7 +77,7 @@ contains
       call this%H(ispin)%delete()
     end do
     
-  end subroutine cleanup
+  end subroutine finalizer
 
   !< Calculate all non-SCF dependent Hamiltonian terms
   !<

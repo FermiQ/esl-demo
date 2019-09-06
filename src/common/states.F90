@@ -36,7 +36,7 @@ module esl_states_m
      procedure, public :: init
      procedure, public :: summary
      procedure, public :: randomize
-     final :: cleanup
+     final :: finalizer
   end type states_t
 
 contains
@@ -103,10 +103,10 @@ contains
 
   end subroutine init
 
-
   !Release the states
   !----------------------------------------------------
-  subroutine cleanup(this)
+
+  subroutine finalizer(this)
     type(states_t), intent(inout) :: this
 
     integer :: ist, isp, ik
@@ -129,7 +129,7 @@ contains
     if(allocated(this%eigenvalues)) deallocate(this%eigenvalues)
     if(allocated(this%k_weights)) deallocate(this%k_weights)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
 
   !Randomize the states

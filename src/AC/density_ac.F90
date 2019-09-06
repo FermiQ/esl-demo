@@ -44,7 +44,7 @@ module esl_density_ac_m
     procedure, public :: calculate
     procedure, public :: calculate_density_matrix
     procedure, nopass, public :: add_density_matrix
-    final  :: cleanup
+    final  :: finalizer
 
   end type density_ac_t
 
@@ -65,7 +65,7 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(density_ac_t), intent(inout) :: this
 
     if( allocated(this%rho) ) then
@@ -75,7 +75,7 @@ contains
     call this%DM%delete()
     call this%EDM%delete()
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !< Guess the initial density from the atomic orbitals
   !<

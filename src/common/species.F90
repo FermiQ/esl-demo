@@ -33,7 +33,7 @@ module esl_species_m
     procedure, public :: get_projector
     procedure, public :: get_projector_rmax
     procedure, public :: summary
-    final :: cleanup
+    final :: finalizer 
   end type species_t
 
 contains
@@ -106,7 +106,7 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine  finalizer(this)
     type(species_t) :: this
 
     integer :: io
@@ -114,7 +114,7 @@ contains
     call pspiof_meshfunc_free(this%vlocal)
     call pspiof_pspdata_free(this%psp)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !summary
   !----------------------------------------------------

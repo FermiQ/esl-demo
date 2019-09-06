@@ -53,7 +53,7 @@ module esl_geometry_m
     procedure, public :: summary
     procedure, public :: volume
     procedure, public :: electronic_charge
-    final  :: cleanup
+    final  :: finalizer
     
   end type geometry_t
 
@@ -158,7 +158,7 @@ contains
   end subroutine init
 
   !< Clean up the object
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(geometry_t) :: this
 
     if ( allocated(this%species) ) &
@@ -168,7 +168,7 @@ contains
     if ( allocated(this%species_idx) ) &
         deallocate(this%species_idx)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !< Print out the geometry coordinates and species information in the YAML output
   subroutine summary(this)

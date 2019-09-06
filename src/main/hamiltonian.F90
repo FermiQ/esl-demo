@@ -28,7 +28,6 @@ module esl_hamiltonian_m
     private
     procedure, public :: init
     procedure, public :: eigensolver
-    final :: cleanup
   end type hamiltonian_t
 
 contains
@@ -73,13 +72,6 @@ contains
     end select
  
   end subroutine init
-
-  !Release
-  !----------------------------------------------------
-  subroutine cleanup(this)
-    type(hamiltonian_t) :: this
-
-  end subroutine cleanup
 
   !Eigensolver
   !----------------------------------------------------

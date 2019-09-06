@@ -33,7 +33,6 @@ module esl_basis_m
     private
     procedure, public :: init
     procedure, public :: summary
-    final :: cleanup
   end type basis_t
 
   integer, public, parameter :: &
@@ -76,13 +75,6 @@ contains
     end if
 
   end subroutine init
-
-  !Release
-  !----------------------------------------------------
-  subroutine cleanup(this)
-    type(basis_t) :: this
-
-  end subroutine cleanup
 
   !Summary
   !----------------------------------------------------

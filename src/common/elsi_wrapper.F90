@@ -19,7 +19,7 @@ module esl_elsi_m
   contains
     private
     procedure, public :: init
-    final :: cleanup
+    final :: finalizer
   end type elsi_t
 
   integer(ip), parameter :: ELPA       = 1
@@ -47,11 +47,11 @@ contains
   end subroutine init
 
   !> Finalize ELSI
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(elsi_t), intent(inout) :: this
 
     call elsi_finalize(this%e_h)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
 end module esl_elsi_m

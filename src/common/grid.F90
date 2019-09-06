@@ -43,7 +43,7 @@ module esl_grid_m
     procedure, private :: dintegrate, zintegrate
     generic, public :: integrate => dintegrate, zintegrate
     
-    final :: cleanup
+    final :: finalizer
   end type grid_t
 
   interface integrate
@@ -116,7 +116,7 @@ contains
 
   !Release the grid
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(grid_t) :: this
 
     if(allocated(this%r)) deallocate(this%r)
@@ -125,7 +125,7 @@ contains
     call dfftw_destroy_plan(this%fftplan)
     call dfftw_destroy_plan(this%ifftplan)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !summary
   !----------------------------------------------------

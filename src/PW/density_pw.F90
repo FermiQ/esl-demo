@@ -29,7 +29,7 @@ module esl_density_pw_m
     procedure, public :: residue
     procedure, public :: get_den
     procedure, public :: set_den
-    final  :: cleanup
+    final  :: finalizer
   end type density_pw_t
 
 contains
@@ -88,13 +88,13 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(density_pw_t), intent(inout) :: this
 
     if(allocated(this%density)) deallocate(this%density)
     nullify(this%pw)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !Calc density
   !----------------------------------------------------

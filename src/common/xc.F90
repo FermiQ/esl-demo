@@ -35,7 +35,7 @@ module esl_xc_m
     procedure, public :: init
     procedure, public :: calculate
     procedure, public :: summary
-    final  :: cleanup
+    final  :: finalizer
   end type xc_t
 
 contains
@@ -67,13 +67,13 @@ contains
 
   !Release
   !----------------------------------------------------
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(xc_t), intent(inout) :: this
 
     this%cell => null()
     this%nmesh => null()
 
-  end subroutine cleanup
+  end subroutine finalizer
 
   !Calc the xc potential from the density
   !----------------------------------------------------

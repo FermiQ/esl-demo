@@ -33,7 +33,7 @@ module esl_force_m
 
     procedure, public :: init
     procedure, public :: calculate
-    final :: cleanup
+    final :: finalizer
 
   end type force_t
 
@@ -90,7 +90,7 @@ contains
   end subroutine display
   
   !< Clean up the object
-  subroutine cleanup(this)
+  subroutine finalizer(this)
     type(force_t), intent(inout) :: this
 
     if ( allocated(this%total) ) &
@@ -102,6 +102,6 @@ contains
     if ( allocated(this%ionion) ) &
         deallocate(this%ionion)
 
-  end subroutine cleanup
+  end subroutine finalizer
 
 end module esl_force_m
