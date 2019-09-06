@@ -149,8 +149,8 @@ contains
           do ist = 1, this%nstates
             call random_number(tmp_re(1:this%ncoef))
             call random_number(tmp_im(1:this%ncoef))
-            this%states(ist, isp, ik)%zcoef(1:this%ncoef) = tmp_re(1:this%ncoef) &
-                   + cmplx(0.d0,1.d0,kind=dp)*tmp_im(1:this%ncoef) 
+            this%states(ist, isp, ik)%zcoef(1:this%ncoef) = &
+                cmplx(tmp_re(1:this%ncoef) - 0.5_dp, tmp_im(1:this%ncoef) - 0.5_dp, dp)
             norm = sum(abs(this%states(ist, isp, ik)%zcoef(1:this%ncoef))**2)
             this%states(ist, isp, ik)%zcoef(1:this%ncoef) = this%states(ist, isp, ik)%zcoef(1:this%ncoef)/sqrt(norm)
           end do
@@ -162,6 +162,7 @@ contains
         do isp = 1, this%nspin
           do ist = 1, this%nstates
             call random_number(this%states(ist, isp, ik)%dcoef(1:this%ncoef))
+            this%states(ist, isp, ik)%dcoef(1:this%ncoef) = this%states(ist, isp, ik)%dcoef(1:this%ncoef) - 0.5_dp
             norm = sum(abs(this%states(ist, isp, ik)%dcoef(1:this%ncoef))**2)
             this%states(ist, isp, ik)%dcoef(1:this%ncoef) = this%states(ist, isp, ik)%dcoef(1:this%ncoef)/sqrt(norm)
           end do
