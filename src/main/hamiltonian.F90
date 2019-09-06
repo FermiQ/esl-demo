@@ -22,7 +22,7 @@ module esl_hamiltonian_m
   !Data structure for the Hamiltonian
   type hamiltonian_t
     type(potential_t)       :: potential
-    type(hamiltonian_pw_t)  :: hm_pw
+    type(hamiltonian_pw_t)  :: pw
     type(hamiltonian_ac_t)  :: ac
   contains
     private
@@ -41,12 +41,11 @@ contains
   !<  2. Calculate the non-SCF terms for the Hamiltonian.
   !<     They are the V_KB projectors and the kinetic part of
   !<     the Hamiltonian.
-  subroutine init(this, basis, geo, states, sp, periodic)
+  subroutine init(this, basis, geo, states, periodic)
     class(hamiltonian_t) :: this
     type(basis_t),    intent(in) :: basis
     type(geometry_t), intent(in) :: geo
     type(states_t),   intent(in) :: states
-    type(sparse_pattern_t), intent(in), target :: sp
     logical,          intent(in) :: periodic
  
     integer mpicomm
@@ -59,14 +58,16 @@ contains
     select case (basis%type)
     case ( PLANEWAVES )
       call this%potential%init(basis%pw, states, geo, periodic)
-      call this%hm_pw%init(this%potential, mpicomm)
+      call this%pw%init(this%potential, mpicomm)
     case ( ATOMCENTERED )
       call this%potential%init(basis%ac, states, geo, periodic)
       
       ! Initialize the AC part of the Hamiltonian
-      call this%ac%init(sp)
+      call this%ac%init(basis%ac%sparse_pattern, states%nspin)
       
       ! Immediately calculate the non-SCF dependent Hamiltonian quantities
+      ! This *should* only be done once per geometry
+      ! and thus we might as well do it here
       call this%ac%calculate_H0(basis%ac, geo)
 
     end select
@@ -83,15 +84,15 @@ contains
   !Eigensolver
   !----------------------------------------------------
   subroutine eigensolver(this, basis, states)
-    class(hamiltonian_t) :: this
+    class(hamiltonian_t), intent(inout) :: this
     type(basis_t),  intent(in)    :: basis
     type(states_t), intent(inout) :: states
 
     select case (basis%type)
     case ( PLANEWAVES )
-      call this%hm_pw%eigensolver(states, basis%pw)
+      call this%pw%eigensolver(basis%pw, states)
     case ( ATOMCENTERED )
-    !TODO
+      call this%ac%eigensolver(basis%ac, states)
     end select
 
   end subroutine eigensolver

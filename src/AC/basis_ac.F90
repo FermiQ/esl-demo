@@ -4,11 +4,13 @@ module esl_basis_ac_m
   use yaml_output
   use pspiof_m
 
-  use esl_basis_base_m
+  use esl_basis_ac_abc_t
   use esl_numeric_m
   use esl_message_m
   use esl_species_m
   use esl_geometry_m
+  use esl_create_sparse_pattern_ac_m, only: create_sparse_pattern_ac_create
+  use esl_overlap_matrix_ac_m, only: overlap_matrix_ac_calculate
   use esl_sparse_matrix_m
   
   implicit none
@@ -17,68 +19,10 @@ module esl_basis_ac_m
 
   public :: basis_ac_t
 
+  type, extends(basis_ac_abc_t) :: basis_ac_t
 
-  ! Local container for the orbital basis function.
-  ! This orbital object contains three things:
-  !  1. l, l-quantum number
-  !  2. m, m-quantum number
-  !  3. R(r), radial function.
-  !  4. occ, initial occupation
-  ! From these 3 quantities one can re-create the full
-  !   psi(r) = R(r) Y_l^m(r)
-  ! values at any point.
-  ! Later this orbital may contain information such
-  ! as polarization, zeta-information etc.
-  type orbital_ac_t
+    ! No new variables
     
-    integer :: l = 0, m = 0
-    real(dp) :: r_cut = 0._dp
-    real(dp) :: occ = 0._dp
-    !< Radial function of psi [R(r) Y_l^m(r) == psi(r)]
-    type(pspiof_meshfunc_t), pointer :: R => null()
-    
-  end type orbital_ac_t
-  
-  ! Each site consists of a set of orbitals
-  ! These orbitals are the *expanded* versions of a state
-  ! I.e. n_orbital is the actual total number of basis-orbitals on that
-  ! site.
-  type state_ac_t
-
-    ! Number of orbitals
-    integer :: n_orbital = 0
-    ! Maximum r_cut for all orbitals on this state
-    real(dp) :: r_cut = 0._dp
-    type(orbital_ac_t), pointer :: orb(:) => null()
-    
-  end type state_ac_t
-
-  type, extends(basis_base_t) :: basis_ac_t
-
-    ! TODO this should be from system, i.e.
-    real(dp) :: Q = 0._dp !< Number of electrons
-
-    integer :: n_site = 0 !< Number of atomic centered sites
-    real(dp), allocatable :: xyz(:,:) !< Cartesian coordinates of the atomic centered sites
-
-    !< Number of unique sites (irrespective of Cartesian positions)
-    integer :: n_state = 0
-    !< Container for each site. Each site contains a set of orbitals on which the basis is expanded
-    type(state_ac_t), allocatable :: state(:)
-
-    !< Total number of orbitals in this AC-basis
-    !< This equates to sum[ state(is)%n_orbital * <number of sites with state is> for all is]
-    integer :: n_orbital = 0 !< Number of functions in basis (sum of number of functions per site)
-
-    integer, allocatable :: site_state_idx(:) !< State indices for each site
-
-    integer, allocatable :: site_orbital_start(:) !< Look-up table to convert a site index to the first global orbital index (n_site + 1)
-    integer, allocatable :: orbital_site(:) !< Look-up table to convert a global orbital index to a site index.
-
-    ! Currently we don't need this array.
-    ! It may be used later.
-    !    integer, allocatable :: orbital_g2l(:) !< Look-up table to convert a global orbital index to the local function index on the specie
-
   contains
     private
     procedure, public :: init
@@ -251,6 +195,11 @@ contains
     this%n_orbital = no - 1
 
     this%size = this%n_orbital
+
+    ! Now we have fully occupied sites etc.
+    ! Create the sparsity pattern based on the orbital sites
+    call create_sparse_pattern_ac_create(this, this%sparse_pattern)
+    call overlap_matrix_ac_calculate(this, this%sparse_pattern, this%S)
 
   end subroutine init
 
@@ -507,6 +456,8 @@ contains
     call yaml_map("Sites first orbital", this%site_orbital_start(:this%n_site))
     call yaml_map("Sites last orbital", this%site_orbital_start(2:this%n_site+1) - 1)
 
+    call yaml_map("Sparse elements", this%sparse_pattern%nz)
+
     call yaml_sequence_open("Sites")
     do isite = 1, this%n_site
       
@@ -547,7 +498,7 @@ contains
       call yaml_mapping_close()
     end do
     call yaml_sequence_close()
-    
+
     call yaml_mapping_close()
 
     call this%grid%summary()

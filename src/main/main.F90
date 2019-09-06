@@ -66,7 +66,8 @@ contains
     case (PLANEWAVES)
       call states%init(system%geo, nspin, 1, .true., system%basis%pw%size)
     case (ATOMCENTERED)
-      call states%init(system%geo, nspin, 1, .true., system%basis%ac%size)
+      ! Currently we only have a working Gamma implementation!
+      call states%init(system%geo, nspin, 1, .false., system%basis%ac%size)
     end select
     call states%summary()
 

@@ -11,9 +11,10 @@ cubic 10.0 Ang
  H H.UPF
 %endblock species
 
-Smearing COLD
+Smearing FD
 
 BasisSet AtomicOrbitals
+ExtraStates 1
 
-SCF.Mix.Alpha 0.2
+SCF.Mix.Alpha 0.3
 SCFMaxIterations 100

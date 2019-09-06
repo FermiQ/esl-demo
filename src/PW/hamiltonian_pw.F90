@@ -67,10 +67,10 @@ contains
 
   !Eigensolver
   !----------------------------------------------------
-  subroutine eigensolver(this, states, pw)
+  subroutine eigensolver(this, pw, states)
     class(hamiltonian_pw_t) :: this
-    type(states_t), intent(inout) :: states
     type(basis_pw_t), intent(in)  :: pw
+    type(states_t), intent(inout) :: states
 
     integer :: ii, jj, lda, ldb, ldc
     real(kind=r8), allocatable :: result_in(:)

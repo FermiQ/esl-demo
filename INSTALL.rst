@@ -18,6 +18,13 @@ eg of building
  ```
  by default will look to read from sample.inp
 
+ELSI Support
+------------
+Force ELSI support, otherwise the build-system will try and determine if it is present.
+```
+cmake ../ -DWITH_ELSI=On
+```
+
 MPI Support
 -----------
 ```

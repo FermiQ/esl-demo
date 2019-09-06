@@ -44,7 +44,7 @@ contains
   !Initialize the states
   !----------------------------------------------------
   subroutine init(this, geo, nspin, nkpt, complex, ncoef)
-    class(states_t)  :: this
+    class(states_t), intent(inout)  :: this
     type(geometry_t), intent(inout) :: geo
     integer,          intent(in)    :: nspin
     integer,          intent(in)    :: nkpt
@@ -56,11 +56,10 @@ contains
     
     extra_states = fdf_get('ExtraStates', 0)
 
-    !TODO: the charge hould be a real number, not an integer
     this%nspin = nspin
     this%nel = geo%electronic_charge()
-    this%nstates = int(geo%electronic_charge()/2)
-    if ( this%nstates*2 < geo%electronic_charge() ) this%nstates = this%nstates + 1
+    this%nstates = int(this%nel / ( 3 - nspin ))
+    if ( this%nstates*(3 - nspin) < this%nel ) this%nstates = this%nstates + 1
     this%nstates = this%nstates + extra_states
     this%nkpt = nkpt
     this%complex_states = complex
@@ -108,7 +107,7 @@ contains
   !Release the states
   !----------------------------------------------------
   subroutine cleanup(this)
-    type(states_t):: this
+    type(states_t), intent(inout) :: this
 
     integer :: ist, isp, ik
 
@@ -136,7 +135,7 @@ contains
   !Randomize the states
   !----------------------------------------------------
   subroutine randomize(this)
-    class(states_t):: this
+    class(states_t), intent(inout) :: this
 
     integer :: ist, isp, ik
     real(dp), allocatable :: tmp_re(:), tmp_im(:)
@@ -175,7 +174,7 @@ contains
   !Summary
   !----------------------------------------------------
   subroutine summary(this)
-    class(states_t) :: this
+    class(states_t), intent(inout) :: this
 
     call yaml_mapping_open("States")
     call yaml_map("Number of states", this%nstates)

@@ -14,8 +14,6 @@
 module esl_energy_m
   use prec, only : dp
 
-  use esl_states_m
-
   implicit none
   private
 
@@ -80,13 +78,9 @@ contains
   end subroutine init
 
 
-  !< Update total energy by examining the states
-  subroutine calculate(this, states)
+  !< Update total energy
+  subroutine calculate(this)
     class(energy_t) :: this
-    type(states_t), intent(in) :: states
-
-    ! TODO Check that the energies are correct. Added eigenvalues times occupations!
-    this%eigenvalues = sum(states%eigenvalues * states%occ_numbers)
 
     this%total = this%ionion + this%eigenvalues + this%extern &
                  - this%hartree + this%exchange + this%correlation + this%kinetic - this%int_nvxc

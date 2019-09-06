@@ -1,4 +1,4 @@
-add_library(common
+set(common_SOURCES
   basis_base.F90
   constants.F90
   elsi_wrapper.F90
@@ -22,6 +22,12 @@ add_library(common
   states.F90
   xc.F90  
   )
+
+if(NOT WITH_ELSI)
+  list(APPEND common_SOURCES elsi_fake.F90)
+endif()
+
+add_library(common ${common_SOURCES})
 
 if(WITH_MPI)
   add_library(esldmpi

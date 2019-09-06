@@ -29,7 +29,7 @@ contains
     
     ! Actual Mulliken charges per site
     real(dp), allocatable :: M(:), F(:)
-    character(len=10) :: str
+    character(len=16) :: str
 
     ! Retrieve sparse pattern
     sp => S%sp

@@ -14,11 +14,11 @@ contains
 
   subroutine overlap_matrix_ac_calculate(basis, sp, S)
     use prec, only: dp
-    use esl_basis_ac_m, only: basis_ac_t
+    use esl_basis_ac_abc_t, only: basis_ac_abc_t
     use esl_sparse_pattern_m, only: sparse_pattern_t
     use esl_sparse_matrix_m, only: sparse_matrix_t
 
-    class(basis_ac_t), intent(inout) :: basis
+    class(basis_ac_abc_t), intent(inout) :: basis
     type(sparse_pattern_t), intent(in) :: sp
     type(sparse_matrix_t), intent(inout) :: S
 

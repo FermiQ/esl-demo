@@ -7,11 +7,6 @@ module esl_system_m
   use esl_dict_m
 #endif
 
-  ! Sparse pattern for LO
-  use esl_sparse_pattern_m, only: sparse_pattern_t
-  ! Sparse matrix for LO (only real(dp))
-  use esl_sparse_matrix_m, only: sparse_matrix_t
-
   use esl_basis_m
   use esl_energy_m
   use esl_force_m
@@ -52,15 +47,9 @@ module esl_system_m
     ! However, it will prohibit switching from PW/LO -> LO/PW within the same
     ! calculation.
 
-    ! LO dependent variables
-    type(sparse_pattern_t):: sparse_pattern
-    ! Perhaps these should be transferred to the basis_ac type.
-    ! However, they could be defined higher level since the basis
-    ! does not necessarily use the overlap matrix
-    type(sparse_matrix_t) :: S ! always 1D
-
     !< Total number of electrons
     real(dp) :: nElectrons = 0._dp
+
   contains
     private
     procedure, public :: init

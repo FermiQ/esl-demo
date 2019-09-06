@@ -80,6 +80,8 @@ module esl_sparse_pattern_m
     !< Delete this sparse object
     procedure, public :: delete => delete_
 
+    final :: cleanup_
+
   end type sparse_pattern_t
 
 contains
@@ -119,6 +121,11 @@ contains
     write(*,'(3(a,i0),a)') "<sparse_pattern rows=", this%nr, &
         ", columns=", this%nc, ", non-zeros=",this%nz, "/>"
   end subroutine print_
+
+  subroutine cleanup_(this)
+    type(sparse_pattern_t), intent(inout) :: this
+    call this%delete()
+  end subroutine cleanup_
 
   subroutine delete_(this, stat)
     class(sparse_pattern_t), intent(inout) :: this

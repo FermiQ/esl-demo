@@ -9,6 +9,7 @@ module esl_hamiltonian_ac_m
   
   use esl_basis_ac_m
   use esl_geometry_m
+  use esl_states_m
   use esl_grid_m
 
   use esl_sparse_matrix_m, only: sparse_matrix_t
@@ -27,16 +28,17 @@ module esl_hamiltonian_ac_m
   type hamiltonian_ac_t
 
     ! Store Hamiltonian quantities
-    
     type(sparse_matrix_t) :: kin !< Kinetic (Laplacian) Hamiltonian
     type(sparse_matrix_t) :: vkb !< Kleynman-Bylander projectors part of the Hamiltonian
-    type(sparse_matrix_t) :: SCF !< SCF Hamiltonian
+    type(sparse_matrix_t), allocatable :: H(:) !< SCF Hamiltonian (per spin)
 
   contains
     
     procedure, public :: init
     procedure, public :: calculate_H0
     procedure, public :: setup_H0
+    procedure, public :: add_potential
+    procedure, public :: eigensolver
     
     final :: cleanup
   end type hamiltonian_ac_t
@@ -49,22 +51,31 @@ contains
   !<  1. The kinetic Hamiltonian (non-SCF dependent)
   !<  2. Non-local Hamiltonian (non-SCF dependent)
   !<  3. SCF Hamiltonian (changed on every SCF cycle)
-  subroutine init(this, sparse_pattern)
+  subroutine init(this, sparse_pattern, nspin)
     class(hamiltonian_ac_t), intent(inout) :: this
     type(sparse_pattern_t), intent(in), target :: sparse_pattern
+    integer, intent(in) :: nspin
+
+    integer :: ispin
     
     call this%kin%init(sparse_pattern)
     call this%vkb%init(sparse_pattern)
-    call this%SCF%init(sparse_pattern)
+    allocate(this%H(nspin))
+    do ispin = 1, nspin
+      call this%H(ispin)%init(sparse_pattern)
+    end do
     
   end subroutine init
   
   subroutine cleanup(this)
     type(hamiltonian_ac_t), intent(inout) :: this
+    integer :: ispin
     
     call this%kin%delete()
     call this%vkb%delete()
-    call this%SCF%delete()
+    do ispin = 1, size(this%H)
+      call this%H(ispin)%delete()
+    end do
     
   end subroutine cleanup
 
@@ -79,7 +90,7 @@ contains
     type(geometry_t), intent(in) :: geom
 
     ! Calculate individual elements for the H0-elements
-    this%kin%M = 0._dp
+    this%kin%M(:) = 0._dp
     call hamiltonian_ac_laplacian(basis, this%kin)
 
     ! Calculate V_kb matrix elements
@@ -94,10 +105,103 @@ contains
   !<   H = H_kin + H_vkb
   subroutine setup_H0(this)
     class(hamiltonian_ac_t), intent(inout) :: this
+    integer :: ispin
 
-    this%SCF%M(:) = this%kin%M(:) + this%vkb%M(:)
+    do ispin = 1, size(this%H)
+      this%H(ispin)%M(:) = this%kin%M(:) + this%vkb%M(:)
+    end do
     
   end subroutine setup_H0
+
+  !< Solve the eigenstates for a given state type
+  !<
+  !< Calls the respective ELSI methods to calculate the eigenspectrum
+  subroutine eigensolver(this, basis, states)
+    class(hamiltonian_ac_t), intent(in) :: this
+    type(basis_ac_t), intent(in) :: basis
+    type(states_t), intent(inout) :: states
+
+    if ( states%complex_states ) then
+      call eig_k()
+    else
+      call eig_gamma()
+    end if
+
+  contains
+
+    subroutine eig_gamma()
+
+      integer :: ispin, ik
+      ! Variables to be diagonalized
+      real(dp), allocatable :: H(:,:), S(:,:), work(:), eig(:)
+      integer :: nr, nc
+      type(sparse_pattern_t), pointer :: sp
+      integer :: info
+
+      integer :: io, ind, jo
+
+      do ispin = 1, size(this%H)
+
+        sp => this%H(ispin)%sp
+        
+        nr = sp%nr
+        nc = sp%nc
+
+        allocate(H(nr,nc), S(nr,nc), eig(nr))
+        ! Nullify
+        H(:,:) = 0._dp
+        S(:,:) = 0._dp
+
+        allocate(work(nr * nc * 4))
+
+        ! Create diagonalization matrices
+        ! Note that we do not have any phases, so we don't need
+        ! the geometry.
+        do io = 1, nr
+          do ind = sp%rptr(io), sp%rptr(io) + sp%nrow(io) - 1
+            jo = sp%column(ind)
+            H(jo,io) = H(jo,io) + this%H(ispin)%M(ind)
+            S(jo,io) = S(jo,io) + basis%S%M(ind)
+          end do
+        end do
+
+        ! Now perform diagonalization
+        call dsygv(1, 'V', 'U', nr, H, nr, S, nr, eig, work, size(work), info)
+        if ( info /= 0 ) then
+          print *, 'hamiltonian_ac::eigensolver::eig_gamma FAILED DIAGONALIZATION: ', info
+        end if
+
+        ! Copy over states and eigenvalues
+        ! Since states does not necessarily take the full orbital space we have to
+        ! do a manual copy.
+        states%eigenvalues(:,ispin,1) = eig(1:states%nstates)
+        do io = 1, states%nstates
+          states%states(io,ispin,1)%dcoef(:) = H(:,io)
+        end do
+
+        deallocate(H, S, eig, work)
+
+      end do
+
+    end subroutine eig_gamma
+
+    subroutine eig_k()
+
+      print *,'hamiltonian_ac::eigensolver::eig_k to be implemented!'
+
+    end subroutine eig_k
+
+  end subroutine eigensolver
+
+  subroutine add_potential(this, basis, V)
+    class(hamiltonian_ac_t), intent(inout) :: this
+    type(basis_ac_t), intent(in) :: basis
+    real(dp), intent(in) :: V(:)
+
+    call hamiltonian_ac_potential(basis, V, this%H(1))
+
+  end subroutine add_potential
+
 
   subroutine hamiltonian_ac_laplacian(basis, H)
     class(basis_ac_t), intent(in) :: basis
@@ -110,7 +214,7 @@ contains
 
     type(sparse_pattern_t), pointer :: sp
 
-    ! Immediately return, if not needed
+    ! Immediately return, if not neededcal
     if ( .not. H%initialized() ) return
 
     sp => H%sp
